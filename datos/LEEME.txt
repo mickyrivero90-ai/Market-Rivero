@@ -1,0 +1,11 @@
+DATOS DE LA HERRAMIENTA ONLINE · Rivero Market
+===============================================
+
+Esta carpeta la escribe sola la herramienta online (https://mickyrivero90-ai.github.io/Market-Rivero/):
+
+  catalogo.json        memoria de precios: el último precio de cada foto de producto
+                       (se carga solo la próxima vez que elegís ese producto)
+  proyectos/*.json     «Mis folletos»: una copia de cada folleto terminado, para retocarlo
+  borradores/*.json    el folleto en curso de cada computadora (para seguirlo en la otra)
+
+No hace falta tocar nada acá. Si se borra un archivo, se pierde solo esa copia.

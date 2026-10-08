@@ -1,9 +1,12 @@
 // ───────────────────────── imágenes de productos y fotos ─────────────────────────
 const IMG = { ready: new Map(), error: new Set() };          // clave → imagen lista para dibujar / claves que no se pudieron cargar
 
-const urlImagen = (ruta, v) => '/api/imagen?ruta=' + encodeURIComponent(ruta) + (v ? '&v=' + encodeURIComponent(v) : '');
-const urlMiniatura = (ruta, v) => '/api/miniatura?ruta=' + encodeURIComponent(ruta) + (v ? '&v=' + encodeURIComponent(v) : '');
-const servidorActivo = () => typeof API !== 'undefined' && API.activo;
+const enLaNube = () => typeof NUBE !== 'undefined' && NUBE.activo && !(typeof API !== 'undefined' && API.activo);
+/** Dirección de una foto de la carpeta de productos: la del programa local o la de la nube (GitHub). */
+const urlImagen = (ruta, v) => (enLaNube() ? NUBE.urlImagen(ruta, v) : '/api/imagen?ruta=' + encodeURIComponent(ruta) + (v ? '&v=' + encodeURIComponent(v) : ''));
+const urlMiniatura = (ruta, v) => (enLaNube() ? NUBE.urlMiniatura(ruta, v) : '/api/miniatura?ruta=' + encodeURIComponent(ruta) + (v ? '&v=' + encodeURIComponent(v) : ''));
+/** ¿Hay carpeta de productos? (programa local o nube) */
+const servidorActivo = () => (typeof API !== 'undefined' && API.activo) || enLaNube();
 
 /** De dónde sale la foto de un producto (o de una foto de colección): incrustada, o de la carpeta del programa. */
 function srcDe(p) {
@@ -22,8 +25,10 @@ const claveImg = p => [p.id, p.imgV || 0, p.archivo || '', p.mtime || '', p.quit
 const getImg = p => (p && srcDe(p) ? IMG.ready.get(claveImg(p)) || null : null);
 const faltaArchivo = p => !!(p && srcDe(p) && IMG.error.has(claveImg(p)));
 
+/** Las fotos de otro sitio (las de la nube) se piden con permiso CORS: si no, el folleto no se podría exportar. */
+const esDeOtroSitio = src => { try { return /^https?:/i.test(src) && new URL(src, location.href).origin !== location.origin; } catch (e) { return false; } };
 function cargarImagen(src) {
-  return new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => rej(new Error('No se pudo cargar la imagen')); im.src = src; });
+  return new Promise((res, rej) => { const im = new Image(); if (esDeOtroSitio(src)) im.crossOrigin = 'anonymous'; im.onload = () => res(im); im.onerror = () => rej(new Error('No se pudo cargar la imagen')); im.src = src; });
 }
 function aCanvas(img, maxSide = 1000) {
   const w0 = img.naturalWidth || img.width, h0 = img.naturalHeight || img.height, sc = Math.min(1, maxSide / Math.max(w0, h0));

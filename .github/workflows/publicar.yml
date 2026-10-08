@@ -1,0 +1,126 @@
+# Publica la herramienta de folletos en GitHub Pages cada vez que cambia algo, y antes le quita
+# el fondo con IA a las fotos que se subieron a productos/_entrada (desde la herramienta online).
+# Los cambios de datos/ (precios, «Mis folletos», folletos en curso) no hace falta publicarlos:
+# la herramienta los lee directo del repositorio.
+name: Publicar la herramienta
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'editor/**'
+      - 'productos/**'
+      - 'programa/**'
+      - 'logo/**'
+      - 'assets/**'
+      - 'herramientas/**'
+      - '.github/workflows/**'
+      - 'CAMBIOS.txt'
+      - 'LEEME.*'
+      - 'CONTEXTO_DEL_PROYECTO.txt'
+      - 'iniciar.*'
+  workflow_dispatch:
+
+# De a una publicación por vez: si llegan fotos mientras se publica, se hace otra vuelta después.
+concurrency:
+  group: publicar
+  cancel-in-progress: false
+
+jobs:
+  fotos:
+    name: Quitar el fondo a las fotos nuevas
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 20
+
+      - name: ¿Hay fotos esperando?
+        id: hay
+        run: |
+          if [ -d productos/_entrada ] && find productos/_entrada -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) | grep -q .; then
+            echo "si=1" >> "$GITHUB_OUTPUT"
+            find productos/_entrada -type f
+          else
+            echo "No hay fotos para procesar."
+          fi
+
+      - if: steps.hay.outputs.si == '1'
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: herramientas/requisitos-ia.txt
+
+      - if: steps.hay.outputs.si == '1'
+        name: Modelo de IA guardado de otras veces
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.rembg
+            ~/.u2net
+          key: rembg-isnet-general-use-1
+
+      - if: steps.hay.outputs.si == '1'
+        name: Instalar la IA
+        run: pip install -r herramientas/requisitos-ia.txt
+
+      - if: steps.hay.outputs.si == '1'
+        name: Quitar el fondo
+        run: python herramientas/procesar_entrada.py
+
+      - if: steps.hay.outputs.si == '1'
+        name: Guardar las fotos sin fondo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A productos
+          if git diff --cached --quiet; then echo "Nada para guardar."; exit 0; fi
+          git commit -m "Fotos sin fondo (IA)"
+          for intento in 1 2 3 4 5; do
+            if git push origin HEAD:main; then exit 0; fi
+            sleep $((intento * 3))
+            git pull --rebase origin main
+          done
+          exit 1
+
+  armar:
+    name: Armar la página
+    needs: fotos
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Armar la herramienta, el catálogo de fotos y el programa para descargar
+        run: |
+          pip install "pillow>=12.1,<13"
+          python herramientas/armar_sitio.py --salida _site
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+  publicar:
+    name: Publicar en GitHub Pages
+    needs: armar
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

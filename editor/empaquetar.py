@@ -2,8 +2,10 @@
 # -*- coding: utf-8 -*-
 """Arma el ZIP del programa de folletos para llevarlo a otra computadora (Windows o Linux).
 
-    python3 empaquetar.py        ->  _entregas/Rivero-Market-Folletos-AAAA-MM-DD.zip
+    python3 empaquetar.py                    ->  _entregas/Rivero-Market-Folletos-vX.Y-AAAA-MM-DD.zip
+    python3 empaquetar.py --salida X.zip     ->  ese archivo (lo usa herramientas/armar_sitio.py para la página online)
 """
+import argparse
 import os
 import re
 import sys
@@ -27,7 +29,7 @@ def archivos():
         out.append((RAIZ / "programa" / n, f"programa/{n}", modo))
     out.append((RAIZ / "programa" / "web" / "index.html", "programa/web/index.html", 0o644))
     for p in sorted((RAIZ / "productos").rglob("*")):
-        if p.is_file() and not any(part.startswith(".") for part in p.relative_to(RAIZ).parts):
+        if p.is_file() and not any(part.startswith((".", "_")) for part in p.relative_to(RAIZ).parts):   # sin ocultas ni _entrada (fotos esperando la IA)
             out.append((p, p.relative_to(RAIZ).as_posix(), 0o644))
     for p in sorted((RAIZ / "logo").iterdir()):
         if p.is_file() and p.suffix.lower() in (".svg", ".png") and p.name != "original_referencia.png":
@@ -36,11 +38,18 @@ def archivos():
 
 
 def main():
-    SALIDA.mkdir(exist_ok=True)
-    for viejo in SALIDA.glob(f"{NOMBRE}*.zip"):                    # una sola entrega vigente: la de la fecha más nueva
-        viejo.unlink()
+    ap = argparse.ArgumentParser(description="Arma el ZIP del programa de folletos")
+    ap.add_argument("--salida", help="ruta del ZIP (por defecto, _entregas/ con la versión y la fecha)")
+    args = ap.parse_args()
     VER = (RAIZ / "editor" / "VERSION").read_text(encoding="utf-8").strip()
-    destino = SALIDA / f"{NOMBRE}-v{VER}-{FECHA}.zip"
+    if args.salida:
+        destino = Path(args.salida).resolve()
+        destino.parent.mkdir(parents=True, exist_ok=True)
+    else:
+        SALIDA.mkdir(exist_ok=True)
+        for viejo in SALIDA.glob(f"{NOMBRE}*.zip"):                # una sola entrega vigente: la de la fecha más nueva
+            viejo.unlink()
+        destino = SALIDA / f"{NOMBRE}-v{VER}-{FECHA}.zip"
     faltan = [str(o) for o, _, _ in archivos() if not o.exists()]
     if faltan:
         sys.exit("Faltan archivos: " + ", ".join(faltan))

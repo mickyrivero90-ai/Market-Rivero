@@ -155,4 +155,6 @@ async function guardarArchivo(blob, nombre) {
   return 'ok';
 }
 
+/** replaceChildren sin "null" de más: deja afuera lo que no corresponde mostrar. */
+const llenar = (el, ...kids) => el.replaceChildren(...kids.flat().filter(k => k != null && k !== false && k !== ''));
 const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };

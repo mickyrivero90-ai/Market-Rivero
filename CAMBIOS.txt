@@ -1,7 +1,45 @@
 RIVERO MARKET · PROGRAMA DE FOLLETOS · CAMBIOS POR VERSIÓN
 ==========================================================
 La versión se ve arriba a la izquierda del programa (tocala para ver esta lista).
-Si la computadora del trabajo muestra un número menor, copiá ahí la carpeta nueva.
+Desde la 3.0, la herramienta online (https://mickyrivero90-ai.github.io/Market-Rivero/)
+se actualiza sola. Si usás el programa de la PC y muestra un número menor, bajá el nuevo
+desde la herramienta online (⋯ Más → Programa para usar sin internet).
+
+Versión 3.0 · 8 de octubre de 2026 · LA HERRAMIENTA ONLINE
+- Ahora se usa desde internet: https://mickyrivero90-ai.github.io/Market-Rivero/
+  Anda en la PC de casa, en la del negocio y en el celular, sin instalar nada, y siempre
+  es la última versión (cuando sale una nueva, aparece un aviso arriba para actualizar).
+- Todo queda en la nube (el repositorio de GitHub del negocio): las fotos de productos,
+  los precios recordados y «Mis folletos» son los mismos en todas las computadoras. El
+  botón «☁ Conectar» (una sola vez en cada PC) guarda la llave de GitHub en ese navegador.
+- «Traer lo de esta PC» (⋯ Más): elegís la carpeta del programa viejo y sube a la nube
+  las fotos, los precios y los folletos que falten. Si lo hacés dos veces, no repite nada.
+- Fotos nuevas con el fondo quitado por IA en la nube (GitHub): sacás las fotos con el
+  celular sobre cualquier fondo y en 1 a 3 minutos aparecen recortadas en el buscador.
+  «Quitar fondo con IA» en un producto del folleto: la foto se cambia sola cuando está.
+- Folleto en curso en la nube: si empezás en una PC, en la otra te pregunta si querés
+  seguir con ese.
+- Al finalizar (online): en Chrome o Edge se puede guardar directo en una carpeta de la PC
+  (por ejemplo el Escritorio); en los demás navegadores se descarga (varias imágenes en
+  un .zip). En el celular, botón «Compartir» para mandarlas a WhatsApp o Facebook.
+- 📣 Marketing (botón nuevo arriba y sección «Para vender más» del panel):
+    · Textos para publicar: canal y grupos de WhatsApp, Estados (uno por producto) y
+      Facebook/Instagram, con tus productos, precios, fechas y promo. Tonos clásico,
+      urgente y cercano. Copiar o abrir directo en WhatsApp.
+    · Plan de la semana: qué publicar, dónde y a qué hora, con el texto listo, casillas
+      para tildar y recordatorios para el calendario del celular (.ics).
+    · ¿Me conviene?: con el costo, cuánto ganás con y sin oferta y cuánto más hay que
+      vender para ganar lo mismo; precio de venta desde el costo. El costo queda solo
+      en tu computadora.
+    · Armar un combo: varios productos del folleto, un precio, y se agrega al folleto con
+      las fotos juntas y la insignia COMBO.
+    · Fechas que vienen: calendario comercial con ideas de productos y cuándo empezar a
+      publicar; «Usar esta fecha» pone el fondo y la vigencia.
+    · Ideas para vender más: Google Maps, WhatsApp Business, el canal, Estados, Facebook,
+      el local, precios, fidelizar y medir, con casillas para ir marcando.
+- Datos del local: campo nuevo «Link de Google Maps» (sale como «cómo llegar» en los textos).
+- El programa para la PC (sin internet) sigue igual, también con Marketing, y se descarga
+  actualizado desde la herramienta online.
 
 Versión 2.6 · 3 de octubre de 2026
 - Procesar fotos en lote (IA): botón "✂ Fotos nuevas · quitar fondo en lote" en el paso

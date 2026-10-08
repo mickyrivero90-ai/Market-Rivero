@@ -1,12 +1,14 @@
 # Rivero Market · sistema de folletos de ofertas
 
-**Versión 2.6** (se ve arriba a la izquierda del programa; la lista de cambios está en `CAMBIOS.txt`).
+**Versión 3.0** (se ve arriba a la izquierda del programa; la lista de cambios está en `CAMBIOS.txt`).
+
+> **Desde la 3.0 la herramienta está online:** https://mickyrivero90-ai.github.io/Market-Rivero/ — siempre actualizada, con las fotos, los precios y «Mis folletos» compartidos entre la PC de casa, la del negocio y el celular, y con la sección **📣 Marketing**. Cómo se usa: ver `README.md`.
 
 Folletos listos para imprimir y para redes. Vos cambiás **producto + descripción + precio + foto**; el logo, la dirección, el Facebook, el QR del canal de WhatsApp y la leyenda legal quedan fijos.
 
 ## El programa de folletos (lo que tenés que usar)
 
-**Dónde está.** Todo lo que armamos está en tu PC Linux (la que tiene Blender), en `/home/rivero/RiveroMarket/`. No hay nada en la nube salvo una página de muestra publicada en claude.ai (privada, solo para ver).
+**Dónde está.** El código está en GitHub (https://github.com/mickyrivero90-ai/Market-Rivero) y en tu PC Linux (la que tiene Blender), en `/home/rivero/RiveroMarket/`, que es la copia de trabajo del repositorio. Este programa local sirve para usar sin internet.
 
 **Cómo abrirlo.** Doble clic en el ícono **Folletos Rivero Market** del Escritorio (o `./iniciar.sh`). Se abre el navegador en `http://127.0.0.1:8780`. Solo escucha en tu computadora y no usa internet.
 

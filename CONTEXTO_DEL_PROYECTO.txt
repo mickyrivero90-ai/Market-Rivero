@@ -1,6 +1,6 @@
 CONTEXTO DEL PROYECTO · RIVERO MARKET · FOLLETOS DE OFERTAS
 ==========================================================
-Actualizado: 3 de octubre de 2026 · versión 2.6
+Actualizado: 8 de octubre de 2026 · versión 3.0 (herramienta online en GitHub)
 
 Este archivo cuenta qué pediste, qué decidimos, qué se hizo, cómo está armado y qué
 falta. Sirve para retomar el trabajo en otra conversación con Claude, en otra
@@ -20,13 +20,22 @@ computadora o con otra persona, sin tener que explicar todo de nuevo.
  10. Pendientes y cosas para confirmar
  11. Ideas para más adelante
  12. Cómo prefiere trabajar el dueño del negocio
- 13. Versión 2.0 (lo último que se hizo) y cómo se numeran las versiones
+ 13. Versión 2.0 y cómo se numeran las versiones
+ 14. Versión 3.0: la herramienta online (GitHub), la nube y Marketing (LO ÚLTIMO)
 
 
 0. CÓMO RETOMAR
 ---------------
-- Todo vive en la PC Linux donde corre Claude Code (usuario "rivero", escritorio KDE),
-  en la carpeta  /home/rivero/RiveroMarket/ . NO está en la nube. Claude trabaja
+- DESDE LA VERSIÓN 3.0 (8/10/2026) LA HERRAMIENTA ESTÁ ONLINE (ver sección 14):
+    Herramienta:   https://mickyrivero90-ai.github.io/Market-Rivero/
+    Repositorio:   https://github.com/mickyrivero90-ai/Market-Rivero  (público)
+  La carpeta /home/rivero/RiveroMarket/ ES el repositorio git (rama main, remoto
+  origin). Para publicar un cambio: commit y "git push" (lo hace el dueño: en esta PC,
+  la configuración de Claude Code no deja que Claude haga push ni use gh; el dueño
+  escribe en el chat  ! git -C /home/rivero/RiveroMarket push ). GitHub Actions publica
+  solo en 1 o 2 minutos.
+- El código fuente vive en la PC Linux donde corre Claude Code (usuario "rivero",
+  escritorio KDE), en /home/rivero/RiveroMarket/, y en GitHub. Claude trabaja
   directamente en esa computadora; el dueño la usa a distancia.
 - Para usar el programa en esa PC: ícono "Folletos Rivero Market" en el Escritorio
   (o ./iniciar.sh). Se abre el navegador en http://127.0.0.1:8780.
@@ -36,9 +45,11 @@ computadora o con otra persona, sin tener que explicar todo de nuevo.
 - Para seguir con Claude en una conversación nueva (en esa PC), decile algo así:
       "Leé /home/rivero/RiveroMarket/CONTEXTO_DEL_PROYECTO.txt y LEEME.md. Es el
        proyecto de folletos de Rivero Market. Quiero ..."
-- Archivos que más importan: LEEME.md (guía de uso), editor/src/*.js (el motor y la
-  pantalla), programa/servidor.py (el servidor local), productos/ (fotos).
-- VERSIÓN ACTUAL: 2.6 (ver sección 13 y CAMBIOS.txt). Se ve arriba a la izquierda del
+- Archivos que más importan: README.md (guía de la versión online), LEEME.md (guía de
+  uso), editor/src/*.js (el motor y la pantalla; 09_nube.js la nube, 10_marketing.js
+  marketing), programa/servidor.py (el servidor local), productos/ (fotos),
+  herramientas/ (armado de la página online y pruebas), .github/workflows/publicar.yml.
+- VERSIÓN ACTUAL: 3.0 (ver secciones 13 y 14, y CAMBIOS.txt). Se ve arriba a la izquierda del
   programa. El dueño trabaja en su casa (esta PC) y lleva una copia al trabajo: el
   número sirve para saber si la copia del trabajo está al día.
 - El dueño también tiene una copia descomprimida del ZIP en
@@ -314,6 +325,9 @@ colección, datos del local, legales). Las fotos de la carpeta se guardan por su
 incrustadas, así el archivo es liviano.
 
 Comandos útiles (desde /home/rivero/RiveroMarket)
+  Armar la página online:    python3 herramientas/armar_sitio.py --salida /tmp/sitio --pruebas --repo prueba/tienda
+  Prueba de la versión online (con un GitHub de mentira, 58 comprobaciones):
+                             _trabajo/venv/bin/python herramientas/pruebas/prueba_nube.py
   Reconstruir la pantalla:   cd editor && ../_trabajo/venv/bin/python build.py
   Armar el ZIP:              python3 editor/empaquetar.py
   Prueba completa:           cd _trabajo && ./levantar_prueba.sh && ./venv/bin/python ui_servidor.py
@@ -328,7 +342,8 @@ Comandos útiles (desde /home/rivero/RiveroMarket)
 -------------------------------------------------
 La hizo un agente de búsqueda el 3/10/2026 sobre folletos vigentes de Maxiconsumo,
 Makro, Yaguar, Diarco, Vital, Nini y Día (de Coto y La Anónima solo banners; de
-Carrefour Maxi no se pudo bajar nada). Material en investigacion/.
+Carrefour Maxi no se pudo bajar nada). Material en investigacion/ (solo en la PC de
+casa: no se sube a GitHub porque tiene folletos de otros comercios).
 
 Lo que hacen los folletos de los mayoristas
   - Colores: rojo + amarillo + blanco/negro; marca en azul marino o violeta. El precio va
@@ -676,3 +691,104 @@ Versión 2.6 (mismo día)
     (si la IA falla en una, se sube con su fondo). botIA se oculta si la foto ya es alfa.
   - Autoprueba 77 OK; programa completo 53 de 53 OK (incluye subir una foto cruda y
     verificar que queda PNG transparente con el nombre puesto).
+
+
+14. VERSIÓN 3.0: LA HERRAMIENTA ONLINE, LA NUBE Y MARKETING (8/10/2026)
+-----------------------------------------------------------------------
+Pedido del dueño (8/10/2026): "subí el proyecto a GitHub
+(https://github.com/mickyrivero90-ai/Market-Rivero) y armá en ese repositorio la herramienta
+para usarla online, en casa o en el trabajo, siempre actualizada. Tengo contenido acá en
+casa, pero más en la PC del negocio. Que se mantenga actualizada y a alto nivel según las
+necesidades del comercio, con herramientas y conocimientos de marketing para potenciar las
+ventas."
+
+Cómo quedó
+  - La carpeta /home/rivero/RiveroMarket es el repositorio git (remoto origin =
+    github.com/mickyrivero90-ai/Market-Rivero, rama main, licencia AGPL-3.0 que ya tenía el
+    repositorio). El .gitignore es "lista blanca": NO se suben _trabajo/, _entregas/,
+    _respaldos/, investigacion/ (folletos de terceros), originales_del_cliente/, salidas/,
+    blender/render/ ni los archivos que se generan al armar.
+  - GitHub Pages publica la herramienta en https://mickyrivero90-ai.github.io/Market-Rivero/
+    con .github/workflows/publicar.yml (en cada push a main que toque editor/, productos/,
+    programa/, logo/, assets/, herramientas/, el workflow o las guías):
+      1) job "fotos": si hay fotos en productos/_entrada/, les quita el fondo con rembg
+         (isnet-general-use, igual que el programa local; herramientas/procesar_entrada.py
+         usa programa/recortar.py) y las guarda en productos/ con el mismo nombre (.png);
+         commit "Fotos sin fondo (IA)" y push con reintentos.
+      2) job "armar": herramientas/armar_sitio.py → index.html (la misma página del programa,
+         con window.RM_NUBE = dueño/repo/rama/armado y una CSP), version.json,
+         catalogo/productos.json + catalogo/mini/<sha>.webp (miniaturas 360 px, la huella es
+         la de blob de git), descargas/Rivero-Market-Folletos.zip (programa local, con las
+         fotos actuales), manifest.webmanifest e íconos (se puede instalar como app).
+      3) job "publicar": actions/deploy-pages.
+  - Para que Pages funcione hay que activarlo UNA vez con fuente "GitHub Actions"
+    (Settings → Pages → Source: GitHub Actions, o: gh api -X POST
+    repos/mickyrivero90-ai/Market-Rivero/pages -f build_type=workflow).
+
+La nube (editor/src/09_nube.js)
+  - Lee la lista de archivos con la API de git (ref con ETag + árbol recursivo por el sha
+    del commit: 2 consultas cuando algo cambió, 1 "304" si no) y las fotos desde
+    raw.githubusercontent.com/<dueño>/<repo>/<commit>/productos/… (con crossOrigin para que
+    el lienzo se pueda exportar). Sin conexión a la API usa catalogo/productos.json.
+  - Guarda con la API de git (blobs → árbol → commit → PATCH de la rama sin force; si otra
+    PC guardó en el medio, vuelve a armar el cambio sobre lo nuevo, hasta 5 veces) y con la
+    API de contenidos para archivos sueltos (PUT con sha; si cambió, lo relee).
+  - En el repositorio:  productos/ (fotos), productos/_entrada/ (esperando la IA),
+    datos/catalogo.json (memoria de precios; al guardar se UNE con la de la nube: por
+    producto gana el ts más nuevo y los historiales se juntan), datos/proyectos/*.json
+    («Mis folletos», mismo nombre que en el programa local), datos/borradores/<pc>.json
+    (el folleto en curso de cada PC, se guarda 1 minuto después del último cambio y al
+    salir de la pestaña; al abrir en otra PC ofrece "¿Seguís con el folleto de la otra
+    computadora?").
+  - Llave: token fine-grained con Contents: Read and write SOLO sobre Market-Rivero, sin
+    vencimiento (expires_in=none, decisión para no cortarle la herramienta al dueño; se
+    anula en GitHub). El asistente "☁ Conectar" arma el link de GitHub con el nombre y el
+    permiso ya puestos (personal-access-tokens/new?name=…&target_name=…&contents=write),
+    prueba la llave con GET /user y creando un blob de prueba, y la guarda en localStorage
+    (rm.github.llave). Cada PC tiene su id (rm.pc.id) y su nombre (Casa, Negocio…).
+  - Sin llave se puede mirar y armar (leer es público); guardar pide conectar.
+  - "Traer lo de esta PC": <input webkitdirectory>; toma productos/** (sin carpetas _ ni .),
+    programa/datos/catalogo.json, programa/datos/proyectos/*.json y el folleto abierto
+    (estado.json → «Mis folletos» como "En curso (traído)"). No repite lo que ya está
+    (compara ruta sin extensión, también contra _entrada). Sube de a 20 fotos por commit.
+    Fotos > 1600 px (2000 para la IA) o > 3 MB se achican; si tienen fondo y se tildó la
+    IA, van a _entrada.
+  - Entrega al finalizar (sin programa local): Chrome/Edge pueden guardar en una carpeta
+    elegida (File System Access, el permiso se pide en el clic de "Generar"); si no, descarga
+    (1 o 2 archivos sueltos; más, en un .zip sin comprimir armado en el navegador). Botón
+    Compartir (Web Share) donde el navegador lo permite.
+  - Aviso de versión nueva: compara version.json (cada 10 min y al volver a la pestaña) con
+    RM_NUBE.armado; "Actualizar ahora" guarda el estado y recarga con ?v=.
+
+Marketing (editor/src/10_marketing.js; botón "📣 Marketing" y sección "Para vender más")
+  - Textos para publicar (canal, grupos, Estados, Facebook; tonos clásico/urgente/cercano;
+    formato de WhatsApp *negrita* ~tachado~; hashtags; link de Google Maps nuevo en Datos
+    del local; leyenda de alcohol opcional, por defecto igual que el folleto).
+  - Plan de la semana (día por día, con horarios sugeridos, textos y casillas; .ics).
+  - ¿Me conviene? (costo → ganancia con y sin oferta, cuánto más hay que vender; precio
+    desde el costo; el costo se guarda solo en localStorage rm.costos, nunca en la nube).
+  - Armar un combo (suma, precio del combo, foto compuesta con las del folleto, insignia
+    COMBO, va al primer casillero libre).
+  - Fechas que vienen (calendario comercial argentino con ideas y anticipación).
+  - Ideas para vender más (guía con casillas, rm.guia.hecho).
+
+Probado (8/10/2026)
+  - Autoprueba del motor: todo OK (versión 3.0). Programa local completo: 53 de 53 OK.
+  - herramientas/procesar_entrada.py con rembg en la PC: recorta, no pisa nombres, descarta
+    archivos que no son fotos, y si la IA falla guarda la foto con su fondo.
+  - Versión online con un GitHub de mentira (herramientas/pruebas/github_falso.py):
+    58 de 58 OK (conectar con llave buena y mala, buscador con miniaturas, subir con y sin
+    IA, quitar fondo de una foto ya subida, finalizar con .zip, «Mis folletos», memoria de
+    precios unida, guardado simultáneo de otra PC, folleto en curso entre PCs, traer lo de
+    otra PC sin repetir, marketing completo, aviso de versión nueva, desconectar).
+  - El flujo de GitHub Actions y Pages solo se puede probar de verdad después del primer push.
+
+Pendientes de la 3.0
+  1. El dueño tiene que hacer el primer push y activar Pages (ver arriba).
+  2. En cada PC (casa y negocio): "☁ Conectar" (crear la llave) y, en la del negocio,
+     "⇪ Traer lo de esta PC".
+  3. Probar en Windows con Chrome/Edge (guardar en carpeta) y en el celular (Compartir).
+  4. Ideas: carteles de góndola (A4 con varias etiquetas de precio), página pública de
+     ofertas para clientes (la web que pide la Res. 446/2025), registrar ventas de cada
+     oferta para medir qué funciona.
+

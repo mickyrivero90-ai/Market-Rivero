@@ -1,0 +1,4 @@
+# Lo que necesita GitHub Actions para quitar el fondo a las fotos (herramientas/procesar_entrada.py).
+# Es la misma IA que usa el programa local en la PC (rembg con el modelo isnet-general-use).
+rembg[cpu]==2.0.85
+pillow>=12.1,<13

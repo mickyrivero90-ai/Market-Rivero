@@ -75,7 +75,7 @@ with open(os.path.join(ROOT, "programa", "VERSION.txt"), "w", encoding="utf-8") 
     f.write(VERSION + "\n")
 assets_js = version_js + "\n" + assets_js
 
-modules = ["01_util.js", "03_draw.js", "04_flyer.js", "04b_temas.js", "04c_formatos.js", "04d_coleccion.js", "05_images.js", "06_state.js", "08_programa.js"]
+modules = ["01_util.js", "03_draw.js", "04_flyer.js", "04b_temas.js", "04c_formatos.js", "04d_coleccion.js", "05_images.js", "06_state.js", "08_programa.js", "09_nube.js", "10_marketing.js"]
 if os.path.exists(os.path.join(SRC, "07_app.js")) and "--solo-prueba" not in sys.argv:
     modules.append("07_app.js")
 qr = read(os.path.join(HERE, "vendor", "qrcode.min.js"))

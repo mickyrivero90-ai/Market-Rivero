@@ -1,6 +1,10 @@
 CARPETA DE PRODUCTOS · Rivero Market
 =====================================
 
+EN LA VERSIÓN ONLINE estas mismas fotos están en GitHub (carpeta productos/ del
+repositorio) y se comparten entre todas las computadoras. Para agregar fotos desde la
+herramienta online: «✂ Fotos nuevas» o «⋯ Más → ⇪ Traer lo de esta PC».
+
 Acá van las fotos de tus productos. El programa de folletos las muestra en el
 buscador: elegís el casillero, buscás el producto por nombre y se carga solo.
 

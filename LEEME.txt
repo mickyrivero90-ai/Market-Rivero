@@ -1,6 +1,14 @@
 RIVERO MARKET · PROGRAMA DE FOLLETOS
 ====================================
 
+LA VERSIÓN ONLINE (recomendada desde la 3.0)
+  https://mickyrivero90-ai.github.io/Market-Rivero/
+  Es la misma herramienta, desde internet: anda en cualquier computadora o celular,
+  siempre está actualizada y las fotos, los precios y «Mis folletos» son los mismos en
+  todas las PC (se guardan en GitHub). La primera vez en cada PC, tocá «☁ Conectar».
+  En la PC del negocio: «⋯ Más → ⇪ Traer lo de esta PC» y elegí esta carpeta: sube tus
+  fotos, precios y folletos a la nube. Este programa sirve para usar sin internet.
+
 Qué es
   Un programa que corre en TU computadora (no necesita internet) para armar los
   folletos de ofertas: elegís el tipo de folleto y la temática, elegís los
@@ -28,7 +36,7 @@ Cómo abrirlo
   Para apagar el programa: botón «⋯ Más» -> «Cerrar programa».
 
 Qué versión tengo
-  Arriba a la izquierda dice «Versión 2.6 · fecha». Tocala para ver qué tiene esa
+  Arriba a la izquierda dice «Versión 3.0 · fecha». Tocala para ver qué tiene esa
   versión (la misma lista está en CAMBIOS.txt). Si en la computadora del trabajo el
   número es menor, copiá ahí la carpeta nueva completa (tus fotos de «productos» no
   se pierden si copiás encima). Si el programa y la pantalla no coinciden, avisa.

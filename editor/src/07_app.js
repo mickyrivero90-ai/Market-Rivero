@@ -2,7 +2,7 @@
 let S = null;                          // estado del folleto
 let ACTIVO = { tipo: 'producto', i: 0 };   // casillero activo: se resalta en la vista previa y recibe las fotos pegadas
 let verGuias = true;                   // guías de vista previa (no salen en el archivo)
-let CAT = {};                          // memoria de precios por foto (solo programa local)
+let CAT = {};                          // memoria de precios por foto (programa local o nube)
 const DOM = {};
 const GRUPOS_FORMATO = [
   ['Folletos de ofertas', 'A4 para imprimir; al terminar elegís también la versión para redes', ['a4_10', 'a4_12', 'a4_16', 'a4_8', 'a4_star4']],
@@ -97,7 +97,8 @@ let _falloGuardado = false;
 const guardarAuto = debounce(async () => {
   try {
     const e = estadoParaGuardar(S);
-    if (API.activo) await API.put('/api/estado', e); else await KV.set('estado', e);
+    if (API.activo) await API.put('/api/estado', e);
+    else { await KV.set('estado', e); await KV.set('estado_ts', Date.now()); if (NUBE.activo && NUBE.puedeEscribir) NUBE.programarBorrador(); }
     _falloGuardado = false;
   } catch (err) { if (!_falloGuardado) { _falloGuardado = true; aviso('No pude guardar tu trabajo automáticamente: ' + err.message); } }
 }, 900);
@@ -259,9 +260,9 @@ function destinosLibres(tipo, i, n) {
 
 async function elegirParaCasillero(i, tipo = 'producto', op = {}) {
   setActivo(tipo, i);
-  if (API.activo) {
+  if (CARPETA.activa) {
     const L = L_ACTUAL(), cuantos = tipo === 'foto' ? MAX_FOTOS : L.slots;
-    const elegidos = await abrirSelector({ titulo: tipo === 'foto' ? `Foto ${i + 1} · elegí una foto de la carpeta` : `Casillero ${i + 1} · elegí el producto`, multi: !!op.multi, max: Math.max(1, cuantos - i) });
+    const elegidos = await abrirSelector({ titulo: tipo === 'foto' ? `Foto ${i + 1} · elegí una foto ${CARPETA.nube ? 'de la nube' : 'de la carpeta'}` : `Casillero ${i + 1} · elegí el producto`, multi: !!op.multi, max: Math.max(1, cuantos - i) });
     if (elegidos && elegidos.length) await aplicarSeleccion(tipo, i, elegidos);
   } else {
     DOM.selArchivo.multiple = !!op.multi; DOM.selArchivo._destino = { tipo, i }; DOM.selArchivo.click();
@@ -353,19 +354,28 @@ function controlesFoto(p, i, tipo) {
   const tol = h('input', { type: 'range', min: '8', max: '110', step: '2', value: String(p.tol || 40), 'aria-label': 'Sensibilidad para quitar el fondo', oninput: e => { p.tol = +e.target.value; cambio(); } });
   const fondoBox = h('div', { class: 'stack', hidden: !p.quitarFondo || null }, h('label', { class: 'fld' }, h('span', null, 'Sensibilidad del fondo ', h('em', null, '· subila si quedan restos de fondo')), tol));
   const chkFondo = check('Quitar fondo blanco', 'Funciona con fotos de fondo liso y claro.', p.quitarFondo, v => { p.quitarFondo = v; fondoBox.hidden = !v; cambio(); });
-  const botIA = (API.activo && API.info && API.info.ia && p.archivo && !p.alfa && !/\(sin fondo\)/i.test(p.archivo))
-    ? h('button', { class: 'btn small', type: 'button', onclick: ev => recortarConIA(p, i, tipo, ev.currentTarget) }, 'Quitar fondo con IA')
-    : null;
+  const botIA = p.esperaIA ? h('button', { class: 'btn small', type: 'button', disabled: true }, 'Quitando el fondo… (1 a 3 min)')
+    : (CARPETA.hayIA && CARPETA.puedeSubir && p.archivo && !p.alfa && !/\(sin fondo\)/i.test(p.archivo))
+      ? h('button', { class: 'btn small', type: 'button', onclick: ev => recortarConIA(p, i, tipo, ev.currentTarget) }, 'Quitar fondo con IA')
+      : null;
   const zoom = h('input', { type: 'range', min: '0.5', max: '1.7', step: '0.02', value: String(p.zoom || 1), 'aria-label': 'Tamaño de la foto', oninput: e => { p.zoom = +e.target.value; cambio(); } });
   const dx = h('input', { type: 'range', min: '-0.4', max: '0.4', step: '0.01', value: String(p.dx || 0), 'aria-label': 'Mover foto a los costados', oninput: e => { p.dx = +e.target.value; cambio(); } });
   const dy = h('input', { type: 'range', min: '-0.3', max: '0.3', step: '0.01', value: String(p.dy || 0), 'aria-label': 'Subir o bajar la foto', oninput: e => { p.dy = +e.target.value; cambio(); } });
   const reset = h('button', { class: 'btn small ghost', type: 'button', onclick: () => { p.zoom = 1; p.dx = 0; p.dy = 0; construirListaCasilleros(tipo, i); cambio(); } }, 'Centrar');
   const ajustes = tipo === 'producto' ? h('details', { class: 'more' }, h('summary', null, 'Ajustar tamaño y posición de la foto'),
     h('div', { class: 'stack', style: 'margin-top:8px' }, campo('Tamaño', zoom), h('div', { class: 'grid2' }, campo('Izquierda ↔ derecha', dx), campo('Arriba ↕ abajo', dy)), reset)) : null;
-  return h('div', { class: 'stack' }, chkFondo, fondoBox, botIA ? h('div', { class: 'row-actions' }, botIA, h('small', { class: 'hint' }, 'Crea una copia sin fondo en la carpeta de productos.')) : null, ajustes);
+  return h('div', { class: 'stack' }, chkFondo, fondoBox, botIA ? h('div', { class: 'row-actions' }, botIA, h('small', { class: 'hint' }, CARPETA.nube ? 'GitHub crea una copia sin fondo y la foto se cambia sola en el folleto.' : 'Crea una copia sin fondo en la carpeta de productos.')) : null, ajustes);
 }
 async function recortarConIA(p, i, tipo, btn) {
-  const orig = btn.textContent; btn.disabled = true; btn.textContent = 'Recortando… (unos segundos)';
+  const orig = btn.textContent; btn.disabled = true; btn.textContent = CARPETA.nube ? 'Pidiendo el recorte…' : 'Recortando… (unos segundos)';
+  if (CARPETA.nube) {
+    try {
+      const r = await NUBE.encolarRecorte(p.archivo);
+      p.esperaIA = r.final; p.esperaIAentrada = r.entrada; btn.textContent = 'Quitando el fondo… (1 a 3 min)'; guardarAuto();
+      aviso('Listo: GitHub le está quitando el fondo. En 1 a 3 minutos la foto se cambia sola en el folleto.', 6500);
+    } catch (e) { aviso(e.message); btn.disabled = false; btn.textContent = orig; }
+    return;
+  }
   try {
     const r = await API.recortar(p.archivo);
     Object.assign(p, { archivo: r.ruta, mtime: r.mtime, imgV: (p.imgV || 0) + 1, alfa: true, quitarFondo: false });
@@ -526,27 +536,27 @@ function ejemploNota() {
   if (!(S.avisoEjemplo && (S.productos.some(p => p.demo) || S.coleccion.fotos.some(f => f.demo)))) return null;
   return h('div', { class: 'demo-note' }, h('b', null, 'Esto es un ejemplo. '), 'Los productos son botellas de muestra (no son fotos reales) y las fotos de repostería son las que me mandaste. Cuando quieras, empezá un folleto propio.',
     h('div', { class: 'row-actions', style: 'margin-top:8px' },
-      API.activo ? h('button', { class: 'btn small primary', type: 'button', onclick: () => nuevoFolleto(true) }, 'Empezar un folleto nuevo') : null,
+      CARPETA.activa ? h('button', { class: 'btn small primary', type: 'button', onclick: () => nuevoFolleto(true) }, 'Empezar un folleto nuevo') : null,
       h('button', { class: 'btn small', type: 'button', onclick: () => { S.avisoEjemplo = false; construirPanel(); guardarAuto(); } }, 'Entendido')));
 }
 function seccionProductos() {
   const L = L_ACTUAL();
   DOM.prods = h('div', { class: 'prods' });
   const acc = h('div', { class: 'row-actions' },
-    h('button', { class: 'btn small primary', type: 'button', onclick: () => { const i = primerLibre('producto'); if (i < 0) { aviso('No hay casilleros libres. Tocá un casillero para cambiar su producto, o quitá alguno primero.'); return; } elegirParaCasillero(i, 'producto', { multi: true }); } }, API.activo ? '＋ Elegir varios de la carpeta' : '＋ Elegir varias fotos'),
+    h('button', { class: 'btn small primary', type: 'button', onclick: () => { const i = primerLibre('producto'); if (i < 0) { aviso('No hay casilleros libres. Tocá un casillero para cambiar su producto, o quitá alguno primero.'); return; } elegirParaCasillero(i, 'producto', { multi: true }); } }, CARPETA.activa ? (CARPETA.nube ? '＋ Elegir varios de la nube' : '＋ Elegir varios de la carpeta') : '＋ Elegir varias fotos'),
     h('button', { class: 'btn small ghost', type: 'button', onclick: async () => { if (await confirmar('¿Vaciar todos los casilleros?', 'Se quitan todos los productos de este folleto. Las fotos de la carpeta no se tocan.', 'Vaciar todo', 'Cancelar')) { S.productos = Array.from({ length: Math.max(10, S.productos.length) }, () => nuevoProducto()); construirListaCasilleros('producto'); cambio(); } } }, 'Vaciar todos'));
   const inputFotos = h('input', { type: 'file', id: 'input-fotos-lote', accept: 'image/png,image/jpeg,image/webp', multiple: true, hidden: true, onchange: async e => {
     const fs = [...e.target.files]; e.target.value = ''; if (!fs.length) return;
     const creados = await agregarFotosALaCarpeta(fs);
-    if (creados && creados.length) aviso(`Guardé ${creados.length} ${creados.length === 1 ? 'foto' : 'fotos'} en tu carpeta de productos. Ya ${creados.length === 1 ? 'la podés' : 'las podés'} elegir en los casilleros.`);
+    if (creados && creados.length && !creados.enCola) aviso(`Guardé ${creados.length} ${creados.length === 1 ? 'foto' : 'fotos'} ${CARPETA.nube ? 'en la nube' : 'en tu carpeta de productos'}. Ya ${creados.length === 1 ? 'la podés' : 'las podés'} elegir en los casilleros.`);
   } });
-  if (API.activo) acc.append(h('button', { class: 'btn small', type: 'button', onclick: () => inputFotos.click() }, API.info && API.info.ia ? '✂ Fotos nuevas · quitar fondo en lote' : '＋ Fotos nuevas a la carpeta'), inputFotos);
+  if (CARPETA.activa) acc.append(h('button', { class: 'btn small', type: 'button', onclick: () => { if (CARPETA.puedeSubir) inputFotos.click(); else { aviso('Para subir fotos a la nube, primero conectá tu cuenta de GitHub.'); abrirConectar(); } } }, CARPETA.hayIA ? '✂ Fotos nuevas · quitar fondo en lote' : '＋ Fotos nuevas a la carpeta'), inputFotos);
   acc.append(h('button', { class: 'btn small ghost', type: 'button', onclick: () => abrirPegarPlanilla() }, '📋 Pegar precios desde Excel'));
-  const ayudaFotos = API.activo && API.info && API.info.ia
-    ? h('p', { class: 'hint' }, 'Sacá las fotos de tus productos como quieras (sobre cualquier fondo), tocá «✂ Fotos nuevas», poneles nombre y el programa les quita el fondo con IA y las deja guardadas y bien presentadas para los folletos.')
+  const ayudaFotos = CARPETA.hayIA
+    ? h('p', { class: 'hint' }, CARPETA.nube ? 'Sacá las fotos de tus productos como quieras (con el celular, sobre cualquier fondo), tocá «✂ Fotos nuevas» y poneles nombre: GitHub les quita el fondo con IA y en unos minutos quedan en la nube, listas para los folletos en cualquier computadora.' : 'Sacá las fotos de tus productos como quieras (sobre cualquier fondo), tocá «✂ Fotos nuevas», poneles nombre y el programa les quita el fondo con IA y las deja guardadas y bien presentadas para los folletos.')
     : null;
   return seccion(paso(2, 'Productos y precios'), `${L.slots} ${L.slots === 1 ? 'casillero' : 'casilleros'}`,
-    h('p', { class: 'hint' }, API.activo ? 'Tocá un casillero del folleto, o la foto de la lista, para elegir el producto de tu carpeta. El nombre y el último precio se cargan solos.' : 'Tocá un casillero para subir su foto. Podés pegar una imagen con Ctrl+V.'),
+    h('p', { class: 'hint' }, CARPETA.activa ? `Tocá un casillero del folleto, o la foto de la lista, para elegir el producto ${CARPETA.nube ? 'de tus fotos en la nube' : 'de tu carpeta'}. El nombre y el último precio se cargan solos.` : 'Tocá un casillero para subir su foto. Podés pegar una imagen con Ctrl+V.'),
     cajaLeyendaPrecio(), acc, ayudaFotos, DOM.prods, h('datalist', { id: 'lista-unidades' }, ...UNIDADES.map(u => h('option', { value: u }))));
 }
 // ── pegar precios desde una planilla (Excel, Google Sheets o texto) ──
@@ -581,15 +591,15 @@ function mejorFoto(nombre, fotos) {
 }
 async function abrirPegarPlanilla() {
   let fotos = [];
-  if (API.activo) try { fotos = (await API.productos()).productos; } catch (e) { /* sin fotos: se cargan solo los textos */ }
+  if (CARPETA.activa) try { fotos = (await CARPETA.productos()).productos; } catch (e) { /* sin fotos: se cargan solo los textos */ }
   const area = h('textarea', { rows: 9, class: 'planilla', placeholder: 'Fernet Branca 750 ml\t20600\t18540\nVino Colón Frutos Rojos\t7700\t6930\nGancia Americano\t8300\t10%' });
   const vista = h('div', { class: 'planilla-vista' });
   let filas = [], modo = 'vacios';
   const pintar = () => {
     filas = leerPlanilla(area.value).map(f => ({ ...f, foto: mejorFoto(f.nombre, fotos) }));
-    vista.replaceChildren(...(filas.length ? [h('table', null, h('thead', null, h('tr', null, h('th', null, 'Producto'), h('th', null, 'Normal'), h('th', null, 'Final'), API.activo ? h('th', null, 'Foto') : null)),
+    vista.replaceChildren(...(filas.length ? [h('table', null, h('thead', null, h('tr', null, h('th', null, 'Producto'), h('th', null, 'Normal'), h('th', null, 'Final'), CARPETA.activa ? h('th', null, 'Foto') : null)),
       h('tbody', null, ...filas.map(f => h('tr', null, h('td', null, f.nombre), h('td', null, f.regular ? '$' + f.regular : '—'), h('td', null, f.final ? '$' + f.final : '—'),
-        API.activo ? h('td', null, f.foto ? h('span', { class: 'ok' }, '✓ ' + f.foto.nombre) : h('span', { class: 'mut' }, 'sin foto')) : null))))] : [h('p', { class: 'hint', style: 'margin:0' }, 'Pegá las filas acá arriba para ver cómo quedan.')]));
+        CARPETA.activa ? h('td', null, f.foto ? h('span', { class: 'ok' }, '✓ ' + f.foto.nombre) : h('span', { class: 'mut' }, 'sin foto')) : null))))] : [h('p', { class: 'hint', style: 'margin:0' }, 'Pegá las filas acá arriba para ver cómo quedan.')]));
     btn.disabled = !filas.length; btn.textContent = filas.length ? `Cargar ${filas.length} ${filas.length === 1 ? 'producto' : 'productos'}` : 'Cargar';
   };
   area.addEventListener('input', pintar);
@@ -608,7 +618,7 @@ async function abrirPegarPlanilla() {
   } }, 'Cargar');
   const m = abrirModal({ titulo: 'Pegar precios desde Excel', ancho: 760,
     cuerpo: h('div', { class: 'stack' },
-      h('p', { class: 'hint', style: 'margin:0' }, 'En Excel o Google Sheets, seleccioná las columnas Producto · Precio normal · Precio final, copiá (Ctrl+C) y pegá acá (Ctrl+V). Si en vez del precio final tenés el %, poné por ejemplo 10%. ' + (API.activo ? 'Busco la foto de cada uno por el nombre en tu carpeta de productos.' : '')),
+      h('p', { class: 'hint', style: 'margin:0' }, 'En Excel o Google Sheets, seleccioná las columnas Producto · Precio normal · Precio final, copiá (Ctrl+C) y pegá acá (Ctrl+V). Si en vez del precio final tenés el %, poné por ejemplo 10%. ' + (CARPETA.activa ? 'Busco la foto de cada uno por el nombre en tus fotos de productos.' : '')),
       area, campo('¿Dónde los cargo?', selModo), vista),
     acciones: [h('button', { class: 'btn ghost', type: 'button', onclick: () => m.cerrar() }, 'Cancelar'), btn] });
   pintar(); setTimeout(() => area.focus(), 30);
@@ -660,7 +670,7 @@ function cajaLeyendaPrecio() {
 function seccionFotos() {
   DOM.prods = h('div', { class: 'prods' });
   const acc = h('div', { class: 'row-actions' },
-    h('button', { class: 'btn small primary', type: 'button', onclick: () => { const i = primerLibre('foto'); if (i >= 0) elegirParaCasillero(i, 'foto', { multi: true }); else aviso('Ya hay ' + MAX_FOTOS + ' fotos. Quitá una para agregar otra.'); } }, API.activo ? '＋ Elegir fotos de la carpeta' : '＋ Elegir fotos'));
+    h('button', { class: 'btn small primary', type: 'button', onclick: () => { const i = primerLibre('foto'); if (i >= 0) elegirParaCasillero(i, 'foto', { multi: true }); else aviso('Ya hay ' + MAX_FOTOS + ' fotos. Quitá una para agregar otra.'); } }, CARPETA.activa ? (CARPETA.nube ? '＋ Elegir fotos de la nube' : '＋ Elegir fotos de la carpeta') : '＋ Elegir fotos'));
   return seccion(paso(2, 'Fotos de productos'), 'hasta ' + MAX_FOTOS,
     h('p', { class: 'hint' }, 'Usá fotos con varios productos juntos (de preferencia sin fondo). Salen una debajo de la otra, grandes, con una etiqueta opcional.'), acc, DOM.prods);
 }
@@ -834,9 +844,10 @@ function seccionMensaje() {
 function seccionRevision() {
   DOM.checks = h('ul', { class: 'checks' });
   return seccion('Revisión antes de terminar', null, DOM.checks,
-    API.activo ? h('div', { class: 'stack', style: 'margin-top:14px' },
-      L_ACTUAL().pdf ? check('También guardar el PDF para imprimir (A4)', 'Se guarda junto a la imagen, en el Escritorio.', S.opciones.pdf !== false, v => { S.opciones.pdf = v; guardarAuto(); }) : null,
-      h('div', { class: 'row-actions' }, h('button', { class: 'btn primary grande', type: 'button', onclick: () => finalizarFolleto() }, '✔ Finalizar y guardar en el Escritorio'))) : null,
+    h('div', { class: 'stack', style: 'margin-top:14px' },
+      L_ACTUAL().pdf ? check('También guardar el PDF para imprimir (A4)', API.activo ? 'Se guarda junto a la imagen, en el Escritorio.' : 'Sale junto a la imagen.', S.opciones.pdf !== false, v => { S.opciones.pdf = v; guardarAuto(); }) : null,
+      h('div', { class: 'row-actions' }, h('button', { class: 'btn primary grande', type: 'button', onclick: () => finalizarFolleto() }, API.activo ? '✔ Finalizar y guardar en el Escritorio' : '✔ Finalizar y descargar'),
+        h('button', { class: 'btn', type: 'button', onclick: () => abrirMarketing('textos') }, '📣 Textos para publicar'))),
     h('p', { class: 'note' }, 'Armado con normas argentinas leídas en fuentes oficiales (Ley 24.240, Dto. 1798/94, Res. 4/2025 y 446/2025, Ley 24.788). Es una guía: no reemplaza el consejo de un contador o abogado.'));
 }
 function seccionLocalYLegales() {
@@ -850,6 +861,7 @@ function seccionLocalYLegales() {
       campo('WhatsApp o teléfono', texto(C, 'telefono', { ph: 'Ej.: 11 5555-5555', mode: 'tel', max: 30 }), 'opcional'),
       campo('Link del canal de WhatsApp', texto(C, 'waCanal', { ph: 'https://whatsapp.com/channel/…', mode: 'url', max: 200 }), 'sale como QR'),
       campo('Link de Facebook', texto(C, 'qrUrl', { ph: 'https://www.facebook.com/tu-pagina', mode: 'url', max: 200 }), 'opcional · 2.º QR'),
+      campo('Link de Google Maps', texto(C, 'mapa', { ph: 'https://maps.app.goo.gl/…', mode: 'url', max: 200 }), 'opcional · para «cómo llegar» en los textos'),
       campo('Texto extra del pie', texto(C, 'legales', { ph: 'Imágenes ilustrativas. Precios finales en pesos argentinos.', max: 140 }))),
       h('p', { class: 'note' }, 'Estos datos se guardan solos y salen en todos los folletos. El QR del canal de WhatsApp se leyó de la foto del cartel del local.')),
     detalles('Legales', h('div', { class: 'stack' },
@@ -889,7 +901,7 @@ function seccionProyecto() {
   return detalles('Tu proyecto', h('div', { class: 'row-actions' },
     h('button', { class: 'btn small', type: 'button', onclick: guardarProyecto }, 'Guardar proyecto (.json)'),
     h('button', { class: 'btn small', type: 'button', onclick: () => DOM.abrir.click() }, 'Abrir proyecto'), cont),
-    h('p', { class: 'note' }, 'El folleto se guarda solo en este navegador. Descargá el proyecto para tener una copia o para llevarlo a otra computadora.'));
+    h('p', { class: 'note' }, CARPETA.nube ? 'El folleto en curso se guarda solo en este navegador y, si estás conectado, también en la nube (para seguirlo en la otra computadora). El .json es una copia extra en un archivo.' : 'El folleto se guarda solo en este navegador. Descargá el proyecto para tener una copia o para llevarlo a otra computadora.'));
 }
 function construirPanel() {
   const st = DOM.panel.scrollTop, g = L_ACTUAL().grupo;
@@ -898,7 +910,7 @@ function construirPanel() {
   if (g === 'coleccion') secs.push(seccionFotos(), seccionMensajes());
   else if (g === 'mensaje') secs.push(seccionMensaje(), seccionFechasPromo());
   else secs.push(seccionProductos(), seccionFechasPromo());
-  secs.push(seccionRevision(), ...seccionLocalYLegales(), seccionConsejos(), seccionProyecto());
+  secs.push(seccionRevision(), seccionMarketing(), ...seccionLocalYLegales(), ...(CARPETA.nube ? [seccionNube()] : []), seccionProyecto());
   DOM.panel.replaceChildren(...secs);
   pintarFormatos(); pintarTemas(); if (g !== 'mensaje') pintarProductos(); else { DOM.prods = null; refrescarLecturas(); }
   DOM.panel.scrollTop = st;
@@ -960,14 +972,21 @@ function cerrarMenu() { if (DOM.menu) DOM.menu.hidden = true; }
 function menuAcciones() {
   const L = L_ACTUAL(), dim = esc => `${L.w * esc}×${L.h * esc} px`;
   const item = (t, d, fn) => h('button', { type: 'button', onclick: fn }, t, h('small', null, d));
-  const lugar = API.activo ? 'en el Escritorio' : 'para compartir';
+  const lugar = API.activo ? 'en el Escritorio' : 'se descarga';
   const items = [
     item('📲 Descargar para WhatsApp, Facebook o A4…', 'cada destino con su medida (Estados, Historias, posts, canal, impresión)', () => { cerrarMenu(); finalizarFolleto(); }),
     h('hr'), h('p', { class: 'menu-lab' }, 'Solo lo que ves en pantalla'),
     item('Imagen PNG', dim(1) + ' · ' + lugar, () => exportar('png')),
     item('Imagen PNG de alta calidad', dim(2) + (L.pdf ? ' · A4 a 300 dpi' : ''), () => exportar('png2')),
     item('PDF', L.pdf ? 'A4 listo para imprimir' : 'mismo tamaño que la imagen', () => exportar('pdf')),
+    h('hr'), item('📣 Marketing: textos, plan, calculadora…', 'para publicar el folleto y vender más', () => { cerrarMenu(); abrirMarketing(); }),
     h('hr'), item('Guardar copia del folleto', API.activo ? 'archivo .json que podés volver a abrir' : 'archivo .json para seguir editando después', guardarProyecto)];
+  if (CARPETA.nube) items.push(
+    item('Abrir una copia (.json)', 'un folleto que guardaste como archivo', () => { cerrarMenu(); DOM.abrir.click(); }),
+    h('hr'), h('p', { class: 'menu-lab' }, 'Nube (GitHub)'),
+    NUBE.puedeEscribir ? item('⇪ Traer lo de esta PC', 'fotos, precios y folletos del programa viejo o de una carpeta', () => { cerrarMenu(); abrirTraer(); }) : item('☁ Conectar con GitHub', 'para guardar fotos, precios y folletos en la nube', () => { cerrarMenu(); abrirConectar(); }),
+    item('Programa para usar sin internet', 'descarga el .zip para Windows o Linux', () => { cerrarMenu(); location.href = 'descargas/Rivero-Market-Folletos.zip'; }),
+    NUBE.puedeEscribir ? item('Desconectar esta computadora', 'borra la llave de GitHub de este navegador', () => { cerrarMenu(); desconectarNube(); }) : null);
   if (API.activo) items.push(item('Abrir carpeta de productos', API.info.productos, () => { cerrarMenu(); API.abrirCarpeta('productos').catch(e => aviso(e.message)); }),
     item('Abrir carpeta del Escritorio', API.info.escritorio, () => { cerrarMenu(); API.abrirCarpeta('escritorio').catch(e => aviso(e.message)); }),
     h('hr'), item('Cerrar programa', 'apaga el programa de folletos', () => { cerrarMenu(); cerrarPrograma(); }));
@@ -978,7 +997,7 @@ function menuAcciones() {
 function verNovedades() {
   abrirModal({ titulo: 'Versión ' + APP_VERSION.v + ' · ' + APP_VERSION.fecha, ancho: 640,
     cuerpo: h('div', { class: 'stack' },
-      h('p', { class: 'hint', style: 'margin:0' }, 'Para saber si una copia (por ejemplo la del trabajo) está al día, compará este número con el de la otra computadora. El archivo CAMBIOS.txt de la carpeta tiene la misma lista.'),
+      h('p', { class: 'hint', style: 'margin:0' }, CARPETA.nube ? 'Esta es la versión online: siempre es la última. Cuando se publica una nueva, aparece un aviso arriba para actualizar.' : 'Para saber si una copia (por ejemplo la del trabajo) está al día, compará este número con el de la otra computadora. El archivo CAMBIOS.txt de la carpeta tiene la misma lista.'),
       API.activo && API.info.version ? h('p', { class: 'confirm-texto', style: 'margin:0' }, 'Programa (servidor): versión ' + API.info.version + (API.info.version === APP_VERSION.v ? ' ✓ coincide con la pantalla.' : ' ⚠ no coincide con la pantalla.')) : null,
       h('pre', { class: 'novedades' }, APP_VERSION.cambios || '')) });
 }
@@ -992,7 +1011,8 @@ function armarEstructura() {
   DOM.menu = h('div', { class: 'menu', hidden: true, role: 'menu' });
   DOM.abrir = h('input', { type: 'file', accept: '.json,application/json', hidden: true, onchange: e => { const f = e.target.files[0]; if (f) abrirProyecto(f); e.target.value = ''; } });
   DOM.selArchivo = h('input', { type: 'file', accept: 'image/*', hidden: true, onchange: e => { const d = e.target._destino || { tipo: 'producto', i: 0 }; const fs = [...e.target.files]; e.target.value = ''; if (fs.length) cargarArchivos(fs, d.tipo, d.i); } });
-  const btnMas = h('button', { class: 'btn' + (API.activo ? '' : ' primary'), type: 'button', 'aria-haspopup': 'true', onclick: ev => { ev.stopPropagation(); if (DOM.menu.hidden) menuAcciones(); DOM.menu.hidden = !DOM.menu.hidden; } }, API.activo ? '⋯ Más' : 'Descargar ▾');
+  const btnMas = h('button', { class: 'btn' + (CARPETA.activa ? '' : ' primary'), type: 'button', 'aria-haspopup': 'true', onclick: ev => { ev.stopPropagation(); if (DOM.menu.hidden) menuAcciones(); DOM.menu.hidden = !DOM.menu.hidden; } }, CARPETA.activa ? '⋯ Más' : 'Descargar ▾');
+  const btnMarketing = h('button', { class: 'btn', type: 'button', title: 'Textos para publicar, plan de la semana, calculadora de ofertas, fechas que vienen e ideas para vender más', onclick: () => abrirMarketing() }, '📣', h('span', { class: 'txt-largo' }, ' Marketing'));
   DOM.info = h('div', { class: 'info' });
   DOM.canvas = h('canvas', { 'aria-label': 'Vista previa del folleto' });
   DOM.canvas.addEventListener('click', e => {
@@ -1008,12 +1028,12 @@ function armarEstructura() {
   const acciones = h('div', { class: 'actions' });
   DOM.btnDeshacer = h('button', { class: 'btn icono', type: 'button', title: 'Deshacer (Ctrl+Z)', 'aria-label': 'Deshacer', onclick: () => moverHistorial(-1) }, '↶');
   DOM.btnRehacer = h('button', { class: 'btn icono', type: 'button', title: 'Rehacer (Ctrl+Y)', 'aria-label': 'Rehacer', onclick: () => moverHistorial(1) }, '↷');
-  const btnTerminar = h('button', { class: 'btn primary', type: 'button', onclick: () => finalizarFolleto() }, API.activo ? '✔ Finalizar' : '⬇ Descargar');
-  if (API.activo) acciones.append(DOM.btnDeshacer, DOM.btnRehacer,
+  const btnTerminar = h('button', { class: 'btn primary', type: 'button', onclick: () => finalizarFolleto() }, CARPETA.activa ? '✔ Finalizar' : '⬇ Descargar');
+  if (CARPETA.activa) acciones.append(DOM.btnDeshacer, DOM.btnRehacer,
     h('button', { class: 'btn', type: 'button', onclick: () => nuevoFolleto() }, 'Nuevo folleto'),
     h('button', { class: 'btn', type: 'button', onclick: () => abrirMisFolletos() }, 'Mis folletos'),
-    btnMas, DOM.menu, btnTerminar);
-  else { btnMas.classList.remove('primary'); btnMas.textContent = '⋯ Más'; acciones.append(DOM.btnDeshacer, DOM.btnRehacer, btnMas, DOM.menu, btnTerminar); }
+    btnMarketing, btnMas, DOM.menu, btnTerminar);
+  else { btnMas.classList.remove('primary'); btnMas.textContent = '⋯ Más'; acciones.append(DOM.btnDeshacer, DOM.btnRehacer, btnMarketing, btnMas, DOM.menu, btnTerminar); }
   // zoom: botones sobre la hoja, Ctrl + rueda del mouse, y las teclas + y −
   DOM.zoomTxt = h('span', { class: 'zoom-txt' }, 'Ajustado');
   const zoomBar = h('div', { class: 'zoom-bar', role: 'group', 'aria-label': 'Zoom de la vista previa' },
@@ -1025,9 +1045,9 @@ function armarEstructura() {
   DOM.version = h('button', { class: 'version', type: 'button', title: 'Ver qué tiene esta versión', onclick: () => verNovedades() }, 'Versión ' + APP_VERSION.v, h('small', null, ' · ' + APP_VERSION.fecha));
   app.replaceChildren(
     h('header', { class: 'top' },
-      h('div', { class: 'brand' }, h('img', { src: ASSETS.logos.insignia, alt: '' }), h('div', { style: 'min-width:0' }, h('b', null, 'Ofertas'), h('span', null, API.activo ? 'Rivero Market · programa de folletos' : 'Rivero Market · armá tu folleto'), DOM.version)), acciones),
+      h('div', { class: 'brand' }, h('img', { src: ASSETS.logos.insignia, alt: '' }), h('div', { style: 'min-width:0' }, h('b', null, 'Ofertas'), h('span', null, API.activo ? 'Rivero Market · programa de folletos' : CARPETA.nube ? 'Rivero Market · folletos online' : 'Rivero Market · armá tu folleto'), h('div', { class: 'brand-fila' }, DOM.version, CARPETA.nube ? chipNube() : null))), acciones),
     h('main', { class: 'work' }, DOM.panel, DOM.stage = h('section', { class: 'stage' }, DOM.stageBox, h('div', { class: 'stage-bar' }, zoomBar, DOM.info, guias,
-      h('button', { class: 'btn small primary', type: 'button', onclick: () => finalizarFolleto() }, API.activo ? '✔ Finalizar' : '⬇ Descargar')))),
+      h('button', { class: 'btn small primary', type: 'button', onclick: () => finalizarFolleto() }, CARPETA.activa ? '✔ Finalizar' : '⬇ Descargar')))),
     DOM.abrir, DOM.selArchivo);
   document.addEventListener('click', e => { if (!DOM.menu.hidden && !DOM.menu.contains(e.target)) cerrarMenu(); });
   document.addEventListener('keydown', e => {
@@ -1046,7 +1066,7 @@ function armarEstructura() {
     const f = [...(e.clipboardData && e.clipboardData.files || [])].find(x => x.type.startsWith('image/'));
     if (!f) return;
     e.preventDefault();
-    if (API.activo) { const items = await agregarFotosALaCarpeta([f]); if (items && items.length) await aplicarSeleccion(ACTIVO.tipo, ACTIVO.i, items); }
+    if (CARPETA.activa && CARPETA.puedeSubir) { const items = await agregarFotosALaCarpeta([f]); if (items && items.length) await aplicarSeleccion(ACTIVO.tipo, ACTIVO.i, items); }
     else cargarArchivos([f], ACTIVO.tipo, ACTIVO.i);
   });
   new ResizeObserver(() => programarDibujo()).observe(DOM.stageBox);
@@ -1056,14 +1076,15 @@ function armarEstructura() {
 async function iniciar() {
   try {
     await cargarRecursos();
-    await API.iniciar();
+    if (NUBE.activo) await NUBE.iniciar(); else await API.iniciar();
     let guardado = API.activo ? await API.json('/api/estado').catch(() => null) : await KV.get('estado');
     if (guardado && guardado.vacio) guardado = null;
     S = guardado && guardado.v ? normalizarEstado(guardado) : estadoDemo();
-    if (API.activo) CAT = await API.json('/api/catalogo').catch(() => ({}));
+    if (CARPETA.activa) CAT = (await CARPETA.leerCatalogo().catch(() => null)) || {};
     ACTIVO = { tipo: esColeccion() ? 'foto' : 'producto', i: 0 };
     armarEstructura(); construirPanel(); await dibujar(); reiniciarHistorial();
     if (API.activo && API.info.version && API.info.version !== APP_VERSION.v) avisoVersionDistinta(API.info.version);
+    if (CARPETA.nube) despuesDeIniciarNube();
     if (new URLSearchParams(location.search).get('autotest')) await autotest();
   } catch (e) { console.error(e); const a = $('#app'); a.textContent = 'No se pudo iniciar: ' + (e && e.message || e); }
 }
@@ -1072,7 +1093,8 @@ Object.defineProperty(window, '__estado', { get: () => S });   // solo para prue
 window.__api = { tema: id => THEMES[id], elegirFormato: id => elegirFormato(id), elegirTema: id => elegirTema(id), lienzo: esc => lienzoExport(esc),
   destino: (dest, i, esc = 1) => { const pg = planDestino(S, dest)[i], c = document.createElement('canvas'); renderFlyer(c, estadoParaPagina(S, pg), { scale: esc, getImg, preview: false, exportar: true }); return c; }, dibujar: () => dibujar(), cat: () => CAT,
   hits: () => LAST_HITS.map(t => ({ tipo: t.tipo, i: t.i, x: t.x, y: t.y, w: t.w, h: t.h })), dim: () => { const L = L_ACTUAL(); return { w: L.w, h: L.h }; },
-  temas: () => Object.fromEntries(Object.entries(THEMES).map(([k, T]) => [k, { grupo: T.grupo, titulo: T.titulo || '', subtitulo: T.subtitulo || '' }])) };
+  temas: () => Object.fromEntries(Object.entries(THEMES).map(([k, T]) => [k, { grupo: T.grupo, titulo: T.titulo || '', subtitulo: T.subtitulo || '' }])),
+  nube: () => NUBE, carpeta: () => CARPETA, marketing: () => MKT };
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar); else iniciar();
 
 // ── autoprueba (solo con ?autotest=1; se usa para verificar el armado) ──
