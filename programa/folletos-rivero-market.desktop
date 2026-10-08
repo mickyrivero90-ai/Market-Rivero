@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Folletos Rivero Market
+Comment=Armá los folletos de ofertas de Rivero Market
+Exec=/usr/bin/python3 /home/rivero/RiveroMarket/programa/servidor.py --abrir
+Icon=/home/rivero/RiveroMarket/programa/icono.png
+Terminal=false
+Categories=Graphics;
+StartupNotify=false

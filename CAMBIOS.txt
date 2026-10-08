@@ -1,0 +1,114 @@
+RIVERO MARKET · PROGRAMA DE FOLLETOS · CAMBIOS POR VERSIÓN
+==========================================================
+La versión se ve arriba a la izquierda del programa (tocala para ver esta lista).
+Si la computadora del trabajo muestra un número menor, copiá ahí la carpeta nueva.
+
+Versión 2.6 · 3 de octubre de 2026
+- Procesar fotos en lote (IA): botón "✂ Fotos nuevas · quitar fondo en lote" en el paso
+  de productos. Sacás las fotos de tus productos como quieras (sobre cualquier fondo, con
+  el celular), les ponés el nombre y el programa les quita el fondo con IA, las recorta y
+  las guarda bien presentadas en tu carpeta, listas para los folletos. Varias fotos de
+  una sola vez. Te ahorra sacar fotos perfectas y pedir que les borren el fondo una por una.
+- La casilla "Quitar el fondo con IA" también aparece al agregar fotos desde el buscador
+  (viene tildada). Si la IA falla en alguna, esa foto se guarda igual con su fondo.
+
+Versión 2.5 · 3 de octubre de 2026
+- Sello (la estrella de arriba a la derecha): ya no se pisan los renglones (el "10%"
+  quedaba encima de "CON QR MP"). Ahora cada renglón tiene su lugar.
+- Sello fácil de editar: recuadro "Sello" en el paso 3 con vista previa y los tres
+  renglones ya cargados (arriba, grande, abajo): escribís encima y cambia al instante.
+  Botones rápidos (CON QR MP · 10% · OFF, SOLO EN · EFECTIVO, LLEVÁ · 2x1 · HOY…) y
+  "Volver al automático". Tocando el sello en el folleto te lleva al recuadro.
+
+Versión 2.4 · 3 de octubre de 2026
+- "Barra de la promo" (paso 3): todo junto y fácil de editar, con vista previa en vivo:
+  medio de pago, TEXTO de la barra (editable, con frases rápidas como "EN TODOS LOS
+  PRODUCTOS"), % de descuento, cuotas, fechas desde/hasta y "hasta agotar stock".
+  Se puede apagar la barra y dejar solo las fechas.
+- Tocando la barra en el folleto, te lleva directo a ese recuadro.
+- Un solo dato en todo el folleto:
+    · Las fechas (Desde / Hasta) se cargan en un único lugar (la barra) y son las mismas
+      en la barra, el pie legal, el mensaje y las imágenes individuales.
+    · Si cambiás el % de la barra, los productos que van "como el folleto" pasan solos al
+      nuevo % y se recalcula su precio final (los que tienen otro % propio se respetan).
+    · La revisión avisa si algún producto muestra un % distinto al de la barra.
+- Las opciones menos usadas de la promo quedaron en "Más opciones de la promo".
+
+Versión 2.3 · 3 de octubre de 2026
+- "Un producto por imagen": al terminar un folleto de varios productos (2, 3, 10, 16…),
+  además del folleto completo se puede generar una imagen individual por cada producto,
+  con el mismo fondo, el título del folleto, el precio normal tachado, el precio final y
+  su medio de pago:
+    · Estados de WhatsApp e Historias (1080 × 1920)
+    · Publicación de Facebook y canal de WhatsApp (1620 × 2025)
+  Se eligen en "¿Para dónde es este folleto?" junto con los demás destinos y se guardan
+  numeradas con el nombre del producto (ej. "Estado e Historia - 03 - Fernet…").
+
+Versión 2.2 · 3 de octubre de 2026
+- Cada producto puede tener su propio medio de pago para el descuento: debajo de los
+  precios, "Descuento válido:" → Como el folleto / Para todos / QR de Mercado Pago /
+  MODO / Efectivo / Transferencia / Débito / Crédito / Visa / Mastercard / Tarjetas.
+  Ejemplo: producto 1 con QR de Mercado Pago, producto 2 solo en efectivo, producto 3
+  con tarjeta. Cada precio lleva su leyenda debajo y el pie aclara que cada descuento
+  vale con el medio indicado.
+- Nuevo medio: "Tarjetas (crédito y débito)".
+- Insignias 2x1, 3x2, 2.ª al 50 %, 2.ª al 70 %, etc.: en el folleto salen más grandes,
+  en rojo con letra blanca y borde amarillo; la nota del precio por unidad ("Llevando 2
+  pagás 1: $X c/u") sale más grande, oscura y siempre visible. Nuevo control "Tamaño de
+  insignias y notas" en "Leyenda del precio" (de 80 % a 200 %).
+- En la pantalla, los botones de esas insignias son más grandes y con color.
+
+Versión 2.1 · 3 de octubre de 2026
+- CORREGIDO: ya no se descuenta dos veces. Antes, con la promo de Mercado Pago, el
+  folleto restaba otro 10% sobre el precio final ("CON MP $16.200" en un producto de
+  $20.000 con 10% = $18.000). Ahora es: precio normal − % de descuento = precio final,
+  y ese precio final es lo que paga el cliente. La promo de pago solo avisa la
+  condición (por ejemplo "pagando con QR de Mercado Pago 10% OFF").
+- Los casilleros ahora se llaman Precio normal · % desc. · Precio final.
+- Funciona igual con cualquier medio de pago (Mercado Pago, MODO, Visa, Mastercard,
+  débito, crédito, transferencia, solo efectivo): precio normal − % = precio final, y
+  debajo de cada precio sale la condición ("PAGANDO CON QR MP", "CON TARJETA VISA",
+  "SOLO EN EFECTIVO"…). Se puede apagar en la promo de pago.
+- "Descuento para todos" propone el % de la promo de pago.
+- La placa del precio dice FINAL (o la palabra que elijas).
+- Los folletos guardados que tenían el descuento "extra" se pasan solos al modo nuevo.
+- El descuento adicional sigue existiendo como opción aparte ("poco común"), con aviso.
+
+Versión 2.0 · 3 de octubre de 2026
+- Precio "antes vs. ahora" más claro: el precio anterior sale más grande y con un
+  tachado rojo bien visible. Se elige la leyenda (ANTES, PRECIO NORMAL, PRECIO DE LISTA,
+  DE $X A, o solo tachado), la palabra de la placa (FINAL, AHORA, OFERTA o ninguna) y
+  si se muestra "AHORRÁS $X".
+- Cada producto tiene Antes · % OFF · Oferta: con el precio de antes y el %, la oferta
+  se calcula sola, con centavos si los hay (sin redondear). Botón "Descuento para todos".
+- El % que se muestra se redondea siempre hacia abajo (nunca se anuncia más descuento
+  que el real).
+- Fondos: galería con vista previa y todas las temáticas en todos los formatos. Fechas
+  nuevas: Reyes Magos, Fechas patrias (25 de Mayo y 9 de Julio), Día del Trabajador,
+  Día del Niño, Pascuas, Primavera y Estudiante, Año Nuevo. Aviso de la próxima fecha
+  especial con un botón que pone el fondo y la vigencia.
+- Títulos y frases sugeridas según la temática (p. ej. "Día de partido" para la Selección).
+- Promos de pago: Mercado Pago, MODO, efectivo, transferencia, débito, crédito, Visa y
+  Mastercard. Cuotas sin interés con el valor de cada cuota y la leyenda del CFT 0 %.
+- Franja "Aceptamos" con los medios de pago (y un texto opcional por cada uno).
+- Folleto de MENSAJE (sin productos): anuncio grande editable, por ejemplo "10% de
+  descuento en todos los productos pagando con QR de Mercado Pago", con fechas.
+- Folletos A4 de 12 y 16 ofertas y Post de 4 ofertas grandes (el más legible).
+- Descargar según el destino: A4 para imprimir (PNG 300 dpi + PDF), publicación de
+  Facebook/Instagram, canal y chats de WhatsApp (alta calidad), Estado de WhatsApp e
+  Historias. En redes los productos se reparten en varias imágenes para que se lean.
+  Todo se guarda junto en una carpeta del Escritorio.
+- Zoom en la vista previa: botones + y −, "🔍 Leer", Ctrl + rueda del mouse.
+- Deshacer y rehacer (↶ ↷, Ctrl+Z y Ctrl+Y).
+- Pegar precios desde Excel: se cargan nombre, precio antes y oferta, y se busca la
+  foto por el nombre.
+- Insignias rápidas 2x1, 3x2, 2.ª al 50 %, 2.ª al 70 %, que escriben solas el precio
+  por unidad.
+- Historial de precios por producto (últimas 12 veces).
+- Versión visible arriba a la izquierda y aviso si el programa y la pantalla no son
+  de la misma versión.
+
+Versión 1.0 · 3 de octubre de 2026
+- Primera versión: folletos A4 de 8 y 10 ofertas, estrella + 4, Post y Historia,
+  producto destacado, colección de productos, promo de Mercado Pago, QR del canal de
+  WhatsApp, banda legal, carpeta de productos y "Mis folletos".

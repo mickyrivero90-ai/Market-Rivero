@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024"><defs>
+<linearGradient id="gyi" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFD84A"/><stop offset="1" stop-color="#FFB400"/></linearGradient>
+</defs>
+<rect width="1024" height="1024" rx="225.28" fill="#E64F12"/>
+<g transform="translate(102.4 102.4) scale(4.096)"><circle cx="100" cy="100" r="99" fill="#FFFFFF"/><circle cx="100" cy="100" r="90" fill="url(#gyi)"/>
+<g fill="#4A1500" stroke="#4A1500" stroke-linecap="round" stroke-linejoin="round">
+<path d="M30 52 H52 L71 136 H158" fill="none" stroke-width="13"/>
+<path d="M58 58 H172 L155 114 H67 Z" stroke-width="12"/>
+<circle cx="92" cy="160" r="11.5" stroke="none"/><circle cx="142" cy="160" r="11.5" stroke="none"/></g>
+<path d="M95.07 109V67H114.69Q124.35 67 129.39 71.26Q134.43 75.52 134.43 82.84Q134.43 87.7 132.09 91.21Q129.75 94.72 125.46 96.58Q121.17 98.44 115.29 98.44H102.93L109.23 92.62V109ZM120.21 109 109.89 93.7H124.89L135.33 109ZM109.23 94.18 102.93 87.76H114.39Q117.33 87.76 118.74 86.44Q120.15 85.12 120.15 82.84Q120.15 80.56 118.74 79.24Q117.33 77.92 114.39 77.92H102.93L109.23 71.5Z" fill="#FFD84A"/></g></svg>

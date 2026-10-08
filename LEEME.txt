@@ -1,0 +1,107 @@
+RIVERO MARKET · PROGRAMA DE FOLLETOS
+====================================
+
+Qué es
+  Un programa que corre en TU computadora (no necesita internet) para armar los
+  folletos de ofertas: elegís el tipo de folleto y la temática, elegís los
+  productos de tu carpeta de fotos, escribís precios y fechas, y al terminar te
+  guarda la imagen en el Escritorio.
+
+Qué más hay acá
+  CONTEXTO_DEL_PROYECTO.txt cuenta qué se pidió, qué se hizo, qué falta y cómo retomarlo.
+  LEEME.md es la guía larga (con las fuentes de marketing y de normas).
+
+Cómo abrirlo
+  Windows ... doble clic en «iniciar.bat».
+              La primera vez hace falta tener Python instalado (es gratis):
+              https://www.python.org/downloads/  -> al instalar, tildá
+              «Add python.exe to PATH».
+  Linux ..... doble clic en «iniciar.sh» (o «./iniciar.sh» en una terminal).
+              Para tener el ícono en el Escritorio, ejecutá una vez
+              «./instalar-acceso-directo-linux.sh».
+  Si Windows muestra un aviso azul («Windows protegió su PC»), tocá «Más
+  información» y después «Ejecutar de todas formas»: es un archivo tuyo.
+  (Para evitarlo: antes de descomprimir, clic derecho en el ZIP -> Propiedades
+  -> tildar «Desbloquear» -> Aceptar.)
+  Se abre solo el navegador (http://127.0.0.1:8780). Si lo cerrás por error,
+  volvé a abrir iniciar.bat / iniciar.sh: te devuelve a donde estabas.
+  Para apagar el programa: botón «⋯ Más» -> «Cerrar programa».
+
+Qué versión tengo
+  Arriba a la izquierda dice «Versión 2.6 · fecha». Tocala para ver qué tiene esa
+  versión (la misma lista está en CAMBIOS.txt). Si en la computadora del trabajo el
+  número es menor, copiá ahí la carpeta nueva completa (tus fotos de «productos» no
+  se pierden si copiás encima). Si el programa y la pantalla no coinciden, avisa.
+
+Cómo se arma un folleto
+  1. Tipo de folleto y fondo: ofertas A4 (10, 12 o 16), posteos, un solo producto,
+     MENSAJE (un anuncio sin productos, por ejemplo «10% en todo pagando con QR de
+     Mercado Pago») o mostrar productos sin precios. Abajo elegís el fondo mirando la
+     miniatura (Día de la Madre, Padre, Selección, Navidad, Reyes, Fechas patrias,
+     Día del Trabajador, Niño, Pascuas, Primavera, Año Nuevo…). Arriba de los fondos
+     te avisa la próxima fecha especial: «Usar este fondo» pone el fondo y la fecha.
+  2. Productos: tocá un casillero del folleto, buscá el producto y elegilo.
+     Precios: Precio normal · % desc. · Precio final. Ponés el precio normal y el %,
+     y el precio final se calcula solo (con centavos si da centavos; vos lo ajustás).
+     Ese precio final es lo que paga el cliente: no se le resta nada más.
+     «Descuento válido»: cada producto puede tener su propio medio de pago (uno con
+     QR de Mercado Pago, otro solo en efectivo, otro con tarjeta…), o el del folleto.
+     En «Más opciones» están las insignias 2x1, 3x2, 2.ª al 50 %… (escriben solas el
+     precio por unidad). Su tamaño se ajusta en «Leyenda del precio».
+     «Descuento para todos» calcula todas de una vez. En «Leyenda del precio» elegís
+     cómo se ve el precio anterior (ANTES, PRECIO NORMAL, DE $X A…), la palabra de la
+     placa (FINAL, AHORA, OFERTA) y el «AHORRÁS $X».
+     «Pegar precios desde Excel»: copiás las columnas Producto · Antes · Oferta y se
+     cargan solas (busca la foto por el nombre).
+  3. «Barra de la promo» (un solo lugar para todo, con vista previa): medio de pago,
+     texto de la barra, % y fechas Desde/Hasta. Esas fechas y ese % son los mismos en
+     todo el folleto (si cambiás el %, los productos se actualizan solos). Tocando la
+     barra en el folleto te lleva ahí. El sello (estrella de arriba a la derecha) se
+     edita en su recuadro: escribís sus tres renglones encima, o tocás el sello.
+     Fechas y promo de pago: Mercado Pago, MODO, efectivo, transferencia, débito,
+     crédito, Visa o Mastercard, con % y/o cuotas sin interés. El medio de pago es la
+     condición del descuento: sale arriba, al pie y debajo de cada precio
+     («PAGANDO CON QR MP», «CON TARJETA VISA», «SOLO EN EFECTIVO»). «Aceptamos» agrega una
+     franja con tus medios de pago.
+  4. Revisión y «✔ Finalizar»: elegís para dónde es (A4 para imprimir, publicación de
+     Facebook, canal de WhatsApp, Estado/Historia). Cada uno sale con su medida; en
+     redes los productos se reparten en varias imágenes para que se lean bien. Todo
+     queda en una carpeta del Escritorio y una copia en «Mis folletos».
+     «UN PRODUCTO POR IMAGEN»: además del folleto completo, sale una imagen por cada
+     producto (para Estados/Historias o para Facebook y el canal), numeradas 01, 02…
+     para ir mandándolas de a una durante la semana.
+
+  Para leer de cerca mientras editás: botones − y + abajo de la hoja, «🔍 Leer», o
+  Ctrl + rueda del mouse. Para deshacer: ↶ arriba (o Ctrl+Z); rehacer: ↷ (Ctrl+Y).
+
+Fotos de tus productos (sin sacar fotos perfectas)
+  Tocá «✂ Fotos nuevas · quitar fondo en lote» en el paso de productos. Elegí las fotos
+  que sacaste con el celular (sobre cualquier fondo), poneles el nombre y el programa les
+  quita el fondo con IA y las guarda recortadas y bien presentadas en tu carpeta, listas
+  para usar. Podés cargar muchas de una vez.
+
+La carpeta «productos»
+  Ahí van las fotos de tus productos. El NOMBRE DEL ARCHIVO es el nombre del
+  producto (por ejemplo «Fernet Branca 750 ml.png»). Las subcarpetas son
+  categorías en el buscador. También podés agregar fotos desde el programa
+  («＋ Agregar fotos»). Más detalles en productos/LEEME.txt.
+
+Datos fijos del local
+  Dirección, Facebook, link del canal de WhatsApp (sale como QR) y leyendas
+  legales están en «Datos del local» y «Legales» (abajo del panel).
+  Cambialos ahí y salen en todos los folletos.
+
+Si algo no anda
+  - «No pude hablar con el programa»: se cerró. Abrí iniciar.bat / iniciar.sh.
+  - La foto no aparece en el buscador: tiene que ser JPG, PNG o WEBP y estar
+    dentro de la carpeta «productos». Tocá «↻ Actualizar».
+  - Plan B sin programa: abrí «Folletos sin programa (solo navegador).html».
+    Funciona igual para armar el folleto, pero no ve la carpeta de productos ni
+    guarda en el Escritorio (descarga el archivo desde el navegador).
+  - Si al abrirlo no pasa nada o sale un cartel de error, mirá el archivo
+    programa/datos/registro.log y mandámelo.
+
+Importante
+  Las leyendas legales (fechas, banda al pie, cuotas) son una ayuda armada con
+  normas argentinas; no reemplazan el consejo de un contador o abogado. La leyenda
+  de bebidas alcohólicas viene apagada (pedido del dueño); se activa en «Legales».

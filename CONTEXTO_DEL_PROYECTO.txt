@@ -1,0 +1,678 @@
+CONTEXTO DEL PROYECTO · RIVERO MARKET · FOLLETOS DE OFERTAS
+==========================================================
+Actualizado: 3 de octubre de 2026 · versión 2.6
+
+Este archivo cuenta qué pediste, qué decidimos, qué se hizo, cómo está armado y qué
+falta. Sirve para retomar el trabajo en otra conversación con Claude, en otra
+computadora o con otra persona, sin tener que explicar todo de nuevo.
+
+Índice
+  0. Cómo retomar (lo más importante)
+  1. El negocio y los datos fijos
+  2. Lo que pediste, en orden
+  3. Decisiones y aclaraciones que quedaron resueltas
+  4. Qué se hizo (entregables)
+  5. Cómo está armado por dentro
+  6. Investigación: mayoristas, marketing y normas (con fuentes)
+  7. La computadora y las herramientas
+  8. Qué se probó y qué no
+  9. Qué hay en el ZIP y qué no
+ 10. Pendientes y cosas para confirmar
+ 11. Ideas para más adelante
+ 12. Cómo prefiere trabajar el dueño del negocio
+ 13. Versión 2.0 (lo último que se hizo) y cómo se numeran las versiones
+
+
+0. CÓMO RETOMAR
+---------------
+- Todo vive en la PC Linux donde corre Claude Code (usuario "rivero", escritorio KDE),
+  en la carpeta  /home/rivero/RiveroMarket/ . NO está en la nube. Claude trabaja
+  directamente en esa computadora; el dueño la usa a distancia.
+- Para usar el programa en esa PC: ícono "Folletos Rivero Market" en el Escritorio
+  (o ./iniciar.sh). Se abre el navegador en http://127.0.0.1:8780.
+- Hay además una página de muestra publicada (privada, solo del dueño) en claude.ai:
+  https://claude.ai/artifact/PjmFJa86RSPV6T6GLyP64R  (versión 4). Es la misma
+  herramienta, pero sin carpeta de productos ni guardado en el Escritorio.
+- Para seguir con Claude en una conversación nueva (en esa PC), decile algo así:
+      "Leé /home/rivero/RiveroMarket/CONTEXTO_DEL_PROYECTO.txt y LEEME.md. Es el
+       proyecto de folletos de Rivero Market. Quiero ..."
+- Archivos que más importan: LEEME.md (guía de uso), editor/src/*.js (el motor y la
+  pantalla), programa/servidor.py (el servidor local), productos/ (fotos).
+- VERSIÓN ACTUAL: 2.6 (ver sección 13 y CAMBIOS.txt). Se ve arriba a la izquierda del
+  programa. El dueño trabaja en su casa (esta PC) y lleva una copia al trabajo: el
+  número sirve para saber si la copia del trabajo está al día.
+- El dueño también tiene una copia descomprimida del ZIP en
+  /home/rivero/Desktop/Negocio/Rivero-Market-Folletos (ahí abrió esta conversación).
+  Al terminar cambios, actualizar también esa copia (archivos del programa, sin tocar
+  sus fotos de productos/).
+
+
+1. EL NEGOCIO Y LOS DATOS FIJOS
+-------------------------------
+- Negocio: Rivero Market, un comercio de Argentina (su página de Facebook se llama
+  "Fiambrería Rivero"). Quiere folletos de ofertas al estilo de los mayoristas. Rubros que
+  se vieron en sus fotos y folletos: bebidas (incluido alcohol), productos de repostería y
+  lácteos.
+- Datos que salen siempre en el pie de los folletos:
+    Ubicación: Barrio San José, Avenida Solís Pizarro 1430
+    Facebook:  Fiambrería Rivero
+    QR del canal de difusión de WhatsApp:
+      https://whatsapp.com/channel/0029VauDHnQHFxOtGnhaa53E
+      (se leyó del QR del cartel del local; se comprobó que el QR de los archivos
+       exportados lleva a ese link)
+  OJO: el folleto anterior decía "Sarli Pizarro 1430" y el pedido decía "Solís
+  Pizarro 1430". Se usó "Solís". Falta confirmar cuál es.
+- Logo original: lo hicieron el dueño y su hermano. Fondo naranja (#EA571B), "RIVERO"
+  en blanco, "MARKET" y un carrito amarillo con una R.
+- Marca nueva que se propuso (todo en vectores, carpeta logo/):
+    Naranja Rivero #E64F12 · Amarillo Oferta #FFC400 · Rojo Precio #D50F25
+    Marrón Chocolate #4A1500 · Crema #FFF6E5
+    Tipografías: Montserrat (800/900) y Barlow Condensed (negra cursiva, para precios
+    y títulos). Las dos son libres (licencia SIL OFL), se pueden usar en un comercio.
+    Cambios: el carrito pasó a una insignia circular con aro blanco; la R quedó
+    recortada dentro de la canasta; "MARKET" va en una etiqueta de precio con
+    agujerito; el naranja se hizo un punto más profundo para que el blanco se lea
+    mejor (contraste 3,82:1 contra 3,57:1 del original); hay versiones para fondo
+    claro, oscuro y blanco, horizontal y vertical.
+- Folleto anterior (guardado en originales_del_cliente/): 8 productos con 10% de
+  descuento. Sus nombres y precios (leídos de esa imagen) se usaron como ejemplo:
+    Fernet Branca 750 ml            $18.540 (antes $20.600)
+    Vino Colón Frutos Rojos 750 ml  $6.930  (antes $7.700)
+    SKY Infusions Cosmic 750 ml     $10.710 (antes $11.900)
+    Vino Canciller                  $2.520  (antes $2.800)
+    Gancia Americano                $7.470  (antes $8.300)
+    Viñas de Balbo Clásico          $2.970  (antes $3.300)
+    Smirnoff Raspberry              $10.530 (antes $11.700)
+    Vino Dilema Rosado              $3.420  (antes $3.800)
+  Su QR era demasiado chico para leerlo.
+- Cómo se llaman estas hojas (una pregunta del primer mensaje que no había quedado
+  respondida): folleto de ofertas, volante o "flyer". Los mayoristas lo llaman
+  "revista de ofertas" o "catálogo de ofertas" cuando tiene varias páginas.
+
+
+2. LO QUE PEDISTE, EN ORDEN
+---------------------------
+1) Primer pedido. Armar plantillas de ofertas "como hacen los mayoristas de Argentina
+   (Maxiconsumo, Makro, Yaguar y los más exitosos)", con impacto visual y atrapante
+   para el cliente, y toda la estructura para poder cambiar solo "producto +
+   descripción + precio". Tomar el folleto que ya tenían como referencia y hacer algo
+   "más espectacular y de alto nivel con todas las estrategias de marketing que
+   puedas recopilar". Nombre: "Rivero Market". Mejorar el logo si se podía. Datos
+   fijos: nombre, "Ubicación: Barrio San José, Avenida Solís Pizarro 1430" y
+   Facebook "Fiambrería Rivero". Se podía usar Blender (MCP) en la PC. El dueño
+   estaba en remoto y pidió ver los resultados en la conversación.
+2) Ampliación (mientras se armaba). Dos esquemas de 10 productos: uno "tradicional"
+   con los colores de la marca, y otro "temático" para cuando hay ofertas con Mercado
+   Pago o fechas importantes (Día de la Madre, Halloween, partidos de la Selección
+   Argentina, Navidad, etc.). Y un tercer folleto para destacar UN solo producto sobre
+   todos los demás, con colores, contraste y mensajes como "OFERTA IMPERDIBLE", para
+   cuando liquidan productos o fardos, o hay ofertas solo en efectivo. Además,
+   recuperar el QR del canal de WhatsApp de la foto del cartel del local y ponerlo en
+   los folletos, para que quien los vea en redes pueda sumarse al canal.
+3) Aclaración de la promo vigente. Oferta de Mercado Pago válida hasta el 18/10/26
+   (domingo, Día de la Madre): pagando con QR de Mercado Pago, 10% de descuento.
+   Después aclaró: "cuando yo haga los folletos colocaré los precios de los productos
+   en oferta con su precio, pero hoy en día estamos con un +10% de descuento pagando
+   con Mercado Pago con QR, que es lo que me gustaría resaltar". O sea: los precios
+   del folleto son de oferta y el 10% de Mercado Pago es EXTRA, aparte.
+4) Folleto para reposteras. Mandó dos fotos de productos de repostería de su local
+   (coberturas, esencias, grageas, lácteos, harinas, etc.). Pidió limpiar el fondo y
+   un folleto con el título "Rivero Market", los productos en el medio, abajo la
+   ubicación, el QR, etc., y un mensaje para las o los reposteros: "Aquí tenemos todos
+   los productos para tus recetas", con temática de Día de la Madre.
+5) Programa local. Pidió "un programita o web local" para elegir qué folleto y qué
+   temática usar, y no depender de Claude para cada folleto. Una carpeta donde poner
+   fotos de productos con su nombre; seleccionar el "casillero 1", que se abra el
+   buscador de esa carpeta, elegir y que se cargue el producto; después editar la
+   leyenda de abajo (nombre) y el precio; y al terminar marcar "finalizado" para que
+   genere la imagen en el Escritorio.
+6) Preguntas posteriores:
+   - "¿Cómo hago para que bajes todo esto a mi PC? ¿O dónde lo estás almacenando?"
+     Respuesta: ya está en tu PC Linux (carpeta RiveroMarket); para otra PC se armó un ZIP.
+   - "¿Cuál sería la herramienta que debo bajar?" Respuesta: el ZIP
+     Rivero-Market-Folletos-2026-10-03.zip (los anteriores se descartaron).
+   - "¿En el ZIP está todo el contexto? Si no, generame un archivo de texto."
+     Respuesta: no estaba; este archivo es esa respuesta.
+
+
+3. DECISIONES Y ACLARACIONES QUE QUEDARON RESUELTAS
+---------------------------------------------------
+- [REEMPLAZADO en la versión 2.1, ver sección 13] El 10% de Mercado Pago era un descuento EXTRA. Cada producto muestra la placa roja
+  con su precio de oferta ("FINAL") y debajo una cápsula "CON MP $..." con lo que
+  realmente paga el cliente (se calcula solo). Arriba hay una barra grande con la
+  condición, "+10% OFF" y la fecha, y el sello del encabezado dice "CON QR MP +10%
+  OFF". Hay una opción para el caso contrario ("los precios ya lo incluyen"), que
+  cambia la placa a "CON MP" en vez de "FINAL".
+- El "precio anterior" (tachado) es opcional. Tiene que ser un precio real que se
+  cobró antes (Dto. 274/2019 art. 11: la publicidad engañosa sobre precios está
+  prohibida).
+- Banda legal al pie en todos los folletos: "PARA MÁS INFORMACIÓN O LIMITACIONES
+  APLICABLES CONSULTE EN ..." a todo el ancho, alto mínimo 5% de la hoja y letra de
+  al menos 4 mm en A4 (Res. 446/2025). Se puede apagar, pero el programa avisa.
+- Leyenda de alcohol ("BEBER CON MODERACIÓN. PROHIBIDA SU VENTA A MENORES DE 18 AÑOS")
+  en la misma banda. En los folletos de precios se agrega sola cuando el nombre de un
+  producto tiene palabras como vino, fernet, cerveza, vodka, aperitivo, etc.
+  (modo "automático", con opción "siempre" o "nunca"). En el folleto de repostería se
+  tilda a mano y viene tildada porque en las fotos hay botellas Tres Plumas (licor
+  café al coñac).
+- Fechas: se piden fecha de inicio y de fin (Ley 24.240 art. 7). "Hasta agotar stock"
+  pide indicar la cantidad (Dto. 1798/94 art. 7); hay un campo "Stock por producto".
+- Casilleros vacíos: en pantalla se ven como "ELEGIR PRODUCTO" (para tocarlos). En el
+  archivo final no sale ningún hueco: se completan con una tarjeta de la marca que
+  dice "Y MUCHAS OFERTAS MÁS EN EL LOCAL".
+- Cada casillero tiene número en la pantalla (esos números y las guías NO salen en la
+  imagen final; se comprobó).
+- Historias y Estados (1080x1920): se dejó libre una franja abajo (176 px) y otra
+  arriba (112 px) para lo que tapa la app. Esas medidas son una estimación (las zonas
+  oficiales no se pudieron confirmar; fuentes de terceros hablan de unos 250 px arriba
+  y 340 abajo). Si en el celular algo queda tapado, hay que subirlo.
+- No se usaron escudos ni logos de marcas de terceros (Mercado Pago, AFA, etc.): solo
+  colores y símbolos genéricos. Si el dueño tiene el logo oficial y corresponde usarlo,
+  puede subirlo en "Promo de pago".
+- Las botellas de los ejemplos NO son fotos reales: son renders genéricos hechos en
+  Blender, sin marcas. El espumante y la cerveza son productos inventados para llegar
+  a 10 en el ejemplo.
+- Fotos de productos: si tienen fondo blanco liso, el programa lo saca solo; en la PC
+  Linux hay además un botón "Quitar fondo con IA" que crea una copia sin fondo.
+- Los recortes de repostería: de las fotos grandes se recortaron 46 productos uno por
+  uno con IA; 42 quedaron bien y están en productos/Repostería. Se descartaron 4
+  porque estaban tapados por otros y quedaron como fragmentos: dulce de leche Nono
+  Reinaldo, dulce de leche Los Taurinos, dulce de leche Campo y la barra de chocolate.
+  Los nombres de los 42 se leyeron de las etiquetas (ver pendientes).
+- Nombres de archivo de los folletos que guarda el programa:
+  "Rivero Market - <título> - <formato> - <fecha de fin>.png/.pdf"; nunca pisa un
+  archivo que ya exista (agrega "(2)", "(3)").
+
+
+4. QUÉ SE HIZO (ENTREGABLES)
+----------------------------
+Logo y marca
+  - logo/ ........................ logos en SVG y PNG transparente (horizontal, vertical,
+                                   íconos de perfil; claro, oscuro, naranja, blanco).
+  - salidas/01_logo_propuesta.png  lámina antes/ahora.
+
+Folletos de muestra (carpeta salidas/)
+  - 02_folleto_10_tradicional.png ................ A4, 10 ofertas, colores de la marca.
+  - 03_folleto_10_tematico_dia_de_la_madre.png/.pdf  A4, 10 ofertas, Día de la Madre
+                                   + Mercado Pago +10% hasta el 18/10.
+  - 04_producto_destacado_liquidacion.png, 04b (Post, estilo "Fuego"), 04c (Historia,
+                                   estilo "Efectivo").
+  - 05_temas_de_fecha.png ......... las 7 fechas especiales.
+  - 06_formatos_para_redes.png .... Post 4:5 e Historia 9:16.
+  - 10_reposteria_A4 .png/.pdf, 10b_reposteria_post.png, 10c_reposteria_historia.png:
+                                   folleto "Aquí tenemos todos los productos para tus
+                                   recetas".
+
+El generador de folletos (el motor)
+  - 12 formatos:
+      Folletos A4: a4_10 (10 ofertas tradicional), a4_10_tema (10 ofertas temático),
+                   a4_8 (8 ofertas grandes), a4_star4 (1 estrella + 4).
+      Redes:       post_star4 (Post 4:5, estrella + 4), story_3 (Historia 9:16,
+                   estrella + 2).
+      Un producto: destacado_a4, destacado_post, destacado_story (liquidación,
+                   fardos, solo efectivo).
+      Sin precios: coleccion_a4, coleccion_post, coleccion_story ("Mostrar
+                   productos": fotos grandes con varios productos juntos).
+  - 14 temas de color:
+      Marca:   naranja, rojo, verde, azul.
+      Fechas:  Día de la Madre, Día del Padre, Halloween, Selección, Navidad,
+               Mercado Pago, Black Friday (cada uno con su decoración).
+      Impacto: Liquidación (negro y amarillo), Fuego, Efectivo (verde).
+  - Piezas: precio con "$" chico y cifra enorme sobre placa roja inclinada con "FINAL"
+    vertical, precio anterior tachado, insignia de descuento automática (-10%) o
+    propia ("2x1", "LLEVÁ 3"), "Ahorrás $X", unidad ("x kg", "x fardo"), nota bajo el
+    precio, sello del encabezado, barra de fechas, barra de promo de pago, banda legal,
+    leyenda de alcohol, QR del canal de WhatsApp (y uno opcional de Facebook).
+  - Exporta PNG (A4 a 300 dpi = 2480x3508; redes a tamaño nativo) y PDF A4.
+
+El programa local (lo que se pidió al final)
+  - Se abre con el ícono del Escritorio. Pantalla en 3 pasos: 1) tipo de folleto y
+    temática, 2) productos (o fotos), 3) fechas y promo; más "Revisión antes de
+    terminar" y los datos del local y legales (plegados).
+  - Tocás un casillero en la vista previa (o la foto en la lista): se abre el buscador
+    de la carpeta productos/ (con categorías, búsqueda sin tildes, "Elegir varios",
+    "Agregar fotos" pidiendo el nombre, "Abrir carpeta", actualización automática al
+    volver del explorador). El nombre sale del nombre del archivo; el precio de la
+    última vez que usaste ese producto se carga solo.
+  - "✔ Finalizar": avisa lo que falta (fechas, stock, casilleros vacíos...), genera la
+    imagen y la guarda en el Escritorio (PNG; y PDF si es A4), guarda una copia en
+    "Mis folletos" y recuerda los precios. Botones: Abrir la imagen, Abrir el
+    Escritorio, Seguir editando, Folleto nuevo.
+  - "Nuevo folleto", "Mis folletos" (reabrir uno anterior para retocar fechas y
+    precios), "Cerrar programa". El trabajo se guarda solo.
+  - Plan B sin programa: "ofertas_rivero_market.html" (página suelta): arma el folleto
+    y descarga la imagen, pero no ve la carpeta ni guarda en el Escritorio.
+
+Fotos y recortes
+  - productos/Repostería ..... 42 productos recortados con nombre (Mapsa Cuber y Drops,
+                               Royal, Yuspe, Decor Magic, Tres Plumas, Emeth, Margadan,
+                               Marolio, Tremblay, Cosalta, Pureza, La Cordobesa, mantecas,
+                               pirotines, film, papel manteca, bandeja, brochetas, etc.).
+  - productos/Fotos grandes .. las 2 fotos con varios productos juntos y sin fondo.
+  - productos/LEEME.txt ...... cómo usar la carpeta.
+
+Otros
+  - ZIP para llevar el programa a otra computadora (Windows o Linux): ver sección 9.
+  - Página de muestra publicada en claude.ai (privada).
+
+
+5. CÓMO ESTÁ ARMADO POR DENTRO
+------------------------------
+Carpetas (en /home/rivero/RiveroMarket/)
+  editor/        código del generador. src/*.js, styles.css, body.html; vendor/qrcode.min.js;
+                 fonts_sub/ (fuentes recortadas, incrustadas en la página); build.py y
+                 empaquetar.py.
+  programa/      servidor.py (servidor local), recortar.py (recorte con IA), web/index.html
+                 (la pantalla, ya construida), icono.png; datos/ se crea al usar el programa
+                 (estado.json, catalogo.json = memoria de precios, proyectos/ = "Mis
+                 folletos", cache/miniaturas, registro.log).
+  productos/     fotos de productos (ver arriba).
+  logo/          logos y scripts que los generan (marca.py, lib_logo.py, lamina_logo.py).
+  blender/       botellas.py y labels.py (renders de botellas de ejemplo); render/ las imágenes.
+  assets/        imágenes que se incrustan en la herramienta (botellas de ejemplo y las 2
+                 fotos de repostería).
+  salidas/       folletos de muestra.
+  originales_del_cliente/  folleto anterior, logo original, foto del cartel con el QR y las
+                 2 fotos de repostería originales (copias de lo que mandó el dueño).
+  investigacion/ folletos de mayoristas (solo inspiración) y textos oficiales de las normas.
+  _entregas/     el ZIP.
+  _trabajo/      herramientas de desarrollo: venv de Python (rembg, numpy, opencv, selenium...),
+                 fuentes originales, geckodriver, scripts de prueba y de recorte (repo/).
+                 NO borrarla: el recorte con IA usa ese Python.
+
+El motor (editor/src, en este orden de armado)
+  01_util.js ...... utilidades, fechas en castellano, precios argentinos (18.540 / 1.250,50),
+                    guardado.
+  03_draw.js ...... dibujo sobre canvas: texto con contorno, ajuste de tamaño, formas, íconos, QR.
+  04_flyer.js ..... temas de marca, tarjetas de producto, producto estrella, pie y banda legal,
+                    formatos de 8 y estrella+4, casilleros clickeables.
+  04b_temas.js .... temas de fecha y decoraciones, promos de pago (extra o incluido).
+  04c_formatos.js . folleto de 10 y producto destacado.
+  04d_coleccion.js  formatos "Mostrar productos".
+  05_images.js .... carga de fotos, detección de fondo, recorte de fondo blanco.
+  06_state.js ..... estado del folleto, ejemplo, folleto nuevo, normalización.
+  07_app.js ....... pantalla y paneles. 08_programa.js: conexión con el servidor, ventanas,
+                    buscador de la carpeta, "Finalizar", "Mis folletos".
+  build.py junta todo en un solo HTML (fuentes e imágenes incrustadas) y escribe
+  editor/ofertas_rivero_market.html, editor/_publicar.html y programa/web/index.html.
+
+El servidor (programa/servidor.py)
+  - Python estándar (sin instalar nada). Solo escucha en 127.0.0.1, puertos 8780 a 8789.
+    Si ya estaba abierto, el ícono solo muestra la pantalla.
+  - Rutas: /api/productos, /api/imagen, /api/miniatura, /api/subir, /api/recortar,
+    /api/estado, /api/catalogo, /api/guardar (Escritorio), /api/proyectos,
+    /api/abrir-carpeta, /api/abrir-archivo, /api/cerrar.
+  - Seguridad: rechaza direcciones que no sean 127.0.0.1/localhost, pedidos que cambian
+    cosas sin el encabezado X-Rivero, orígenes ajenos y cualquier ruta fuera de la carpeta
+    de productos; solo guarda PNG/JPG/PDF válidos; nunca pisa archivos.
+  - Detecta el Escritorio según el sistema (Linux: xdg-user-dir; Windows: registro, incluye
+    OneDrive; Mac: ~/Desktop). Variables para pruebas: RIVERO_PRODUCTOS, RIVERO_ESCRITORIO,
+    RIVERO_DATOS, RIVERO_SIN_ABRIR, RIVERO_PYTHON_IA.
+
+Estado del folleto: un JSON (formato, tema, título, vigencia, promo, productos[], fotos de
+colección, datos del local, legales). Las fotos de la carpeta se guardan por su ruta, no
+incrustadas, así el archivo es liviano.
+
+Comandos útiles (desde /home/rivero/RiveroMarket)
+  Reconstruir la pantalla:   cd editor && ../_trabajo/venv/bin/python build.py
+  Armar el ZIP:              python3 editor/empaquetar.py
+  Prueba completa:           cd _trabajo && ./levantar_prueba.sh && ./venv/bin/python ui_servidor.py
+  Prueba de la página suelta: ./venv/bin/python ui_suelta.py     (autoprueba: ui_test.py)
+  Renders de botellas:       ~/Descargas/blender-setup/blender-4.5.14-linux-x64/blender -b
+                             --factory-startup --python blender/botellas.py -- --samples 160
+  Republicar la página de muestra: pedirle a Claude que publique editor/_publicar.html en el
+                             mismo link.
+
+
+6. INVESTIGACIÓN: MAYORISTAS, MARKETING Y NORMAS
+-------------------------------------------------
+La hizo un agente de búsqueda el 3/10/2026 sobre folletos vigentes de Maxiconsumo,
+Makro, Yaguar, Diarco, Vital, Nini y Día (de Coto y La Anónima solo banners; de
+Carrefour Maxi no se pudo bajar nada). Material en investigacion/.
+
+Lo que hacen los folletos de los mayoristas
+  - Colores: rojo + amarillo + blanco/negro; marca en azul marino o violeta. El precio va
+    en rojo, amarillo, negro o blanco.
+  - Tipografía: sans extra negra y condensada para cifras y títulos; títulos con efecto 3D.
+  - Precio: cifra enorme, "$" chico y levantado, "FINAL" vertical o debajo, precio anterior
+    tachado, "precio sin impuestos nacionales" y "x kg" en letra chica; terminaciones en
+    99, 49, 89, 79.
+  - Insignias: "desde 3 unidades", "llevando mín. 12 un.", "precio por bulto cerrado", 3x2,
+    "2da unidad al 50/70%", "-35%" en círculo amarillo, "Stock disponible: X u.".
+  - Estructura: cabecera (campaña y fechas) > producto héroe > grilla > franja de pagos o
+    llamada a la acción > pie legal. De 9 a 16 productos por hoja (12 es lo más común).
+
+Estrategias y su fuente (resumen)
+  - Anclaje con precio de referencia: https://digitalcommons.memphis.edu/facpubs/11759
+  - Precios que terminan en 9 o 99: https://ideas.repec.org/a/kap/qmktec/v1y2003i1p93-110.html
+  - Escasez ("cantidad limitada" rinde más que "tiempo limitado"):
+    https://experts.umn.edu/en/publications/scarcity-messages-a-consumer-competition-perspective/
+  - Producto gancho (aceite, yerba, harina; en fiambrería, un fiambre estrella):
+    https://smallbiztrends.com/loss-leader-pricing-strategy/  (vender bajo costo solo es
+    desleal si busca eliminar competidores: Dto. 274/2019 art. 10 f)
+  - Jerarquía visual: https://www.nngroup.com/articles/visual-hierarchy-ux-definition/
+  - Rojo en los precios: evidencia inconsistente
+    https://ideas.repec.org/a/eee/jouret/v89y2013i2p115-125.html
+  - Cantidad de opciones por hoja (9 a 16, 12 es la moda):
+    https://abcwest.cogs.indiana.edu/pmwiki/pdf/scheibehenne.options.2010.pdf
+  - Prueba social (solo si es real): https://spiegel.medill.northwestern.edu/How-Online-Reviews-Influence-Sales
+  - Consistencia semanal y llamada a la acción: no hay estudio; los mayoristas numeran sus
+    revistas y ponen "Escaneá el QR" (https://www.nini.com.ar/revistaonline).
+
+Normas argentinas (guía; no es asesoría legal)
+  - Ley 24.240 art. 7: la oferta debe tener fecha precisa de comienzo y de finalización,
+    modalidades, condiciones o limitaciones. No cumplirla es "negativa injustificada de
+    venta" (art. 47: multa de 0,5 a 2.100 canastas básicas).
+    https://servicios.infoleg.gob.ar/infolegInternet/anexos/0-4999/638/texact.htm
+  - Dto. 1798/94 art. 7 a): fuera del local la oferta lleva el plazo de vigencia; si se
+    limita la cantidad, hay que informar con cuántas unidades se cuenta.
+    https://www.argentina.gob.ar/normativa/recurso/13734/texact/htm
+  - Res. SIyC 446/2025 (B.O. 03/11/2025, rige desde 03/12/2025), art. 1: el aviso lleva
+    "PARA MÁS INFORMACIÓN O LIMITACIONES APLICABLES CONSULTE EN www..." (o 0800...); en
+    folletos, banda al pie de todo el ancho, alto mínimo 5% del aviso y letra de al menos
+    4 mm en negrita; en esa web van vigencia, nombre, domicilio y CUIT, condiciones y
+    stock. (Este texto lo leyó Claude directamente en el Boletín Oficial.)
+    https://www.boletinoficial.gob.ar/detalleAviso/primera/333879/20251103
+  - Res. SIyC 4/2025 (B.O. 17/01/2025) arts. 2 y 3: precio "total y final" (IVA incluido);
+    leyenda "PRECIO SIN IMPUESTOS NACIONALES" en letra menor, también en avisos (desde
+    01/04/2025); precio por kg o litro en letra menor; con cuotas, contado, cuotas y CFT.
+    https://www.boletinoficial.gob.ar/detalleAviso/primera/319787/20250117
+  - Precio tachado: la regla específica del "precio anterior" se derogó con la Res. 4/2025
+    (art. 6) y no se encontró reemplazo; rige la prohibición de publicidad engañosa
+    (Dto. 274/2019 art. 11). El "antes" tiene que ser real.
+    https://servicios.infoleg.gob.ar/infolegInternet/anexos/70000-74999/74899/texact.htm
+  - Alcohol: Ley 24.788 art. 6 y Dto. 149/2009 (según Dto. 688/2009): "BEBER CON MODERACION"
+    y "PROHIBIDA SU VENTA A MENORES DE 18 AÑOS" en no menos del 3% del aviso.
+    https://www.argentina.gob.ar/normativa/nacional/norma-154313/texto
+  - Tabaco: la Ley 26.687 prohíbe publicitarlo en gráfica e internet (no poner cigarrillos
+    en folletos ni redes).
+  - Sorteos o premios al azar condicionados a comprar: prohibidos (Dto. 274/2019 art. 14,
+    texto de 2019).
+  - "Imágenes ilustrativas": no hay norma que la exija; la Ley 24.240 art. 8 dice que lo
+    que se muestra obliga.
+  - Volantes en la calle: algunas ciudades exigen "Prohibido arrojar en la vía pública"
+    (CABA, Ley 260); revisar el municipio.
+
+Tamaños (2026)
+  - Feed Facebook e Instagram: 1080x1350 (4:5), mínimo 1080 de ancho
+    (https://www.facebook.com/business/help/430958953753149).
+  - Historias, Reels y Estados: 1080x1920 (9:16), mínimo 600x1067
+    (https://www.facebook.com/business/help/2222978001316177). WhatsApp comprime las
+    imágenes: para conservar calidad, mandar el PDF como documento.
+  - Impresión a 300 dpi: A4 2480x3508 (con 3 mm de sangrado 2551x3579), A3 3508x4961. La
+    banda legal de 5% equivale a unos 15 mm en A4 y 21 mm en A3.
+
+Lo que no se pudo confirmar: las zonas libres de Historias y Reels (solo hay guías de
+terceros), cambios posteriores a dic-2025 de la Res. 446/2025, el texto vigente de
+Dto. 274/2019 art. 14, y normas provinciales o municipales de la zona.
+
+
+7. LA COMPUTADORA Y LAS HERRAMIENTAS
+------------------------------------
+- PC Linux (usuario "rivero"), escritorio KDE Plasma sobre Wayland, sin placa de video
+  (CPU i5-8400, 15 GB de RAM). Hay un Escritorio en /home/rivero/Desktop.
+- Python del sistema: 3.14 con Pillow (sin numpy). Python con rembg, onnxruntime, numpy,
+  opencv, fonttools, uharfbuzz, qrcode, zxing-cpp y selenium: _trabajo/venv (Python 3.12,
+  creado con uv). Modelos de IA descargados en ~/.rembg/models (isnet-general-use 171 MB;
+  SAM 438 MB, usado una sola vez con cajas para recortar las fotos con muchos productos).
+- Firefox (versión snap) 157: es el navegador de las pruebas. OJO: el Firefox snap no puede
+  leer archivos de /tmp (para subir fotos en las pruebas hay que usar carpetas dentro de
+  /home). geckodriver en _trabajo/bin.
+- Blender 4.5.14 en ~/Descargas/blender-setup/blender-4.5.14-linux-x64/blender. El MCP de
+  Blender no conectó (la aplicación estaba cerrada), así que se corrió Blender en segundo
+  plano con scripts (Cycles en CPU). Una botella a 800x1500 con 160 muestras tarda unos 2
+  minutos.
+- Trampas conocidas: no usar "pkill -f" con un texto que aparece en el propio comando
+  (mata la shell); en Selenium, las variables "let/const" de la página no se ven desde
+  execute_script (por eso la página expone window.__estado y window.__api).
+
+
+8. QUÉ SE PROBÓ Y QUÉ NO
+------------------------
+Probado
+  - Autoprueba del motor (ui_test.py): 12 formatos, 14 temas, PNG de alta calidad, PDF,
+    quitar fondo, revisión legal, QR, promo de Mercado Pago (+10% sobre $18.540 da $16.686).
+  - Programa completo con servidor (ui_servidor.py, 45 comprobaciones): abrir, folleto
+    nuevo, buscar y elegir productos (con y sin tildes, símbolos raros en el nombre), elegir
+    varios, precio de la última vez, recorte automático de fondo blanco, avisos antes de
+    finalizar, PNG A4 de 2480x3508 y PDF en el Escritorio, QR leído desde el PNG exportado,
+    sin números ni guías en el archivo final, "Mis folletos", agregar una foto nueva con su
+    nombre y categoría, recorte con IA, "Nuevo folleto", "Cerrar programa".
+  - Página suelta (ui_suelta.py, 9 comprobaciones).
+  - Servidor por API: rutas fuera de la carpeta, direcciones y orígenes ajenos, archivos
+    falsos, nombres con símbolos, que no pise archivos.
+  - El ZIP, descomprimido en otra carpeta, abre y lee las 44 fotos. El servidor también
+    arranca con Python 3.12.
+  - PDF validado con pdfinfo (A4, 1 página).
+No probado
+  - Windows (iniciar.bat, el Escritorio por registro, os.startfile). Está preparado pero
+    nunca se corrió ahí.
+  - Chrome y Edge (solo se probó Firefox).
+  - Impresión real en papel y la apariencia en el celular de las Historias.
+  - Fotos reales del resto de los productos (todavía no están cargadas).
+
+
+9. QUÉ HAY EN EL ZIP Y QUÉ NO
+-----------------------------
+ZIP: _entregas/Rivero-Market-Folletos-2026-10-03.zip  (unos 9 MB)
+Está dentro:
+  iniciar.bat (Windows) · iniciar.sh y instalar-acceso-directo-linux.sh (Linux) ·
+  LEEME.txt (cómo usarlo) · LEEME.md (guía larga con fuentes) ·
+  "Folletos sin programa (solo navegador).html" · programa/ (servidor, pantalla, ícono) ·
+  productos/ (los 42 productos de repostería, las 2 fotos grandes y su LEEME) ·
+  logo/ (SVG y PNG) · y este archivo (CONTEXTO_DEL_PROYECTO.txt). El ZIP que se bajó antes
+  de que existiera este archivo no lo trae; el que quedó en la PC sí.
+NO está dentro (existe solo en la PC Linux, en /home/rivero/RiveroMarket/):
+  - El código fuente del generador (editor/) y los scripts de Blender (blender/).
+  - Los folletos de muestra (salidas/), los originales del cliente y la investigación.
+  - _trabajo/ (Python con IA, pruebas, scripts de recorte).
+  Sin el código fuente, en otra computadora se puede USAR el programa pero no
+  MODIFICARLO. Si hace falta, se puede armar otro ZIP "respaldo completo" (sin el venv).
+Requisito: Python 3 instalado (en Windows, gratis en python.org; tildar "Add python.exe
+to PATH"). En Windows, el aviso azul de SmartScreen se pasa con "Más información" y
+"Ejecutar de todas formas". El botón "Quitar fondo con IA" solo existe en la PC Linux.
+
+
+10. PENDIENTES Y COSAS PARA CONFIRMAR
+-------------------------------------
+ 1. La calle: ¿"Solís Pizarro" o "Sarli Pizarro"? (se cambia en "Datos del local").
+ 2. Fecha de INICIO de la promo de Mercado Pago. Solo se cargó el fin (18/10/2026) y la
+    Ley 24.240 art. 7 pide las dos.
+ 3. Condiciones de la promo de Mercado Pago (tope de reintegro, días, medios, términos que
+    exija Mercado Pago para anunciarla). El folleto dice "pagando con QR de Mercado Pago
+    +10% OFF hasta el 18 de octubre" y nada más.
+ 4. Leyenda "PRECIO SIN IMPUESTOS NACIONALES" (Res. 4/2025): el programa NO la imprime en
+    cada producto. Hay que consultar con el contador si le corresponde al negocio (según
+    su régimen). Si hace falta, se agrega por producto o en el pie.
+ 5. Link de Facebook, si se quiere un segundo QR (hoy sale solo el del canal de WhatsApp).
+ 6. Fotos reales de los demás productos para poner en productos/ (nombre del archivo =
+    nombre del producto). Las botellas de ejemplo son renders genéricos.
+ 7. Revisar los nombres de los 42 productos de repostería, que se leyeron de las etiquetas.
+    Los más dudosos: "Tres Plumas (frasco chico ámbar)", "Tres Plumas (botella chica)",
+    "Royal (sobre celeste con frutillas)", "Fleibor (caja y pote)", "Yuspe limón / frutilla /
+    vainilla (botella)", "Esencia de vainilla (botella oscura)", "Bandeja ovalada
+    transparente", "Brochetas de bambú (2 paquetes)". Se corrigen renombrando el archivo.
+ 8. Cantidad de stock para "hasta agotar stock" (Dto. 1798/94): se escribe en Legales
+    ("Stock por producto") o en la nota de cada producto.
+ 9. Probar en Windows si la PC del local es Windows (nunca se probó ahí).
+10. Si el dueño usa otra PC, llevar el ZIP y copiar sus fotos a productos/.
+11. Historias: confirmar en un celular que no quede tapado el logo ni el pie.
+12. Si se quiere usar el logo oficial de Mercado Pago, subirlo en "Promo de pago".
+13. Razón social y CUIT: están vacíos (campos opcionales en Legales). La Res. 446/2025 dice
+    que esos datos deben estar disponibles en el sitio o canal que se cite en la banda
+    ("Facebook: Fiambrería Rivero"); conviene verificar que ahí figuren.
+
+
+11. IDEAS PARA MÁS ADELANTE (no están hechas)
+---------------------------------------------
+- Más fechas: Día del Niño, Pascuas, Día del Amigo, Año Nuevo, Día de la Tradición.
+- Cargar precios desde una planilla (Excel o CSV) para armar un folleto en un minuto.
+- Folleto de varias páginas tipo "revista de ofertas", numerada y semanal.
+- Carteles de góndola o etiquetas de precio individuales (A5 y A6).
+- Insignias de cantidad ("llevando 3", "3x2") con cálculo automático del precio por unidad.
+- Mostrar el precio por kilo o litro en letra chica.
+- Historial de precios por producto y aviso cuando cambia mucho.
+
+
+12. CÓMO PREFIERE TRABAJAR EL DUEÑO DEL NEGOCIO
+-----------------------------------------------
+- Habla en castellano rioplatense; las respuestas van en ese registro y en lenguaje simple.
+- Está en remoto: quiere ver los resultados como imágenes o archivos en la conversación.
+- No es técnico: conviene dar pasos cortos, botones claros y cosas que se puedan hacer sin
+  consola.
+- Quiere dejar de depender de Claude para cada folleto: por eso el programa local.
+- Le importa lo legal (fechas, banda al pie, alcohol, precios): mostrar los avisos y no
+  esconder las dudas. Todo lo legal de este archivo es una ayuda y no reemplaza a un
+  contador o abogado.
+- Valora que no se inventen datos: lo que se leyó de una foto o etiqueta se marca como
+  tal, y lo que no se pudo probar se dice.
+
+
+13. VERSIÓN 2.0 Y CÓMO SE NUMERAN LAS VERSIONES
+-----------------------------------------------
+Pedidos de esta etapa (3/10/2026, en orden):
+  - Mejoras "a nivel empresarial", sobre todo que sea más fácil la leyenda del precio de
+    antes vs. el precio con descuento, y todo lo que haga la herramienta más fácil e
+    intuitiva.
+  - Poder elegir el fondo para distintas temáticas: la naranja básica, Día de la Madre,
+    Día del Padre, partidos de la Selección, Navidad, Reyes, fechas patrias, Día del
+    Trabajador, etc.
+  - Descuentos por medio de pago: QR de Mercado Pago, Visa, Mastercard, solo efectivo,
+    etc.
+  - Un folleto de MENSAJE editable (p. ej. "10% de descuento en todos los productos
+    pagando con QR de Mercado Pago", con fechas).
+  - Zoom en la vista previa (no se podía leer lo que se editaba sin descargar).
+  - Descargar según el destino (WhatsApp, Estado de WhatsApp, Historia y publicación de
+    Facebook, canal de WhatsApp, hoja A4) con tamaños acordes para que se lea bien:
+    el "antes" tachado y chico no capta interés.
+  - "No hagas redondeos: si el precio da centavos, dejalo; yo lo ajusto."
+  - Una leyenda de versión arriba a la izquierda, para saber si la copia del trabajo
+    está actualizada.
+  - Quitar la leyenda de bebidas alcohólicas ("ocupa espacio y ya está entendido").
+
+Decisiones tomadas
+  - Precios calculados con centavos exactos (aCentavos); NUNCA se redondea a pesos.
+    El valor por cuota y el "c/u" de 2x1/3x2 se redondean al centavo hacia arriba.
+  - El % de la insignia se calcula hacia abajo (pctReal): nunca anuncia más descuento
+    que el real.
+  - Leyenda de alcohol: apagada por defecto (legal.alcohol = 'no'); los estados viejos
+    (v < 5) se pasan a 'no'. Se puede activar en Legales. OJO: la Ley 24.788 art. 6 la
+    exige en publicidad de bebidas alcohólicas; se le avisó al dueño y fue su decisión.
+  - Cuotas sin interés: al pie va "CFT 0,00 % · TNA 0,00 % · TEA 0,00 %. El precio en
+    cuotas es igual al precio de contado." (Res. 4/2025 pide contado, cuotas y CFT).
+  - "A4 · 10 ofertas (temático)" se unificó con el de 10: ahora cualquier fondo va en
+    cualquier formato. Los estados guardados con a4_10_tema se pasan a a4_10.
+  - Medios de pago sin logos de terceros (colores e íconos genéricos); se puede subir
+    el logo oficial en la promo.
+  - Destinos: A4 = PNG 2480×3508 + PDF; Post Facebook/Instagram = 1080×1350; Canal y
+    chats de WhatsApp = 1620×2025 (más nitidez, WhatsApp comprime); Estado/Historia =
+    1080×1920. En redes los productos se reparten (post_4: de a 4; story_3: de a 3).
+    Si hay más de una imagen, todo va a una carpeta nueva del Escritorio.
+
+Qué se agregó (código)
+  - 01_util.js: pctReal, aCentavos, precioATexto, ofertaDesde, calendario (Pascua,
+    n-ésimo domingo, Black Friday, proximasFechas).
+  - 04_flyer.js: leyenda del precio configurable (PRECIO_CFG, drawAntes, chipAhorro,
+    filaAntes), tarjeta vertical drawCardV, franja de medios de pago en el pie.
+  - 04b_temas.js: 7 fondos nuevos con decoración, SUGERENCIAS de títulos por temática,
+    PAGOS (9 medios), cuotas, promoLegal, LEYENDA_CUOTAS, drawFranjaPagos.
+  - 04c_formatos.js: a4_12, a4_16, post_4, mensaje_a4/post/story, DESTINOS, FAMILIA,
+    planDestino (reparte productos por destino), estadoParaPagina.
+  - 06_state.js: v5 (precio, pagos, mensaje, promo.cuotas, 16 casilleros).
+  - 07_app.js: galería de fondos con miniaturas, "Se vienen estas fechas", Antes·%·Oferta,
+    Leyenda del precio, Descuento para todos, Pegar desde Excel, insignias rápidas,
+    sección Mensaje, zoom, deshacer/rehacer, versión y novedades.
+  - 08_programa.js: Finalizar con destinos, guardado en carpeta, historial de precios.
+  - servidor.py: /api/guardar acepta carpeta (nueva o existente); /api/abrir-archivo
+    abre carpetas dentro del Escritorio; la versión sale de programa/VERSION.txt.
+
+Probado (3/10/2026, Firefox headless)
+  - Autoprueba: 69 comprobaciones OK (formatos, 21 fondos, centavos, % hacia abajo,
+    cuotas, fechas móviles, pegar planilla, insignias, reparto por destino, versión).
+  - Programa completo con servidor (_trabajo/ui_servidor.py): 49 de 49 OK, incluye
+    finalizar con los 4 destinos y comprobar las medidas de cada PNG.
+  - No probado todavía: Windows, Chrome/Edge, impresión real, verlo en un celular.
+
+Cómo se numeran las versiones (para Claude o quien siga)
+  1. Cambiar el número en editor/VERSION (2.0 → 2.1 para mejoras chicas, 3.0 grandes).
+  2. Agregar arriba en CAMBIOS.txt qué cambió, en lenguaje simple.
+  3. cd editor && python3 build.py   (escribe la pantalla y programa/VERSION.txt)
+  4. python3 editor/empaquetar.py    (ZIP _entregas/Rivero-Market-Folletos-vX.Y-fecha.zip)
+  5. Copiar los archivos del programa a la copia del Escritorio del dueño.
+  La pantalla muestra "Versión X.Y · fecha y hora del armado"; si el servidor tiene otra
+  versión (se copió solo una parte), avisa.
+
+Versión 2.1 (corrección pedida por el dueño, mismo día)
+  - "No me estás colocando descuento + descuento": el dueño quiere SIEMPRE
+    precio normal − % de descuento = precio final, con CUALQUIER medio de pago (QR de
+    Mercado Pago, Visa, Mastercard, solo efectivo, etc.). El medio de pago es solo la
+    condición: va en la barra de arriba, en el pie y debajo de cada precio ("PAGANDO
+    CON QR MP", "CON TARJETA VISA", "SOLO EN EFECTIVO"…).
+  - promo.modo por defecto = 'incluido'; los estados guardados con 'extra' se pasan a
+    'incluido' (ESTADO_VERSION 6). El modo 'extra' (descuento adicional) quedó solo como
+    opción "poco común" con aviso. Esto REEMPLAZA la decisión de la v1 de la sección 3.
+  - Casilleros: Precio normal · % desc. · Precio final. La placa dice FINAL.
+  - Autoprueba 73 OK; programa completo 49 de 49 OK.
+
+Versión 2.2 (mismo día)
+  - Condición de pago POR PRODUCTO (p.pago): "Como el folleto" / "Para todos" / un medio
+    propio (MP, MODO, efectivo, transferencia, débito, crédito, Visa, Mastercard,
+    Tarjetas). promoDeProducto/chipProducto en 04b_temas.js. Si hay condiciones distintas,
+    el pie agrega "Cada precio con descuento vale solo con el medio de pago indicado
+    debajo del precio."
+  - Insignias 2x1/3x2/2.ª al 50 %/70 % en rojo con letra blanca; tamaño ajustable
+    (S.precio.insignia, 80–200 %, por defecto 130 %); la nota de cantidad grande y oscura,
+    y si no entra al lado de la leyenda de pago va abajo (nunca se aprieta la letra).
+  - Validación del % (entre 0 y 100), aviso flotante más arriba (no tapa el zoom),
+    copias de "Mis folletos" con segundos en el nombre (no se pisan).
+  - Autoprueba 74 OK; programa completo 49 de 49 OK.
+
+Versión 2.3 (mismo día)
+  - Pedido: "armar el folleto de 10 productos para Facebook y para imprimir, pero que
+    también se generen 10 folletos individuales para ir enviando de forma manual cada 1
+    hora cada uno de esos productos" (Estados de WhatsApp, Historias, etc.).
+  - Destinos nuevos "story1" (Estados e Historias, 1080×1920) y "post1" (Facebook y canal
+    de WhatsApp, 1620×2025): una imagen por producto con el formato destacado_* y el
+    título del folleto en el cartel (no "OFERTA IMPERDIBLE"). Numeradas "01 Nombre…" para
+    mandarlas en orden. No aparecen en folletos de mensaje ni colección.
+  - Autoprueba 76 OK; programa completo 50 de 50 OK.
+
+Versión 2.4 (mismo día)
+  - Recuadro "Barra de la promo" (cajaBarra en 07_app.js) con vista previa en vivo:
+    medio de pago, texto propio (promo.textoBarra), %, cuotas, Desde/Hasta, agotar stock,
+    mostrar u ocultar la barra (promo.verBarra). Clic en la barra del folleto (HITS tipo
+    'barra') lleva ahí.
+  - Pedido del dueño: "las fechas deben editarse de un solo lugar, para que no haya en un
+    lado una fecha y en otro otra". Hay un único input de fechas (S.vigencia) y todo lo
+    dibuja desde ahí. El % de la barra se propaga a los productos "como el folleto" que
+    tenían el % anterior; la revisión avisa si queda alguno distinto.
+  - Autoprueba 77 OK; programa completo 50 de 50 OK.
+
+Versión 2.5 (mismo día)
+  - drawSello reescrito: renglón de arriba, grande y de abajo con espacios calculados
+    (no se superponen). cajaSello en 07_app.js: vista previa, 3 renglones prellenados con
+    lo automático (al escribir pasa a "texto propio"), botones rápidos, volver a
+    automático. HITS tipo 'sello' (clic en el folleto lleva al recuadro).
+  - OJO pruebas: hay más de un <canvas> en la página (vistas previas de barra y sello);
+    las pruebas usan '.stage canvas' para el folleto.
+  - Autoprueba 77 OK; programa completo 50 de 50 OK.
+
+Versión 2.6 (mismo día)
+  - Pedido: el dueño trabaja con ~90% de productos que compra del mayorista (Maxiconsumo)
+    y pidió descargar en masa las fotos del catálogo del mayorista a su carpeta.
+  - DECISIÓN: no se hizo el bajador masivo. Los Términos y Condiciones de Maxiconsumo
+    (punto 11, leído el 3/10/2026 en /sucursal_moreno/terminos-y-condiciones) dicen que
+    sus imágenes "sólo tienen como destino la exhibición de los productos dispuestos para
+    la venta" y que "se encuentra prohibida cualquier reproducción, modificación o
+    distribución". El robots.txt permite navegar, pero eso no habilita copiar el catálogo,
+    y que una foto aparezca en Google no da permiso para usarla. Se armó la alternativa de
+    abajo. Si hay permiso escrito de Maxiconsumo, o fotos oficiales de las marcas o del
+    preventista, ahí sí se puede armar la descarga por categorías.
+  - ALTERNATIVA HECHA: "Procesar fotos en lote". Endpoint /api/procesar en servidor.py
+    (reusa recortar.py / rembg, isnet-general-use; serializa con LOCK_IA, guarda PNG
+    recortado con nombre limpio en productos/). En la pantalla: botón "✂ Fotos nuevas"
+    (seccionProductos, solo con servidor activo) y casilla "Quitar el fondo con IA" en
+    "Agregar fotos" (agregarFotosALaCarpeta), tildada por defecto, con progreso y respaldo
+    (si la IA falla en una, se sube con su fondo). botIA se oculta si la foto ya es alfa.
+  - Autoprueba 77 OK; programa completo 53 de 53 OK (incluye subir una foto cruda y
+    verificar que queda PNG transparente con el nombre puesto).

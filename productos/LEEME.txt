@@ -1,0 +1,31 @@
+CARPETA DE PRODUCTOS · Rivero Market
+=====================================
+
+Acá van las fotos de tus productos. El programa de folletos las muestra en el
+buscador: elegís el casillero, buscás el producto por nombre y se carga solo.
+
+CÓMO SE USA
+ 1. Copiá tus fotos en esta carpeta (JPG, PNG o WEBP).
+ 2. El NOMBRE DEL ARCHIVO es el nombre del producto. Ponele nombres claros:
+        Fernet Branca 750 ml.png
+        Yerba Taragüí 1 kg.jpg
+        Jamón cocido natural.webp
+    Si el nombre tiene "(sin fondo)" o "(muestra)" al final, esa parte no sale en el folleto.
+ 3. Podés ordenarlas en subcarpetas: cada subcarpeta aparece como una categoría
+    en el buscador (por ejemplo: Bebidas, Fiambres, Almacén, Repostería).
+ 4. También podés agregar fotos desde el programa, con el botón «＋ Agregar fotos».
+
+FOTOS QUE QUEDAN MEJOR
+ - Un solo producto por foto, de frente, bien iluminado y sin sombras fuertes.
+ - Fondo blanco liso: el programa lo saca solo.
+ - Si la foto tiene otro fondo, en «Más opciones» del casillero hay un botón
+   «Quitar fondo con IA» que crea una copia sin fondo en esta misma carpeta.
+ - Las fotos con VARIOS productos juntos van en la subcarpeta «Fotos grandes»
+   y se usan en los folletos de «Mostrar productos».
+
+NOTAS
+ - Las carpetas que empiezan con guion bajo (_) o con punto (.) no se muestran.
+ - Si cambiás el nombre o movés una foto que ya usaste en un folleto guardado,
+   el folleto te va a pedir que elijas el producto de nuevo.
+ - Los nombres de los productos de «Repostería» se leyeron de las etiquetas de las fotos:
+   corregí los que estén mal con solo renombrar el archivo.

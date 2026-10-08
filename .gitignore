@@ -1,0 +1,48 @@
+# Solo se sube a GitHub lo que hace falta para la herramienta.
+# Queda solo en la PC: pruebas locales (_trabajo), entregas, respaldos, la investigación
+# (tiene folletos de otros comercios, que no son nuestros) y los originales del cliente.
+/*
+!/.gitignore
+!/.gitattributes
+!/.github/
+!/README.md
+!/LICENSE
+!/CAMBIOS.txt
+!/CONTEXTO_DEL_PROYECTO.txt
+!/LEEME.md
+!/LEEME.txt
+!/iniciar.bat
+!/iniciar.sh
+!/instalar-acceso-directo-linux.sh
+!/editor/
+!/programa/
+!/productos/
+!/datos/
+!/logo/
+!/assets/
+!/blender/
+!/herramientas/
+!/docs/
+
+# archivos que se generan al armar (build.py, armar_sitio.py)
+/editor/_publicar.html
+/editor/_prueba.html
+/editor/ofertas_rivero_market.html
+/programa/web/
+/programa/VERSION.txt
+/_site/
+
+# datos del programa local de cada PC (la nube usa /datos)
+/programa/datos/
+
+# fuentes grandes que no hacen falta para armar la herramienta
+/blender/render/
+/assets/colecciones/*.png
+/logo/original_referencia.png
+
+__pycache__/
+*.pyc
+*.tmp
+.DS_Store
+Thumbs.db
+desktop.ini
