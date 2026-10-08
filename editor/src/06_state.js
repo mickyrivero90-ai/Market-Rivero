@@ -44,6 +44,7 @@ function estadoDemo() {
     mensaje: { kicker: '¡Aprovechá!', titulo: 'Descuento en todos los productos', grande: '', grande2: '', condicion: '', texto: 'Válido para todas tus compras en el local.' },
     destacado: { mensaje: 'OFERTA IMPERDIBLE', mensaje2: 'SOLO EN EFECTIVO' },
     legal: { banda: true, bandaTam: 1, letraChica: true, alcohol: 'no', stock: '' },
+    cuadros: { sep: 1, margen: 1, foto: 1, estrella: 1, alinear: 'auto', dx: 0, dy: 0 },
     opciones: { pdf: true, destinos: ['a4', 'post', 'story'] },
     coleccion: {
       mensaje: 'Aquí tenemos todos los productos para tus recetas', kicker: 'Para reposteras y reposteros', ocasion: 'Especial Día de la Madre',
@@ -98,6 +99,7 @@ function normalizarEstado(S, op = {}) {
   out.promo.barra = { ...base.promo.barra, ...((S.promo || {}).barra || {}) };
   out.destacado = { ...base.destacado, ...(S.destacado || {}) };
   out.legal = { ...base.legal, ...(S.legal || {}) };
+  out.cuadros = { ...base.cuadros, ...(S.cuadros || {}) };
   if (!(S.v >= 6) && out.promo.modo === 'extra') out.promo.modo = 'incluido';   // v2.1: el % ya está en el precio final; nunca se suma otro descuento sin querer
   if (!(S.v >= 5)) { out.legal.alcohol = 'no'; if (S.coleccion) S.coleccion.alcohol = false; }   // v2.0: la leyenda de alcohol viene apagada (se puede volver a activar en Legales)
   out.opciones = { ...base.opciones, ...(S.opciones || {}) };

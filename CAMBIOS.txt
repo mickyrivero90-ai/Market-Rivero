@@ -5,6 +5,22 @@ Desde la 3.0, la herramienta online (https://mickyrivero90-ai.github.io/Market-R
 se actualiza sola. Si usás el programa de la PC y muestra un número menor, bajá el nuevo
 desde la herramienta online (⋯ Más → Programa para usar sin internet).
 
+Versión 3.2 · 8 de octubre de 2026
+- Cuadros de productos (paso 2, caja nueva «Cuadros de productos: tamaño y dónde va el precio»):
+    · Separación entre cuadros (10 % a 300 %) y margen a los costados (40 % a 200 %). Con más
+      separación o más margen, los cuadros quedan más chicos. En los folletos para imprimir, la
+      revisión avisa si el margen baja de 70 % (muchas impresoras no llegan al borde de la hoja).
+    · Producto estrella (formatos «Estrella + 4» e historia): el cuadro grande de 70 % a 130 %;
+      los de abajo usan lo que queda.
+    · Fotos de los productos: todas juntas, de 70 % a 130 % (como el tamaño de cada foto). Las
+      botellas altas crecen hasta donde deja la separación, sin meterse en otro cuadro.
+- Dónde va el precio adentro de cada cuadro: como venía, a la izquierda, al centro o a la
+  derecha, y además correrlo a los costados o subirlo y bajarlo. Con él van el precio anterior,
+  «AHORRÁS», la unidad, la condición de pago y la nota; el nombre del producto se acomoda en el
+  lugar que queda (en los cuadros verticales, con la misma alineación que el precio).
+- «↺ Cuadros como venían» vuelve todo a como estaba. Sin tocar nada, los folletos salen
+  exactamente igual que en la 3.1.
+
 Versión 3.1 · 8 de octubre de 2026
 - Tamaños a gusto (paso 2, «Leyenda del precio» → Tamaños):
     · Precio final: la placa con el número, de 70 % a 160 %. Si a lo ancho no entra, crece

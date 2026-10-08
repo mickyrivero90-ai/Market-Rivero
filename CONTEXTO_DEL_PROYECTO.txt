@@ -825,3 +825,60 @@ Cómo quedó (código)
 Probado: autoprueba 89 OK (12 nuevas), programa local 53 de 53, versión online 60 de 60;
 muestras antes/después en _trabajo/tmp/muestras31 (solo en la PC).
 
+16. VERSIÓN 3.2: CUADROS DE PRODUCTOS Y POSICIÓN DEL PRECIO (8/10/2026)
+---------------------------------------------------------------------
+Pedido del dueño: poder ajustar los tamaños de los «cuadros» de productos (lo que separa el cuadro
+de un producto del de otro) y mover el precio dentro del cuadro del producto.
+Cómo quedó (código)
+  - 04_flyer.js: CUADROS_CFG (sale de S.cuadros en renderFlyer): sep 0–3, margen 0,3–2,5,
+    foto 0,6–1,5, estrella 0,6–1,5, alinear 'auto'|'izquierda'|'centro'|'derecha', dx −40…40 y
+    dy −20…50 (en % del ancho/alto del cuadro; dy positivo = más arriba).
+    gridCards multiplica las separaciones y aplica conMargen(); las estrellas (A4/Post estrella + 4,
+    historia, cartel) y layoutDestacado usan conMargen(); altoEstrella() cambia el alto del cuadro
+    grande y deja al menos lugar para la grilla.
+    drawProductArt: zoom × foto. Si foto > 1, la foto crece hasta la separación de arriba (o.aire,
+    que pasa gridCards) y no se sale del cuadro por los costados (o.lim).
+    Precio movible: si precioMovido(), cada tarjeta llama a precioMovidoCard / precioMovidoV /
+    precioMovidoWide / precioMovidoHeroH / precioMovidoHeroV. Arman el bloque del precio en filas
+    con piezas (piezaPlaca, piezaAntes, piezaAhorro, piezaPromo, piezaChip, piezaTexto) y lo ubican
+    con bloqueFilas(): alineación en la zona del precio, corrimiento elegido y topes para no salir
+    del cuadro ni tapar del todo el nombre. Con 'auto' y sin corrimiento se usa el código de siempre:
+    las imágenes por defecto son idénticas a las de la 3.1 (comparadas píxel a píxel en los 11
+    formatos con productos).
+  - 06_state.js: S.cuadros por defecto { sep 1, margen 1, foto 1, estrella 1, alinear 'auto', dx 0,
+    dy 0 } (normalizarEstado lo completa en los folletos viejos).
+  - 07_app.js: cajaCuadros() en el paso 2, debajo de «Leyenda del precio» (se recuerda si está
+    abierta); aviso en la revisión si el margen de un A4 baja de 70 %; 9 comprobaciones nuevas.
+Probado: autoprueba 100 OK (9 nuevas), panel 8 de 8 (scratchpad), programa local 53 de 53, versión online
+60 de 60 (Firefox y Chrome); por defecto, idéntico a la 3.1 en los 11 formatos con productos; muestras en
+_trabajo/tmp/muestras32 (solo en la PC).
+
+17. RELEVAMIENTO DE MEJORAS (8/10/2026): LO QUE QUEDA PARA HACER
+-----------------------------------------------------------------
+El dueño pidió revisar todo. Se revisó el código y se armaron folletos de prueba. En orden:
+Errores que llegan al cliente o hacen perder datos (lo primero):
+  1. qrMotif (fondo Mercado Pago) y el ícono QR de la barra usan clearRect, y la llave inglesa
+     usa destination-out: dejan píxeles transparentes, que salen negros en el PDF (JPG) y al
+     pasar a JPG en redes. Además el «QR» de adorno parece uno de verdad.
+  2. generarPDF toma el tamaño de la página del formato en pantalla, no del A4 que se imprime:
+     desde un formato de redes el PDF sale de 810×1012 pt con la imagen estirada.
+  3. planDestino: en redes no sale lo que se ve (Post estrella + 4 → post de 4 sin estrella;
+     salen productos «que no entran»; estrellas falsas y rellenos en las historias).
+  4. Abrir un folleto (Mis folletos, .json, el de la otra PC) pisa S.comercio (datos del local).
+  5. IMG.error no se reintenta: una foto que no cargó una vez sale vacía y sin aviso.
+  6. Fotos con IA: la ruta pasa de .jpg a .png y se pierde el precio recordado.
+Otros: el ejemplo editado no se guarda; fechas sin control (vencida, desde > hasta, falta
+«desde»); % con coma en la barra (12,5 → 125); «SOLO EN EFECTIVO» de fábrica en un producto
+con promo MP; combo con «ANTES» = suma de ofertas; «,00» en la placa; -14 % con 15 % y centavos;
+palabra muy larga repetida.
+Diseño: fotos chicas en el post de 4 y A4 de 16 (modo limpio), botella sobre la barra en
+historias, adornos sobre el logo, franja oscura vacía abajo de las historias, «x kg» al lado del
+precio, QR del canal chico en redes.
+Uso: botones de arriba en el celular, vista previa chica en 1366×768, aviso de precios «de la
+última vez», tamaño de foto y unidad escondidos, Mis folletos con copias repetidas, revisión que
+mezcla problemas con recordatorios.
+Online: fotos desde raw.githubusercontent.com (límite sin llave), borrador cada minuto a un repo
+público, llave sin vencimiento en un dominio compartido, Brave sin carpeta y con dos descargas,
+aviso falso de versión nueva al subir fotos, ZIP del programa con todas las fotos.
+Ideas: pedidos por WhatsApp y horario en el folleto, carteles de góndola y tarjeta de sellos,
+precio por 100 g, página pública de ofertas, sticker «¡Último día!», medir qué funciona.

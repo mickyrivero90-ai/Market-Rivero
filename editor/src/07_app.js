@@ -522,6 +522,7 @@ function calcularRevision() {
     if (g !== 'mensaje') info('El precio “Antes” tiene que ser el real', 'Si nunca lo cobraste, es publicidad engañosa (Dto. 274/2019, art. 11). El % que se muestra se redondea hacia abajo, así nunca anunciás más descuento que el real.');
     if (g !== 'mensaje') info('Precios finales', 'Mostrá siempre el precio final (con impuestos incluidos). Si hay precio por kg o litro, ponelo en letra menor.');
   }
+  if ((+(S.cuadros || {}).margen || 1) < 0.7 && L.pdf === 'A4' && L.grupo !== 'mensaje' && L.grupo !== 'coleccion') warn('Los cuadros quedaron muy pegados al borde de la hoja', 'Muchas impresoras no imprimen los últimos 4 o 5 mm: subí el margen a 70 % o más en «Cuadros de productos».');
   if (S.legal.banda && (+S.legal.bandaTam || 1) < 1 && (L.pdf === 'A4' || planDestino(S, 'a4').length)) warn('La letra de la banda quedó chica para A4', 'La Res. 446/2025 pide letras de al menos 4 mm en el folleto impreso: subí el tamaño a 100 % en «Pie del folleto».');
   if (S.legal.letraChica === false && g !== 'coleccion') info('Letra chica apagada', 'Las fechas y la condición de pago se siguen viendo en la barra de arriba. Las demás condiciones tienen que estar en: ' + (S.comercio.consulta || 'el lugar que indica la banda') + '.');
   if (S.legal.banda) ok('Banda legal al pie activada', 'Res. 446/2025: ancho completo, mínimo 5 % del alto y letras de 4 mm (en A4). Asegurate de que la info esté en: ' + (S.comercio.consulta || '—'));
@@ -561,7 +562,7 @@ function seccionProductos() {
     : null;
   return seccion(paso(2, 'Productos y precios'), `${L.slots} ${L.slots === 1 ? 'casillero' : 'casilleros'}`,
     h('p', { class: 'hint' }, CARPETA.activa ? `Tocá un casillero del folleto, o la foto de la lista, para elegir el producto ${CARPETA.nube ? 'de tus fotos en la nube' : 'de tu carpeta'}. El nombre y el último precio se cargan solos.` : 'Tocá un casillero para subir su foto. Podés pegar una imagen con Ctrl+V.'),
-    cajaLeyendaPrecio(), acc, ayudaFotos, DOM.prods, h('datalist', { id: 'lista-unidades' }, ...UNIDADES.map(u => h('option', { value: u }))));
+    cajaLeyendaPrecio(), cajaCuadros(), acc, ayudaFotos, DOM.prods, h('datalist', { id: 'lista-unidades' }, ...UNIDADES.map(u => h('option', { value: u }))));
 }
 // ── pegar precios desde una planilla (Excel, Google Sheets o texto) ──
 const esNumeroPrecio = c => /^\$?\s*[\d.,]+\s*$/.test(String(c).trim()) && /\d/.test(c);
@@ -677,6 +678,38 @@ function cajaLeyendaPrecio() {
       tamInsignias(),
       h('div', { class: 'todos' }, h('span', null, 'Descuento para todos:'), h('span', { class: 'pct' }, pctTodos), h('button', { class: 'btn small primary', type: 'button', onclick: aplicarTodos }, 'Calcular ofertas')),
       h('p', { class: 'hint', style: 'margin:0' }, 'Precio normal − % de descuento = precio final (con centavos si los hay, sin redondear). El precio final es el que paga el cliente: no se le resta nada más. También podés poner un % distinto en cada producto.')));
+}
+/** Cuadros de productos: separación, margen, fotos, producto estrella y dónde va el precio adentro de cada cuadro. */
+let CUADROS_ABIERTO = false;
+const CUADROS_NORMAL = { sep: 1, margen: 1, foto: 1, estrella: 1, alinear: 'auto', dx: 0, dy: 0 };
+function cajaCuadros() {
+  const C = S.cuadros || (S.cuadros = { ...CUADROS_NORMAL }), L = L_ACTUAL(), conEstrella = ['a4_star4', 'post_star4', 'story_3'].includes(S.formato);
+  const alin = h('div', { class: 'quick', role: 'group', 'aria-label': 'Dónde va el precio' });
+  const pintarAlin = () => alin.replaceChildren(...[['auto', 'Como venía'], ['izquierda', '⇤ Izquierda'], ['centro', 'Centro'], ['derecha', 'Derecha ⇥']].map(([v, t]) =>
+    h('button', { type: 'button', class: 'q' + ((C.alinear || 'auto') === v ? ' on' : ''), 'aria-pressed': String((C.alinear || 'auto') === v), onclick: () => { C.alinear = v; pintarAlin(); cambio(); } }, t)));
+  pintarAlin();
+  const corrimiento = (etq, key, min, max, txt) => {
+    const out = h('b', null), pintar = () => { out.textContent = txt(+C[key] || 0); };
+    const r = h('input', { type: 'range', min: String(min), max: String(max), step: '1', value: String(+C[key] || 0), 'aria-label': etq, oninput: e => { C[key] = +e.target.value; pintar(); cambio(); } });
+    pintar();
+    return h('div', { class: 'fld tam' }, h('span', null, etq + ': ', out), h('span', { class: 'tam-fila' }, r,
+      h('button', { type: 'button', class: 'btn small ghost', title: 'Volver a su lugar', 'aria-label': 'Volver a su lugar: ' + etq, onclick: () => { C[key] = 0; r.value = '0'; pintar(); cambio(); } }, '↺')));
+  };
+  return h('details', { class: 'caja-aparte cuadros', id: 'caja-cuadros', open: CUADROS_ABIERTO, ontoggle: e => { CUADROS_ABIERTO = e.target.open; } },
+    h('summary', null, 'Cuadros de productos: tamaño y dónde va el precio'),
+    h('div', { class: 'stack', style: 'margin-top:10px' },
+      h('p', { class: 'hint', style: 'margin:0' }, 'Los cuadros son los recuadros de cada producto. Lo que elijas acá vale para todo el folleto y también para las imágenes de redes.'),
+      h('p', { class: 'lab', style: 'margin:4px 0 0' }, 'Tamaño de los cuadros'),
+      sliderTam('Separación entre cuadros', C, 'sep', 0.1, 3, 1, { ayuda: 'más separación = cuadros más chicos' }),
+      sliderTam('Margen a los costados', C, 'margen', 0.4, 2, 1, { ayuda: L.pdf === 'A4' ? 'para imprimir, no menos de 70 %' : 'más margen = cuadros más angostos' }),
+      conEstrella ? sliderTam('Producto estrella (el cuadro grande)', C, 'estrella', 0.7, 1.3, 1, { ayuda: 'los de abajo usan lo que queda' }) : null,
+      sliderTam('Fotos de los productos', C, 'foto', 0.7, 1.3, 1, { ayuda: 'todas juntas; las botellas altas crecen hasta donde deja la separación' }),
+      h('p', { class: 'lab', style: 'margin:8px 0 0' }, 'Dónde va el precio adentro de cada cuadro'),
+      h('div', { class: 'fld tam' }, h('span', null, 'Alineación'), alin),
+      corrimiento('Correr a los costados', 'dx', -30, 30, v => (v === 0 ? 'en su lugar' : v < 0 ? `${-v} % a la izquierda` : `${v} % a la derecha`)),
+      corrimiento('Subir o bajar', 'dy', -10, 40, v => (v === 0 ? 'en su lugar' : v > 0 ? `${v} % más arriba` : `${-v} % más abajo`)),
+      h('p', { class: 'hint', style: 'margin:0' }, 'El nombre del producto se acomoda en el lugar que deja el precio. Si algo no entra, el precio frena en el borde del cuadro.'),
+      h('button', { class: 'btn small ghost', type: 'button', onclick: () => { Object.assign(C, CUADROS_NORMAL); CUADROS_ABIERTO = true; construirPanel(); cambio(); const c = $('#caja-cuadros', DOM.panel); if (c) c.scrollIntoView({ block: 'center' }); } }, '↺ Cuadros como venían')));
 }
 function seccionFotos() {
   DOM.prods = h('div', { class: 'prods' });
@@ -1220,6 +1253,36 @@ async function autotest() {
       t('legales viejos sin repetir', normalizarEstado({ v: 6, comercio: { legales: 'Imágenes ilustrativas. Precios finales en pesos argentinos.' } }).comercio.legales === 'Imágenes ilustrativas.');
       PRECIO_CFG = { ...PCbak, antes: 'normal' }; const wN = measureAntes(cx, { int: '20.600', dec: '' }, 28); PRECIO_CFG = { ...PCbak, antes: 'antes' }; const wA = measureAntes(cx, { int: '20.600', dec: '' }, 28); PRECIO_CFG = PCbak;
       t('mide bien «PRECIO NORMAL» (una sola medida)', wN > wA, Math.round(wN) + ' > ' + Math.round(wA));
+    }
+    { // v3.2: cuadros de productos y precio movible
+      const c = document.createElement('canvas'), CUbak = S.cuadros;
+      t('cuadros: valores de fábrica', JSON.stringify(normalizarEstado({ v: 7 }).cuadros) === JSON.stringify(CUADROS_NORMAL));
+      const cajas = (formato, cu) => { renderFlyer(c, { ...S, formato, cuadros: { ...CUADROS_NORMAL, ...cu } }, { scale: 0.2, getImg, exportar: true }); return HITS.filter(x => x.tipo === 'producto'); };
+      const r0 = cajas('a4_8', {}), r2 = cajas('a4_8', { sep: 2 }), rm = cajas('a4_8', { margen: 0.5 });
+      t('cuadros: de fábrica no cambia nada', !precioMovido() && r0[0].x === 44 && Math.round(r0[1].x - r0[0].x - r0[0].w) === 22, r0[0].x + ' · ' + (r0[1].x - r0[0].x - r0[0].w));
+      t('cuadros: separación', Math.round(r2[1].x - r2[0].x - r2[0].w) === 44 && Math.round(r2[2].y - r2[0].y - r2[0].h) === 36);
+      t('cuadros: margen a los costados', rm[0].x === 22 && Math.round(rm[1].x + rm[1].w) === 1240 - 22, rm[0].x + ' · ' + (rm[1].x + rm[1].w));
+      const e0 = cajas('a4_star4', {}), e1 = cajas('a4_star4', { estrella: 1.2 });
+      t('cuadros: producto estrella más grande', e1[0].h > e0[0].h && e1[1].h < e0[1].h, Math.round(e0[0].h) + ' → ' + Math.round(e1[0].h));
+      const hm = cajas('destacado_post', { margen: 1.5 });
+      t('cuadros: margen también en un solo producto', hm[0] && Math.round(hm[0].x) === 51, hm[0] && hm[0].x);
+      // el bloque del precio: alineación, corrimiento y topes
+      const CFGbak = CUADROS_CFG, pos = (a, cu = {}) => { CUADROS_CFG = { ...CUADROS_NORMAL, ...cu }; let x0 = null, y0 = null;
+        const b = bloqueFilas([{ h: 40, items: [{ w: 50, dib: (x, y) => { x0 = x; y0 = y; } }] }], { x: 100, w: 200, bottom: 300, lim: { l: 20, r: 400, t: 120, b: 320 } }, a, 1000, 1000);
+        CUADROS_CFG = CFGbak; return { x0, y0, b }; };
+      t('precio: izquierda / centro / derecha', pos('izquierda').x0 === 100 && pos('centro').x0 === 175 && pos('derecha').x0 === 250);
+      t('precio: correr a los costados', pos('izquierda', { dx: 5 }).x0 === 150 && pos('derecha', { dx: 30 }).x0 === 350, pos('derecha', { dx: 30 }).x0);
+      t('precio: subir y bajar', pos('izquierda', { dy: 10 }).y0 === 160 && pos('izquierda', { dy: 40 }).b.top === 120 && pos('izquierda', { dy: -10 }).b.bottom === 320, pos('izquierda', { dy: 40 }).b.top);
+      t('precio: «como venía» no se mueve', !(CUADROS_CFG = { ...CUADROS_NORMAL }, precioMovido()) && (CUADROS_CFG = { ...CUADROS_NORMAL, alinear: 'derecha' }, precioMovido()));
+      CUADROS_CFG = CFGbak;
+      // todos los formatos con productos, con valores extremos, sin errores
+      let malos = [];
+      const fmts = Object.keys(LAYOUTS).filter(f => !LAYOUTS[f].oculto && !['coleccion', 'mensaje'].includes(LAYOUTS[f].grupo));
+      for (const f of fmts) for (const cu of [{ alinear: 'derecha', dx: 30, dy: 40, sep: 3, margen: 2, foto: 1.3, estrella: 1.3 }, { alinear: 'centro', dx: -30, dy: -10, sep: 0.1, margen: 0.4, foto: 0.7, estrella: 0.7 }, { alinear: 'izquierda', dy: 15 }]) {
+        try { const r = cajas(f, cu); if (r.some(x => !(x.w > 40 && x.h > 40 && Number.isFinite(x.x + x.y)))) malos.push(f); } catch (e) { malos.push(f + ': ' + e.message); }
+      }
+      t('cuadros: todos los formatos con valores extremos', !malos.length, malos.join(' · ') || fmts.length + ' formatos');
+      S.cuadros = CUbak; renderFlyer(c, S, { scale: 0.2, getImg, exportar: true });
     }
   } catch (e) { t('excepción', false, e.message + ' ' + (e.stack || '').split('\n')[1]); }
   const pre = document.createElement('pre'); pre.id = 'autotest'; pre.textContent = out.join('\n'); pre.style.cssText = 'position:fixed;left:0;top:0;z-index:99;background:#111;color:#9f9;padding:10px;margin:0;font:13px monospace;max-width:100vw;overflow:auto;max-height:100vh'; document.body.append(pre);

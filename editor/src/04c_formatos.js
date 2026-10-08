@@ -122,8 +122,9 @@ function layoutDestacado(ctx, S, T, env, kind) {
   const fp = footerPlan(ctx, S, W, H, P.foot), fh = fp.total, fy = H - SAFE - fh;
   if (SAFE) { ctx.fillStyle = T.footer; ctx.fillRect(0, H - SAFE - 2, W, SAFE + 2); }
   const heroY = hb + P.heroGap, bottom = fy - 24;
-  casillero(ctx, env, 'producto', 0, { x: P.M, y: heroY, w: W - 2 * P.M, h: bottom - heroY });
-  drawHeroV(ctx, { x: P.M, y: heroY, w: W - 2 * P.M, h: bottom - heroY }, prodAt(S, 0), T, env, { big: kind === 'post' ? 0.9 : 1.02, imgFrac: kind === 'post' ? 0.45 : 0.46, pop: 26, sticker: false });
+  const caja = conMargen({ x: P.M, y: heroY, w: W - 2 * P.M, h: bottom - heroY });
+  casillero(ctx, env, 'producto', 0, caja);
+  drawHeroV(ctx, caja, prodAt(S, 0), T, env, { big: kind === 'post' ? 0.9 : 1.02, imgFrac: kind === 'post' ? 0.45 : 0.46, pop: 26, sticker: false });
   if (D.mensaje2) drawBadge(ctx, P.M + P.bR * 0.98 + 10, heroY + P.bR * 1.02 + 8, P.bR, { etiqueta: D.mensaje2 }, T, 0, -0.16, 1);
   if (T.decorTop) T.decorTop(ctx, W, H, P.bY + P.bH, { footerY: fy });
   drawFooter(ctx, S, T, env, { x: 0, y: fy, w: W }, fp, { m: P.M });
