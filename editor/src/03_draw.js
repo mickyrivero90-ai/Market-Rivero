@@ -86,19 +86,16 @@ function wrapFit(ctx, str, mk, max, min, maxW, maxLines, tracking = 0) {
     }
   }
   ctx.font = mk(min);                               // no entra: recorta con puntos suspensivos
-  const lines = []; let cur = '';
+  const lines = []; let cur = '', sobra = false;
   for (const w of words) {
     const t = cur ? cur + ' ' + w : w;
-    if (measure(ctx, t, tracking) <= maxW) cur = t;
-    else { lines.push(cur || w); cur = w; if (lines.length === maxLines) break; }
+    if (!cur || measure(ctx, t, tracking) <= maxW) cur = t;   // una palabra más larga que el renglón va sola (y se recorta abajo)
+    else { lines.push(cur); cur = w; if (lines.length === maxLines) { sobra = true; cur = ''; break; } }
   }
-  if (lines.length < maxLines && cur) lines.push(cur);
-  let last = lines[maxLines - 1] || lines[lines.length - 1];
-  const shown = lines.slice(0, maxLines);
-  if (words.join(' ').length > shown.join(' ').length) {
-    while (last.length > 1 && measure(ctx, last + '…', tracking) > maxW) last = last.slice(0, -1);
-    shown[shown.length - 1] = last.replace(/\s+$/, '') + '…';
-  }
+  if (cur) lines.push(cur);
+  const puntos = s => { while (s.length > 1 && measure(ctx, s + '…', tracking) > maxW) s = s.slice(0, -1); return s.replace(/\s+$/, '') + '…'; };
+  const shown = lines.map(l => (measure(ctx, l, tracking) > maxW ? puntos(l) : l));
+  if (sobra && !shown[shown.length - 1].endsWith('…')) shown[shown.length - 1] = puntos(shown[shown.length - 1]);
   return { size: min, lines: shown };
 }
 

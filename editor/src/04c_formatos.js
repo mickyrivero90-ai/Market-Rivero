@@ -64,7 +64,7 @@ function layoutMensaje(ctx, S, T, env, kind) {
   const rg = ctx.createRadialGradient(cw / 2, chh * 0.3, 0, cw / 2, chh * 0.3, cw * 0.8); rg.addColorStop(0, T.heroRay); rg.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = rg; raysPath(ctx, cw / 2, chh * 0.3, cw * 1.3, 36, 0.1); ctx.fill(); ctx.restore();
   rrPath(ctx, 8 * k, 8 * k, cw - 16 * k, chh - 16 * k, 38 * k); ctx.lineWidth = 6 * k; ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.stroke();
   // de arriba hacia abajo: número grande, palabra, condición, cuotas, texto, fechas
-  const grande = String(Mj.grande || (PF && PF.pct ? PF.pct + '%' : '')).trim().toUpperCase();
+  const grande = String(Mj.grande || (PF && PF.pct ? PF.pctTxt + '%' : '')).trim().toUpperCase();
   const grande2 = String(Mj.grande2 != null && Mj.grande2 !== '' ? Mj.grande2 : grande ? 'DE DESCUENTO' : '').trim().toUpperCase();
   const cond = String(Mj.condicion || (PF ? PF.texto : '')).trim().toUpperCase(), cuotas = PF && PF.cuotas ? PF.cuotas + ' CUOTAS SIN INTERÉS' : '';
   const cuerpo = String(Mj.texto || '').trim(), fecha = fechaPillTexto(S);

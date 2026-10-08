@@ -42,7 +42,7 @@ function estadoDemo() {
     precio: { antes: 'antes', etiqueta: 'FINAL', ahorro: true, grande: true, insignia: 1.3, placa: 1, ahorroTam: 1 },
     pagos: { ver: false, lista: ['efectivo', 'debito', 'credito', 'mp', 'transferencia'], textos: {} },
     mensaje: { kicker: '¡Aprovechá!', titulo: 'Descuento en todos los productos', grande: '', grande2: '', condicion: '', texto: 'Válido para todas tus compras en el local.' },
-    destacado: { mensaje: 'OFERTA IMPERDIBLE', mensaje2: 'SOLO EN EFECTIVO' },
+    destacado: { mensaje: 'OFERTA IMPERDIBLE', mensaje2: '' },
     legal: { banda: true, bandaTam: 1, letraChica: true, alcohol: 'no', stock: '' },
     cuadros: { sep: 1, margen: 1, foto: 1, estrella: 1, alinear: 'auto', dx: 0, dy: 0 },
     opciones: { pdf: true, destinos: ['a4', 'post', 'story'] },

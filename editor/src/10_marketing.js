@@ -53,8 +53,8 @@ function datosDelFolleto(S) {
 /** Frase de la promo general: "Precios con 10% OFF pagando con QR de Mercado Pago." */
 function frasePromo(D) {
   const P = D.P; if (!P) return '';
-  if (P.pct && P.extra) return `Además, ${P.pct}% OFF extra ${P.frase}.`;
-  if (P.pct) return `Precios con ${P.pct}% OFF ${P.frase}.`;
+  if (P.pct && P.extra) return `Además, ${P.pctTxt}% OFF extra ${P.frase}.`;
+  if (P.pct) return `Precios con ${P.pctTxt}% OFF ${P.frase}.`;
   if (P.cuotas) return `${P.cuotas} cuotas sin interés ${P.frase}.`;
   return capitalizar(`${P.tipo === 'efectivo' ? 'Precios' : 'Válido'} ${P.frase}.`);
 }
@@ -65,7 +65,7 @@ function lineaProducto(x, o = {}) {
   const precio = x.F ? b(precioTxt(x.F)) + (x.unidad ? ' ' + x.unidad : '') : '';
   let ln = `${o.vinieta || '•'} ${b(x.nombre)}`;
   if (precio) ln += (o.dosPuntos ? ': ' : ' a ') + precio;
-  if (x.R && o.antes !== false) ln += o.wa ? ` ${t(precioTxt(x.R))}` : ` (antes ${precioTxt(x.R)}${x.pct ? `, ${x.pct}% OFF` : ''})`;
+  if (x.R && o.antes !== false) ln += o.wa ? (x.R.separado ? ` (por separado ${t(precioTxt(x.R))})` : ` ${t(precioTxt(x.R))}`) : ` (${x.R.separado ? 'por separado' : 'antes'} ${precioTxt(x.R)}${x.pct ? `, ${x.pct}% OFF` : ''})`;
   if (x.R && x.pct && o.wa && o.pct !== false) ln += ` (-${x.pct}%)`;
   if (o.ahorro && x.ahorro) ln += ` · ahorrás ${pesos(x.ahorro)}`;
   if (x.etiqueta && !/^-?\d+%?$/.test(x.etiqueta)) ln += ` · ${mayus(x.etiqueta)}`;
@@ -98,7 +98,7 @@ function textoPublicacion(S, destino = 'canal', tono = 'clasico', op = {}) {
   const vigencia = [D.fechas ? capitalizar(D.fechas) : '', D.V.agotar ? 'hasta agotar stock' : ''].filter(Boolean).join(' · ');
   // ── folletos de mensaje (sin productos) ──
   if (D.g === 'mensaje') {
-    const M = S.mensaje || {}, grande = String(M.grande || (D.P && D.P.pct ? D.P.pct + '%' : '')).trim(), cond = String(M.condicion || '').trim() || (D.P ? D.P.frase : '');
+    const M = S.mensaje || {}, grande = String(M.grande || (D.P && D.P.pct ? D.P.pctTxt + '%' : '')).trim(), cond = String(M.condicion || '').trim() || (D.P ? D.P.frase : '');
     out.push(`📢 ${b(mayus(D.titulo))}`);
     if (grande) out.push(`${D.emoji} ${b(grande + ' ' + (String(M.grande2 || '').trim() || 'de descuento'))}${cond ? ' ' + cond : ''}`);
     else if (cond) out.push(`${D.emoji} ${capitalizar(cond)}`);
@@ -147,7 +147,7 @@ function textoPublicacion(S, destino = 'canal', tono = 'clasico', op = {}) {
 function textosEstados(S, op = {}) {
   const D = datosDelFolleto(S), hasta = parseISO(D.V.hasta), fin = hasta ? `hasta el ${DIAS[hasta.getDay()]} ${hasta.getDate()}` : D.V.agotar ? 'hasta agotar stock' : '';
   const firma = `📍 ${D.nombre}${D.calle ? ', ' + D.calle : ''}`;
-  const cond = D.P && D.P.pct && !D.P.extra ? ` (${D.P.pct}% OFF ${D.P.frase})` : D.P ? ` (${D.P.frase})` : '';
+  const cond = D.P && D.P.pct && !D.P.extra ? ` (${D.P.pctTxt}% OFF ${D.P.frase})` : D.P ? ` (${D.P.frase})` : '';
   const general = D.g === 'mensaje' ? `📢 ${D.titulo}${D.fechas ? ' · ' + D.fechas : ''} · ${firma}`
     : D.g === 'coleccion' ? `${D.emoji} ${D.titulo} · ${firma}`
     : `${D.emoji} ${D.titulo}: ¡${D.prods.length} ${D.prods.length === 1 ? 'oferta' : 'ofertas'}${fin ? ' ' + fin : ''}! ${firma}`;
@@ -439,7 +439,7 @@ function mktCalc() {
   function calcular() {
     const c = numDe(inCosto.value), n = numDe(inNormal.value); let o = numDe(inOferta.value);
     const pv = parseFloat(String(inPct.value || '').replace(',', '.'));
-    if (pv > 0 && pv < 100 && n) { o = aCentavos(n * (100 - pv) / 100); inOferta.value = precioATexto(o); }
+    if (pv > 0 && pv < 100 && n) { o = conDescuento(n, pv); inOferta.value = precioATexto(o); }
     if (elegido && inCosto.value.trim()) { costos[clave(elegido)] = inCosto.value.trim(); lsGuardar('rm.costos', costos); }
     if (!c || !n) { res.replaceChildren(h('p', { class: 'hint', style: 'margin:0' }, 'Escribí cuánto te sale el producto (costo) y el precio normal. Si ponés el precio de oferta o el %, te digo si te conviene.')); return; }
     const r = calcOferta(c, n, o || n), filas = [];
@@ -491,7 +491,7 @@ function mktCombo() {
   const suma = () => [...elegidos.entries()].reduce((t, [i, n]) => t + parsePrecio(S.productos[i].final).num * n, 0);
   const calcular = () => {
     const tot = aCentavos(suma()), pv = parseFloat(String(inPct.value || '').replace(',', '.'));
-    if (pv > 0 && pv < 100 && tot) inPrecio.value = precioATexto(aCentavos(tot * (100 - pv) / 100));
+    if (pv > 0 && pv < 100 && tot) inPrecio.value = precioATexto(conDescuento(tot, pv));
     const pc = numDe(inPrecio.value);
     if (!elegidos.size) { res.replaceChildren(h('p', { class: 'hint', style: 'margin:0' }, 'Tildá los productos que van en el combo (y cuántos de cada uno).')); btn.disabled = true; return; }
     const ah = tot - pc;
@@ -513,7 +513,7 @@ function mktCombo() {
     const nombre = inNombre.value.trim() || 'Combo ' + (S.titulo || 'de la semana');
     const desc = items.map(([i, n]) => (n > 1 ? n + ' × ' : '') + S.productos[i].nombre).join(' + ');
     const img = imagenCombo(items.map(([i]) => S.productos[i]));
-    Object.assign(S.productos[k], nuevoProducto({ id: S.productos[k].id, nombre: nombre.slice(0, 60), desc: desc.slice(0, 90), regular: precioATexto(tot), final: precioATexto(pc), etiqueta: 'COMBO', img, alfa: !!img, imgV: (S.productos[k].imgV || 0) + 1 }));
+    Object.assign(S.productos[k], nuevoProducto({ id: S.productos[k].id, nombre: nombre.slice(0, 60), desc: desc.slice(0, 90), regular: precioATexto(tot), final: precioATexto(pc), etiqueta: 'COMBO', combo: true, img, alfa: !!img, imgV: (S.productos[k].imgV || 0) + 1 }));
     construirListaCasilleros('producto', k); cambio();
     aviso(`Listo: «${nombre}» quedó en el casillero ${k + 1}. Revisalo en la vista previa.`, 6000);
   } }, 'Agregar el combo al folleto');
@@ -529,14 +529,15 @@ function mktCombo() {
 function imagenCombo(ps) {
   const imgs = ps.map(p => getImg(p)).filter(Boolean).slice(0, 4);
   if (!imgs.length) return null;
-  const H = 900, W = 1200, c = document.createElement('canvas'); c.width = W; c.height = H;
+  const H = 660, W = 880, c = document.createElement('canvas'); c.width = W; c.height = H;   // alcanza para el cuadro más grande; WebP pesa ~10 veces menos que PNG
   const ctx = c.getContext('2d'), n = imgs.length, paso = W / (n + 0.6), alto = H * (n > 2 ? 0.78 : 0.9);
   imgs.forEach((im, i) => {
     const w0 = im.width || im.naturalWidth, h0 = im.height || im.naturalHeight, k = Math.min(alto / h0, (paso * 1.5) / w0), w = w0 * k, hh = h0 * k;
     const cx = paso * (i + 0.8), y = H - hh - (i % 2 ? 0 : H * 0.05);
     ctx.drawImage(im, cx - w / 2, y, w, hh);
   });
-  return c.toDataURL('image/png');
+  const webp = c.toDataURL('image/webp', 0.86);
+  return webp.startsWith('data:image/webp') ? webp : c.toDataURL('image/png');
 }
 
 function mktFechas() {

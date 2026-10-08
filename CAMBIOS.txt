@@ -5,6 +5,23 @@ Desde la 3.0, la herramienta online (https://mickyrivero90-ai.github.io/Market-R
 se actualiza sola. Si usás el programa de la PC y muestra un número menor, bajá el nuevo
 desde la herramienta online (⋯ Más → Programa para usar sin internet).
 
+Versión 3.4 · 8 de octubre de 2026 · MÁS ARREGLOS DEL RELEVAMIENTO (7 a 14)
+- Si editás el folleto de ejemplo, ahora se guarda en «Mis folletos» y en la nube aunque no hayas
+  tocado «Entendido».
+- Fechas: debajo de «Desde» y «Hasta» avisa si la fecha de fin ya pasó, si «desde» es posterior a
+  «hasta» o si falta «desde» (con un botón «Desde hoy»). Con las fechas al revés, el folleto ya no
+  dice «DEL 20 AL 10»: muestra solo «HASTA EL 10» hasta que las corrijas.
+- El % de la barra acepta decimales: «12,5» sale 12,5 % (antes salía 125 %).
+- «Un solo producto» ya no trae «SOLO EN EFECTIVO» de fábrica. Si el sello dice «efectivo» y la
+  promo es otra (por ejemplo Mercado Pago), la revisión lo avisa.
+- Combos: el precio tachado dice «POR SEPARADO» (la suma de los productos), no «ANTES», porque
+  ese precio nunca se cobró como combo. En cada producto hay una casilla «Es un combo». La foto
+  del combo pesa unas 10 veces menos (cada guardado era casi 1 MB más pesado).
+- «18.540,00» se muestra como $18.540, sin el «00» chiquito en la placa.
+- Con precios con centavos, la insignia dice el % que pusiste (antes, con 15 % podía decir -14 %):
+  los centavos del precio de oferta se redondean hacia abajo.
+- Una palabra muy larga que no entra en el cuadro ya no se dibuja dos veces: se corta con «…».
+
 Versión 3.3 · 8 de octubre de 2026 · ARREGLOS DEL RELEVAMIENTO
 - Sin cuadrados blancos o negros en las imágenes. El fondo Mercado Pago tenía «códigos QR» de
   adorno que dejaban agujeros: en el PDF salían negros, y también podían salir así cuando WhatsApp

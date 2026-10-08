@@ -1,6 +1,6 @@
 CONTEXTO DEL PROYECTO · RIVERO MARKET · FOLLETOS DE OFERTAS
 ==========================================================
-Actualizado: 8 de octubre de 2026 · versión 3.1 (herramienta online en GitHub)
+Actualizado: 8 de octubre de 2026 · versión 3.4 (herramienta online en GitHub)
 
 Este archivo cuenta qué pediste, qué decidimos, qué se hizo, cómo está armado y qué
 falta. Sirve para retomar el trabajo en otra conversación con Claude, en otra
@@ -22,7 +22,11 @@ computadora o con otra persona, sin tener que explicar todo de nuevo.
  12. Cómo prefiere trabajar el dueño del negocio
  13. Versión 2.0 y cómo se numeran las versiones
  14. Versión 3.0: la herramienta online (GitHub), la nube y Marketing
- 15. Versión 3.1: tamaños del precio y del «Ahorrás», barra y pie del folleto (LO ÚLTIMO)
+ 15. Versión 3.1: tamaños del precio y del «Ahorrás», barra y pie del folleto
+ 16. Versión 3.2: cuadros de productos y posición del precio
+ 17. Relevamiento de mejoras (38 puntos): lo que queda para hacer
+ 18. Versión 3.3: arreglos 1 a 6 del relevamiento
+ 19. Versión 3.4: arreglos 7 a 14 del relevamiento (LO ÚLTIMO)
 
 
 0. CÓMO RETOMAR
@@ -905,3 +909,18 @@ precio por 100 g, página pública de ofertas, sticker «¡Último día!», medi
      el árbol o el manifiesto; 07_app.js: recordadoDe(ruta) busca el precio recordado sin la extensión.
 Probado: autoprueba 113 OK (13 nuevas; en Firefox tarda ~70 s), programa local 53 de 53, versión online 60 de 60
 (Firefox y Chrome). Con los valores de fábrica, frente a la 3.1 solo cambia el ícono QR de la barra (≈20×20 px).
+
+19. VERSIÓN 3.4: ARREGLOS 7 A 14 DEL RELEVAMIENTO (8/10/2026)
+-------------------------------------------------------------
+  7. 07_app.js: cambio() llama a tomarEjemplo() si S.avisoEjemplo: el ejemplo editado deja de ser «ejemplo»
+     (hayContenido() lo guarda en «Mis folletos» y en el borrador de la nube). «Volver al ejemplo» no usa cambio().
+  8. 07_app.js: problemasFechas(V) → vencida / reves / falta; aviso debajo de las fechas (DOM.avisoFechas, botón
+     «Desde hoy») y en la revisión. 01_util.js: rangoFechas() ignora un «desde» posterior al «hasta».
+  9. 01_util.js: numPct() y txtPct(); promoInfo() devuelve pct numérico (12.5) y pctTxt («12,5») para mostrar.
+ 10. 06_state.js: destacado.mensaje2 vacío de fábrica; la revisión avisa si el sello dice «efectivo» y la promo es otra.
+ 11. 10_marketing.js: el combo lleva combo: true; infoProducto() marca R.separado y antesPartes(price) dice
+     «POR SEPARADO». Casilla «Es un combo» en cada producto. imagenCombo() 880×660 en WebP (PNG si no hay WebP).
+ 12. 01_util.js: parsePrecio() descarta «,00».
+ 13. 01_util.js: conDescuento(n, pct) redondea los centavos hacia abajo (ofertaDesde, promo extra, Marketing).
+ 14. 03_draw.js: wrapFit() sin la palabra repetida; cada renglón que no entra se corta con «…».
+Probado: autoprueba 121 OK (Firefox y Chrome; 8 nuevas).

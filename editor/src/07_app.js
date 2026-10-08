@@ -102,7 +102,9 @@ const guardarAuto = debounce(async () => {
     _falloGuardado = false;
   } catch (err) { if (!_falloGuardado) { _falloGuardado = true; aviso('No pude guardar tu trabajo automáticamente: ' + err.message); } }
 }, 900);
-function cambio() { refrescarLecturas(); programarDibujo(); guardarAuto(); registrarHistorial(); }
+function cambio() { if (S.avisoEjemplo) tomarEjemplo(); refrescarLecturas(); programarDibujo(); guardarAuto(); registrarHistorial(); }
+/** Apenas se edita el ejemplo pasa a ser un folleto propio: se guarda en «Mis folletos» y en la nube aunque no se toque «Entendido». */
+function tomarEjemplo() { S.avisoEjemplo = false; const n = $('#nota-ejemplo'); if (n) n.remove(); }
 
 // ── piezas de formulario ──
 function texto(obj, key, o = {}) {
@@ -357,7 +359,8 @@ function cuerpoMas(p, i) {
     h('div', { class: 'insignias' }, h('span', { class: 'lab' }, 'Promos por cantidad y etiquetas (tocá una):'),
       h('div', { class: 'insig-lista' }, ...INSIGNIAS.map(t => h('button', { type: 'button', class: 'insig', 'aria-pressed': String(String(p.etiqueta || '').toUpperCase() === t.toUpperCase()), onclick: e => { usarInsignia(t); $$('.insig', e.currentTarget.parentNode).forEach(b => b.setAttribute('aria-pressed', String(String(p.etiqueta || '').toUpperCase() === b.textContent.toUpperCase()))); } }, t)))),
     campo('Nota bajo el precio', inNota, 'opcional'),
-    check('No mostrar “Ahorrás $…” en este producto', null, !!p.noAhorro, v => { p.noAhorro = v; cambio(); }));
+    check('No mostrar “Ahorrás $…” en este producto', null, !!p.noAhorro, v => { p.noAhorro = v; cambio(); }),
+    check('Es un combo', 'El precio tachado dice «POR SEPARADO» (la suma de los productos) en vez de «ANTES».', !!p.combo, v => { p.combo = v; cambio(); }));
   return h('div', { class: 'stack' }, campos, controlesFoto(p, i, 'producto'), accionesFila(i));
 }
 /** Fondo, tamaño y posición de la foto (sirve para productos y para fotos de colección). */
@@ -468,7 +471,22 @@ function construirListaCasilleros(tipo, foco) {
 const pintarProductos = () => construirListaCasilleros(esColeccion() ? 'foto' : 'producto');
 
 // ── lecturas en vivo (descuento, advertencias, revisión) ──
+/** Fechas de la oferta con problemas: vencida, al revés o sin «desde» (la Ley 24.240, art. 7, pide inicio y fin). */
+function problemasFechas(V) {
+  const a = parseISO(V.desde), b = parseISO(V.hasta), out = [];
+  if (b && b < hoy0()) out.push({ k: 'vencida', t: 'La fecha «hasta» ya pasó (' + fechaLinda(b) + ')', d: 'El folleto anunciaría una oferta vencida. Cambiala en el paso 3 antes de publicar.' });
+  if (a && b && a > b) out.push({ k: 'reves', t: '«Desde» es posterior a «hasta»', d: `Diría «del ${a.getDate()} al ${b.getDate()}». Mientras tanto el folleto muestra solo «hasta el ${b.getDate()}». Revisalas en el paso 3.` });
+  if (!a && b) out.push({ k: 'falta', t: 'Falta la fecha «desde»', d: 'La Ley 24.240 (art. 7) pide fecha de inicio y de fin.' });
+  return out;
+}
+function pintarAvisoFechas() {
+  if (!DOM.avisoFechas) return;
+  const ps = problemasFechas(S.vigencia);
+  llenar(DOM.avisoFechas, ...ps.map((x, n) => [n ? ' ' : '', x.t + '. ']),
+    ps.some(x => x.k === 'falta') ? h('button', { class: 'btn small', type: 'button', style: 'margin-left:6px', onclick: () => { S.vigencia.desde = isoDe(hoy0() > parseISO(S.vigencia.hasta) ? parseISO(S.vigencia.hasta) : hoy0()); construirPanel(); cambio(); } }, 'Desde hoy') : null);
+}
 function refrescarLecturas() {
+  pintarAvisoFechas();
   if (!DOM.panel) return;
   $$('.prow[data-tipo="producto"]', DOM.panel).forEach(f => {
     const i = +f.dataset.i, p = S.productos[i]; if (!p) return;
@@ -508,12 +526,14 @@ function calcularRevision() {
 
   } else {
     const prods = S.productos.slice(0, L.slots), usados = prods.filter(p => !productoVacio(p));
-    if (V.desde && V.hasta) ok('Fechas de inicio y fin cargadas', 'La Ley 24.240 (art. 7) pide fecha precisa de comienzo y de finalización.');
-    else warn('Falta la fecha de ' + (V.hasta ? 'inicio' : 'inicio y fin'), 'La Ley 24.240 (art. 7) pide las dos fechas, y además generan urgencia. Completalas en el paso 3.');
+    const malFechas = problemasFechas(V).filter(x => x.k !== 'falta');
+    malFechas.forEach(x => warn(x.t, x.d));
+    if (V.desde && V.hasta) { if (!malFechas.length) ok('Fechas de inicio y fin cargadas', 'La Ley 24.240 (art. 7) pide fecha precisa de comienzo y de finalización.'); }
+    else warn('Falta la fecha de ' + (!V.desde && !V.hasta ? 'inicio y fin' : V.desde ? 'fin' : 'inicio'), 'La Ley 24.240 (art. 7) pide las dos fechas, y además generan urgencia. Completalas en el paso 3.');
     if (V.agotar && !String(S.legal.stock || '').trim() && !usados.every(p => /stock|unid|u\.|fardo/i.test(p.nota || '')))
       warn('“Hasta agotar stock” sin cantidad', 'El Dto. 1798/94 (art. 7) pide informar con cuántas unidades contás. Escribilo en Legales o en la nota de cada producto.');
     const P = promoInfo(S);
-    if (P) info('Promo de pago: ' + (P.pct ? (P.extra ? '+' : '') + P.pct + '% ' : '') + P.texto.toLowerCase(), (P.extra ? 'OJO: está como descuento ADICIONAL: se resta otra vez sobre el precio final. Si el % ya está en el precio final, cambialo a “Ya está en el precio final”. ' : 'El % ya está en el precio final de cada producto (no se descuenta dos veces); vale pagando de esa forma. ') + 'Dejá claras las condiciones y la fecha de vigencia en el lugar donde consultar.');
+    if (P) info('Promo de pago: ' + (P.pct ? (P.extra ? '+' : '') + P.pctTxt + '% ' : '') + P.texto.toLowerCase(), (P.extra ? 'OJO: está como descuento ADICIONAL: se resta otra vez sobre el precio final. Si el % ya está en el precio final, cambialo a “Ya está en el precio final”. ' : 'El % ya está en el precio final de cada producto (no se descuenta dos veces); vale pagando de esa forma. ') + 'Dejá claras las condiciones y la fecha de vigencia en el lugar donde consultar.');
     const hayAlcohol = usados.some(p => RE_ALCOHOL.test((p.nombre || '') + ' ' + (p.desc || '')));
     if (alcoholActivo(S)) ok('Leyenda de alcohol incluida', 'Ley 24.788: “Beber con moderación” y “Prohibida su venta a menores de 18 años”.');
     else if (hayAlcohol) info('Leyenda de alcohol apagada', 'Si alguna vez la querés, se activa en «Legales» (Ley 24.788: “Beber con moderación. Prohibida su venta a menores de 18 años”).');
@@ -522,8 +542,11 @@ function calcularRevision() {
     if (rotas.length) warn((rotas.length === 1 ? 'Una foto no cargó: ' : rotas.length + ' fotos no cargaron: ') + rotas.slice(0, 4).map(p => String(p.nombre || 'sin nombre').trim()).join(', ') + (rotas.length > 4 ? '…' : ''),
       'Saldrían sin foto. Puede ser internet lento, o que la foto se haya borrado o cambiado de nombre en la otra computadora. Esperá un momento y volvé a tocar Finalizar, o elegí la foto de nuevo.');
     if (g === 'mensaje' && !String(S.mensaje.titulo || '').trim()) warn('Falta el título del mensaje', 'Escribilo en el paso 2.');
-    const distintos = P && P.pct ? usados.filter(p => (!p.pago || p.pago === P.tipo) && infoProducto(p).R && infoProducto(p).pct !== P.pct && pctReal(infoProducto(p).R.num, infoProducto(p).F ? infoProducto(p).F.num : 0) !== P.pct).length : 0;
-    if (distintos) warn(`${distintos} ${distintos === 1 ? 'producto tiene' : 'productos tienen'} un % distinto al de la barra (${P.pct}%)`, 'La barra dice ' + P.pct + '% y esos productos muestran otro descuento. Corregilos o usá “Descuento para todos”, así el folleto dice lo mismo en todos lados.');
+    const pBarra = P && Math.floor(P.pct);                          // con 12,5 % la insignia dice -12 % (nunca más que el real)
+    const distintos = P && P.pct ? usados.filter(p => (!p.pago || p.pago === P.tipo) && infoProducto(p).R && infoProducto(p).pct !== pBarra).length : 0;
+    if (distintos) warn(`${distintos} ${distintos === 1 ? 'producto tiene' : 'productos tienen'} un % distinto al de la barra (${P.pctTxt}%)`, 'La barra dice ' + P.pctTxt + '% y esos productos muestran otro descuento. Corregilos o usá “Descuento para todos”, así el folleto dice lo mismo en todos lados.');
+    const contra = g === 'unico' && P && P.tipo !== 'efectivo' && /efectivo/i.test(String((S.destacado || {}).mensaje2 || '') + ' ' + String((S.destacado || {}).mensaje || ''));
+    if (contra) warn('El sello dice «efectivo» y la promo es ' + P.nombre, 'Se contradicen: corregí el sello en el paso 2 o cambiá la promo de pago en el paso 3.');
     if (P && P.cuotas) ok('Cuotas sin interés: leyenda del CFT incluida', 'Res. 4/2025: con cuotas se informa precio de contado, cantidad de cuotas y CFT. Va al pie: “CFT 0,00 %”.');
     if (!usados.length && g !== 'mensaje') warn('Todavía no hay productos', 'Tocá un casillero del folleto (o el botón +) para elegir un producto de la carpeta.');
     if (vacios && usados.length) warn(vacios + (vacios === 1 ? ' casillero vacío' : ' casilleros vacíos'), 'En el folleto terminado se completan con una tarjeta de Rivero Market («Y muchas ofertas más en el local»). Si preferís otro formato con menos productos, cambialo en el paso 1.');
@@ -551,7 +574,7 @@ function pintarRevision() {
 // ── secciones del panel ──
 function ejemploNota() {
   if (!(S.avisoEjemplo && (S.productos.some(p => p.demo) || S.coleccion.fotos.some(f => f.demo)))) return null;
-  return h('div', { class: 'demo-note' }, h('b', null, 'Esto es un ejemplo. '), 'Los productos son botellas de muestra (no son fotos reales) y las fotos de repostería son las que me mandaste. Cuando quieras, empezá un folleto propio.',
+  return h('div', { class: 'demo-note', id: 'nota-ejemplo' }, h('b', null, 'Esto es un ejemplo. '), 'Los productos son botellas de muestra (no son fotos reales) y las fotos de repostería son las que me mandaste. Cuando quieras, empezá un folleto propio.',
     h('div', { class: 'row-actions', style: 'margin-top:8px' },
       CARPETA.activa ? h('button', { class: 'btn small primary', type: 'button', onclick: () => nuevoFolleto(true) }, 'Empezar un folleto nuevo') : null,
       h('button', { class: 'btn small', type: 'button', onclick: () => { S.avisoEjemplo = false; construirPanel(); guardarAuto(); } }, 'Entendido')));
@@ -665,7 +688,7 @@ function cajaLeyendaPrecio() {
   };
   pintarEjemplo();
   const upd = () => { pintarEjemplo(); cambio(); };
-  const pctPromo = () => { const P = promoInfo(S); return P && P.pct && !P.extra ? String(P.pct) : ''; };
+  const pctPromo = () => { const P = promoInfo(S); return P && P.pct && !P.extra ? P.pctTxt : ''; };
   const pctTodos = h('input', { type: 'text', inputmode: 'decimal', placeholder: pctPromo() || '10', maxlength: 5, value: PR.pctTodos || pctPromo(), 'aria-label': '% de descuento para todos', oninput: e => { PR.pctTodos = e.target.value; } });
   const aplicarTodos = () => {
     const pct = String(pctTodos.value || '').trim(); PR.pctTodos = pct;
@@ -771,6 +794,7 @@ function cajaBarra() {
   const frases = PT ? [PT.texto, ...FRASES_BARRA.map(f => PT.texto + ' ' + f)] : [];
   const chipsTexto = h('div', { class: 'quick' }, ...[...new Set(frases)].slice(0, 7).map(t => h('button', { type: 'button', class: 'q', onclick: () => { S.promo.textoBarra = t === PT.texto ? '' : t; inTexto.value = S.promo.textoBarra; cambio(); } }, t)));
   const fecha = (k, etq) => campo(etq, h('input', { type: 'date', value: S.vigencia[k] || '', onchange: e => { S.vigencia[k] = e.target.value; cambio(); }, oninput: e => { S.vigencia[k] = e.target.value; cambio(); } }));
+  DOM.avisoFechas = h('div', { class: 'calc aviso-fechas', 'aria-live': 'polite' }); pintarAvisoFechas();
   DOM.barraPrev = h('canvas', { class: 'barra-prev', 'aria-label': 'Vista previa de la barra de la promo' });
   const caja = h('div', { class: 'stack caja-aparte caja-barra', id: 'caja-barra' },
     h('p', { class: 'lab', style: 'margin:0' }, g === 'mensaje' ? 'Promo y fechas' : 'Barra de la promo (debajo del título)'),
@@ -780,7 +804,7 @@ function cajaBarra() {
     PT ? h('div', { class: conCuotas ? 'grid2' : 'grid2' },
       campo('% de descuento', h('span', { class: 'pct pct-grande' }, pctBarra()), 'vacío = sin %'),
       conCuotas ? campo('Cuotas sin interés', texto(S.promo, 'cuotas', { ph: '3, 6, 12', mode: 'numeric', max: 2 }), 'opcional') : h('span')) : null,
-    h('div', { class: 'grid2' }, fecha('desde', 'Desde'), fecha('hasta', 'Hasta')),
+    h('div', { class: 'grid2' }, fecha('desde', 'Desde'), fecha('hasta', 'Hasta')), DOM.avisoFechas,
     check('Agregar “hasta agotar stock”', 'Crea urgencia. Indicá la cantidad en Legales.', S.vigencia.agotar, v => { S.vigencia.agotar = v; cambio(); }),
     PT && g !== 'mensaje' ? check('Mostrar la barra de la promo', 'Si la apagás, debajo del título quedan solo las fechas.', S.promo.verBarra !== false, v => { S.promo.verBarra = v; cambio(); }) : null,
     g !== 'mensaje' ? disenoBarra() : null);
@@ -893,7 +917,7 @@ function seccionFechasPromo() {
   const g = L_ACTUAL().grupo, unico = g === 'unico', mensaje = g === 'mensaje';
   DOM.inpTitulo = texto(S, 'titulo', { ph: 'Ofertas de la semana', max: 30 }); DOM.inpSub = texto(S, 'subtitulo', { ph: 'Los precios más bajos del barrio', max: 44 });
   DOM.sugerencias = h('div', { class: 'quick' }, ...chipsSugerencias());
-  const inM1 = texto(S.destacado, 'mensaje', { ph: 'OFERTA IMPERDIBLE', max: 28 }), inM2 = texto(S.destacado, 'mensaje2', { ph: 'SOLO EN EFECTIVO', max: 24 });
+  const inM1 = texto(S.destacado, 'mensaje', { ph: 'OFERTA IMPERDIBLE', max: 28 }), inM2 = texto(S.destacado, 'mensaje2', { ph: 'Ej.: HASTA AGOTAR STOCK', max: 24 });
   const destacado = unico ? h('div', { class: 'stack caja-aparte' }, h('p', { class: 'lab', style: 'margin:0' }, 'Mensajes del producto destacado'),
     campo('Cartel principal', inM1), chipsRapidos(MENSAJES1, inM1, S.destacado, 'mensaje'), campo('Sello secundario', inM2, 'opcional'), chipsRapidos(MENSAJES2, inM2, S.destacado, 'mensaje2'),
     h('p', { class: 'hint', style: 'margin:0' }, 'Pensado para liquidaciones, fardos u ofertas solo en efectivo: elegí un estilo de impacto en el paso 1 y, si querés, activá la promo “Efectivo”.')) : null;
@@ -911,7 +935,7 @@ function seccionMensaje() {
     campo('Arriba (etiqueta chica)', inK, 'opcional'), chipsRapidos(MENSAJES_KICKER, inK, M, 'kicker'),
     campo('Título', inT), chipsRapidos(MENSAJES_TITULO, inT, M, 'titulo'),
     h('div', { class: 'grid2' },
-      campo('Número grande', texto(M, 'grande', { ph: PF && PF.pct ? PF.pct + '%' : 'Ej.: 10%', max: 12 }), 'vacío = el % de la promo'),
+      campo('Número grande', texto(M, 'grande', { ph: PF && PF.pct ? PF.pctTxt + '%' : 'Ej.: 10%', max: 12 }), 'vacío = el % de la promo'),
       campo('Debajo del número', texto(M, 'grande2', { ph: 'DE DESCUENTO', max: 30 }), 'opcional')),
     campo('Condición', texto(M, 'condicion', { ph: PF ? PF.texto : 'Ej.: PAGANDO CON QR DE MERCADO PAGO', max: 50 }), 'vacío = la de la promo'),
     campo('Texto', h('textarea', { rows: 3, maxlength: 220, placeholder: 'Ej.: Válido para todas tus compras en el local. No acumulable con otras promociones.', oninput: e => { M.texto = e.target.value; cambio(); } }, M.texto || ''), 'opcional')));
@@ -991,7 +1015,7 @@ function seccionProyecto() {
   }
   const cont = h('span', { class: 'confirm' });
   const b = h('button', { class: 'btn small danger ghost', type: 'button', onclick: () => {
-    cont.replaceChildren(h('span', { class: 'lab' }, '¿Volver al ejemplo?'), h('button', { class: 'btn small danger', type: 'button', onclick: async () => { S = estadoDemo(); await prepararImagenes(S); construirPanel(); cambio(); aviso('Volviste al folleto de ejemplo.'); } }, 'Sí'), h('button', { class: 'btn small ghost', type: 'button', onclick: () => cont.replaceChildren(b) }, 'No')); } }, 'Volver al ejemplo');
+    cont.replaceChildren(h('span', { class: 'lab' }, '¿Volver al ejemplo?'), h('button', { class: 'btn small danger', type: 'button', onclick: async () => { S = estadoDemo(); await prepararImagenes(S); construirPanel(); programarDibujo(); guardarAuto(); reiniciarHistorial(); aviso('Volviste al folleto de ejemplo.'); } }, 'Sí'), h('button', { class: 'btn small ghost', type: 'button', onclick: () => cont.replaceChildren(b) }, 'No')); } }, 'Volver al ejemplo');
   cont.append(b);
   return detalles('Tu proyecto', h('div', { class: 'row-actions' },
     h('button', { class: 'btn small', type: 'button', onclick: guardarProyecto }, 'Guardar proyecto (.json)'),
@@ -1342,6 +1366,32 @@ async function autotest() {
         const ok6 = (recordadoDe('Bebidas/Fernet.png') || {}).final === '18.540' && !recordadoDe('Bebidas/Otro.png'); CAT = CATbak;
         const real = NUBE.rutaReal.call({ arbol: new Map([['productos/Bebidas/Fernet.png', {}]]) }, 'Bebidas/Fernet.jpg');
         t('foto con IA: precio recordado y foto con el nombre nuevo', ok6 && real === 'Bebidas/Fernet.png', real); }
+    }
+    { // v3.4: errores 7 a 14 del relevamiento
+      // 7) el ejemplo editado pasa a ser un folleto propio (se guarda en «Mis folletos» y en la nube)
+      { const bak = S.avisoEjemplo; S.avisoEjemplo = true; cambio(); const ok7 = S.avisoEjemplo === false; S.avisoEjemplo = bak; t('ejemplo editado: se guarda', ok7); }
+      // 8) fechas vencidas, al revés o sin «desde»
+      { const en = d => isoDe(new Date(Date.now() + d * 86400000)), ks = V => problemasFechas(V).map(x => x.k).join(',');
+        t('fechas: vencida, al revés y sin «desde»', ks({ desde: '2026-01-20', hasta: '2026-01-10' }) === 'vencida,reves' && ks({ desde: '', hasta: en(30) }) === 'falta' && ks({ desde: en(0), hasta: en(5) }) === ''
+          && rangoCorto('2026-01-20', '2026-01-10') === 'HASTA EL 10 DE ENERO', ks({ desde: '2026-01-20', hasta: '2026-01-10' }) + ' / ' + rangoCorto('2026-01-20', '2026-01-10')); }
+      // 9) % con coma en la barra
+      { const P = promoInfo({ ...S, promo: { ...S.promo, tipo: 'mp', pct: '12,5' } }); t('% con coma: 12,5 % (no 125 %)', P.pct === 12.5 && P.pctTxt === '12,5' && selloTexto({ ...S, sello: { modo: 'auto' }, promo: { ...S.promo, tipo: 'mp', pct: '12,5' } }).l2 === '12,5%', P.pct + ' ' + P.pctTxt); }
+      // 10) «SOLO EN EFECTIVO» ya no viene de fábrica, y si contradice la promo se avisa
+      { const bakF = S.formato, bakD = S.destacado, bakP = S.promo; S.formato = 'destacado_post'; S.destacado = { mensaje: 'OFERTA', mensaje2: 'SOLO EN EFECTIVO' }; S.promo = { ...S.promo, tipo: 'mp' };
+        const avisa = calcularRevision().some(x => x.k === 'warn' && /efectivo/i.test(x.t)); S.formato = bakF; S.destacado = bakD; S.promo = bakP;
+        t('«SOLO EN EFECTIVO»: no viene de fábrica y se avisa si contradice', estadoDemo().destacado.mensaje2 === '' && avisa); }
+      // 11) combo: el tachado dice «POR SEPARADO» y la foto es liviana
+      { const I = infoProducto(nuevoProducto({ regular: '5.000', final: '4.000', combo: true })), I2 = infoProducto(nuevoProducto({ regular: '5.000', final: '4.000' }));
+        const u = imagenCombo(S.productos.filter(p => srcDe(p)).slice(0, 3)) || '';
+        t('combo: «POR SEPARADO» y foto liviana', antesPartes(I.R)[0] === 'POR SEPARADO' && antesPartes(I2.R)[0] !== 'POR SEPARADO' && (!u || u.length < 450000), (u.slice(5, 15) || 'sin fotos') + ' ' + Math.round(u.length / 1024) + ' KB'); }
+      // 12) «18.540,00» es 18.540 (sin el «00» chiquito)
+      t('precio con ,00', parsePrecio('18.540,00').dec === '' && parsePrecio('18.540,00').int === '18.540' && parsePrecio('1.250,50').dec === '50' && parsePrecio('99,5').dec === '50');
+      // 13) con centavos, la insignia dice el % que se puso
+      { const malos = []; for (const r of ['1.234,50', '999,99', '2.799,90', '18.540', '7.333,33', '149,99']) for (const q of [5, 10, 12, 15, 20, 25, 33, 50]) { const f = ofertaDesde(r, String(q)); if (pctReal(parsePrecio(r).num, f) !== q) malos.push(r + '−' + q + '%=' + f); }
+        t('con centavos, la insignia dice el % que se puso', !malos.length && ofertaDesde('1.234,50', '15') === 1049.32, malos.slice(0, 3).join(' · ')); }
+      // 14) una palabra que no entra no se dibuja dos veces
+      { const cx = document.createElement('canvas').getContext('2d'), r = wrapFit(cx, 'Superextraordinariamente rico', s => FB(900, s), 40, 30, 120, 2), r1 = wrapFit(cx, 'Supercalifragilístico', s => FB(900, s), 40, 30, 80, 2);
+        t('palabra larga: una sola vez', r.lines.length === 2 && !r.lines[1].startsWith('Superextra') && r1.lines.length === 1 && r1.lines[0].endsWith('…'), JSON.stringify(r.lines) + ' ' + JSON.stringify(r1.lines)); }
     }
   } catch (e) { t('excepción', false, e.message + ' ' + (e.stack || '').split('\n')[1]); }
   const pre = document.createElement('pre'); pre.id = 'autotest'; pre.textContent = out.join('\n'); pre.style.cssText = 'position:fixed;left:0;top:0;z-index:99;background:#111;color:#9f9;padding:10px;margin:0;font:13px monospace;max-width:100vw;overflow:auto;max-height:100vh'; document.body.append(pre);

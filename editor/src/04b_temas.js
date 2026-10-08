@@ -451,7 +451,7 @@ const LEYENDA_CUOTAS = 'Cuotas sin interés: CFT 0,00 % · TNA 0,00 % · TEA 0,0
 function promoInfo(S) {
   const P = S.promo || {}, t = P.tipo || 'ninguna';
   if (t === 'ninguna' || !PAGOS[t]) return null;
-  const pct = parseInt(String(P.pct || '').replace(/\D/g, ''), 10) || 0;
+  const pct = numPct(P.pct);                                      // «12,5» → 12.5 (antes salía 125 %)
   const base = { ...PAGOS[t] };
   if (t === 'texto' && P.texto) { base.texto = String(P.texto).toUpperCase(); base.frase = String(P.texto).trim(); base.leyenda = base.texto.length <= 22 ? base.texto : 'CON LA PROMO'; }
   const tb = String(P.textoBarra || '').trim();                   // texto propio de la barra ("PAGANDO CON QR DE MERCADO PAGO", "EN TODO EL LOCAL"…)
@@ -460,12 +460,12 @@ function promoInfo(S) {
   const cuotas = base.cuotas ? (parseInt(String(P.cuotas || '').replace(/\D/g, ''), 10) || 0) : 0;
   const extra = !!pct && P.modo === 'extra';
   const verPrecio = P.verPrecio !== false;
-  return { ...base, tipo: t, pct, cuotas: cuotas > 1 ? cuotas : 0, extra, verPrecio, chipLabel: extra ? base.etiqueta : cuotas > 1 ? cuotas + ' CUOTAS' : base.etiqueta };
+  return { ...base, tipo: t, pct, pctTxt: txtPct(pct), cuotas: cuotas > 1 ? cuotas : 0, extra, verPrecio, chipLabel: extra ? base.etiqueta : cuotas > 1 ? cuotas + ' CUOTAS' : base.etiqueta };
 }
 /** Precio que paga el cliente con el descuento extra (con centavos), o null si no corresponde. */
 function precioConPromo(p, P) {
   const F = parsePrecio(p.final);
-  return F && P && P.verPrecio && P.extra ? aCentavos(F.num * (100 - P.pct) / 100) : null;
+  return F && P && P.verPrecio && P.extra ? conDescuento(F.num, P.pct) : null;
 }
 /** Texto de la cápsula de cada producto: "$16.686" con la promo, o "$6.180" por cuota. null si no corresponde. */
 function precioPromoTexto(p, P) {
@@ -516,8 +516,8 @@ function fraseNatural(t) {
 function promoLetraChica(PF, S) {
   const tb = String(((S || {}).promo || {}).textoBarra || '').trim(), cond = tb ? fraseNatural(tb) : PF.frase;
   const mensaje = (LAYOUTS[(S || {}).formato] || {}).grupo === 'mensaje';
-  if (PF.pct && PF.extra) return `Además, ${PF.pct}% de descuento sobre el precio final ${cond}.`;
-  if (PF.pct) return mensaje ? `${PF.pct}% de descuento ${cond}.` : `Precios finales en pesos, con ${PF.pct}% de descuento ${cond}.`;
+  if (PF.pct && PF.extra) return `Además, ${PF.pctTxt}% de descuento sobre el precio final ${cond}.`;
+  if (PF.pct) return mensaje ? `${PF.pctTxt}% de descuento ${cond}.` : `Precios finales en pesos, con ${PF.pctTxt}% de descuento ${cond}.`;
   if (PF.cuotas) return `Precios finales en pesos. ${PF.cuotas} cuotas sin interés ${cond}.`;
   return `Precios finales en pesos, ${cond}.`;
 }
@@ -581,7 +581,7 @@ function promoIcono(ctx, tipo, x, y, s, ink, generico = false) {
   ctx.restore();
 }
 const promoIconInk = P => P.c[1];
-const pctTexto = P => (P.extra ? '+' : '') + P.pct + '% OFF';
+const pctTexto = P => (P.extra ? '+' : '') + P.pctTxt + '% OFF';
 function fechaPillTexto(S, corto = false) {
   const V = S.vigencia || {}, dt = rangoCorto(V.desde, V.hasta), ag = V.agotar && !corto;
   return dt ? dt + (ag ? '  ·  HASTA AGOTAR STOCK' : '') : (ag ? 'HASTA AGOTAR STOCK' : '');

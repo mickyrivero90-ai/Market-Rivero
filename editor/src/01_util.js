@@ -25,8 +25,10 @@ function parseISO(s) {
   return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null;
 }
 const MES = d => MESES[d.getMonth()].toUpperCase();
+/** «Desde» y «hasta» como fechas; un «desde» posterior al «hasta» no se usa (la revisión lo avisa). */
+function rangoFechas(desde, hasta) { let a = parseISO(desde); const b = parseISO(hasta); if (a && b && a > b) a = null; return [a, b]; }
 function rangoCorto(desde, hasta) {            // para la cinta: "DEL 12 AL 18 DE OCTUBRE"
-  const a = parseISO(desde), b = parseISO(hasta);
+  const [a, b] = rangoFechas(desde, hasta);
   if (a && b) {
     if (a.getTime() === b.getTime()) return `SOLO EL ${a.getDate()} DE ${MES(a)}`;
     if (a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear()) return `DEL ${a.getDate()} AL ${b.getDate()} DE ${MES(b)}`;
@@ -37,7 +39,7 @@ function rangoCorto(desde, hasta) {            // para la cinta: "DEL 12 AL 18 D
   return '';
 }
 function rangoLargo(desde, hasta) {            // para el pie legal: "del 12 al 18 de octubre de 2026"
-  const a = parseISO(desde), b = parseISO(hasta);
+  const [a, b] = rangoFechas(desde, hasta);
   const f = d => `${d.getDate()} de ${MESES[d.getMonth()]} de ${d.getFullYear()}`;
   if (a && b) {
     if (a.getTime() === b.getTime()) return `el ${f(a)}`;
@@ -63,6 +65,7 @@ function parsePrecio(v) {
     else { ent = s.slice(0, ld); dec = after.slice(0, 2); }
   } else ent = s;
   ent = ent.replace(/^0+(?=\d)/, '') || '0';
+  if (!+dec) dec = '';                                              // "18.540,00" es 18.540: sin el «00» chiquito en la placa
   return { num: parseFloat(ent + (dec ? '.' + dec : '')), int: formatMiles(ent), dec: dec ? dec.padEnd(2, '0') : '' };
 }
 function pesos(n) {
@@ -73,6 +76,12 @@ function pesos(n) {
 const pctReal = (antes, ahora) => (antes > 0 && ahora < antes ? Math.floor(((antes - ahora) / antes) * 100 + 1e-9) : 0);
 /** Redondea a centavos (sin redondear a pesos: si da centavos, quedan; la persona lo ajusta si quiere). */
 const aCentavos = n => Math.round(n * 100 + 1e-7) / 100;
+/** Precio con un % de descuento, con los centavos hacia abajo: así el % que se anuncia (redondeado hacia abajo) es el que se puso. */
+const conDescuento = (n, pct) => Math.floor(n * (100 - pct) + 1e-6) / 100;
+/** «12,5» → 12.5 (el % como lo escribe la persona; 0 si no es un % válido). */
+const numPct = v => { const n = parseFloat(String(v ?? '').replace(/[^\d.,]/g, '').replace(',', '.')); return n > 0 && n < 100 ? Math.round(n * 100) / 100 : 0; };
+/** 12.5 → «12,5» */
+const txtPct = n => String(n).replace('.', ',');
 /** Número → texto de precio como se escribe en el formulario: 18.540 · 1.250,50 */
 function precioATexto(n) {
   const c = aCentavos(n), ent = Math.trunc(c), dec = Math.round((c - ent) * 100);
@@ -80,9 +89,9 @@ function precioATexto(n) {
 }
 /** Precio de oferta a partir del precio anterior y un % (texto como lo escribe la persona), con centavos exactos. */
 function ofertaDesde(regular, pct) {
-  const R = parsePrecio(regular), p = parseFloat(String(pct || '').replace(',', '.'));
-  if (!R || !(p > 0 && p < 100)) return null;
-  return aCentavos(R.num * (100 - p) / 100);
+  const R = parsePrecio(regular), p = numPct(pct);
+  if (!R || !p) return null;
+  return conDescuento(R.num, p);
 }
 
 // ── calendario de fechas comerciales de Argentina ──

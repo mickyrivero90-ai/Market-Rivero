@@ -42,6 +42,7 @@ const THEMES = {
 function infoProducto(p) {
   const F = parsePrecio(p.final), R = parsePrecio(p.regular);
   const pct = F && R ? pctReal(R.num, F.num) : 0;                 // hacia abajo: nunca se anuncia más descuento que el real
+  if (R && p.combo) R.separado = true;                            // combo: el precio tachado es la suma de los productos, no un «antes»
   return { F, R, pct, ahorro: pct ? R.num - F.num : 0 };
 }
 const productoVacio = p => !p || (!String(p.nombre || '').trim() && !String(p.final || '').trim() && !p.img && !p.archivo);
@@ -52,7 +53,7 @@ function selloTexto(S) {
   if (m.modo === 'none') return null;
   if (m.modo === 'custom') return (m.l1 || m.l2 || m.l3) ? { l1: (m.l1 || '').toUpperCase(), l2: (m.l2 || '').toUpperCase(), l3: (m.l3 || '').toUpperCase() } : null;
   const P = typeof promoInfo === 'function' ? promoInfo(S) : null;
-  if (P && P.pct) return { l1: P.selloL1, l2: (P.extra ? '+' : '') + P.pct + '%', l3: 'OFF' };
+  if (P && P.pct) return { l1: P.selloL1, l2: (P.extra ? '+' : '') + P.pctTxt + '%', l3: 'OFF' };
   if (P && P.cuotas) return { l1: P.selloL1, l2: P.cuotas + ' CUOTAS', l3: 'SIN INTERÉS' };
   if (P && P.tipo === 'efectivo') return { l1: 'SOLO EN', l2: 'EFECTIVO', l3: '' };
   if (P && P.tipo !== 'texto') return { l1: 'PAGÁ CON', l2: P.corto, l3: '' };
@@ -268,11 +269,11 @@ const altoEstrella = (h0, total, minResto) => { const e = CUADROS_CFG.estrella |
 /** Tamaño de la nota bajo el precio ("Llevando 2 pagás 1: $X c/u"): sigue al tamaño elegido para las insignias. */
 const notaTam = k => 15 * k * Math.min(1.5, PRECIO_CFG.insignia || 1);
 const ANTES_ESTILOS = { antes: ['ANTES', ''], normal: ['PRECIO NORMAL', ''], lista: ['PRECIO DE LISTA', ''], de_a: ['DE', 'A'], solo: ['', ''] };
-const antesPartes = () => ANTES_ESTILOS[PRECIO_CFG.antes] || ANTES_ESTILOS.antes;
+const antesPartes = price => (price && price.separado ? ['POR SEPARADO', ''] : ANTES_ESTILOS[PRECIO_CFG.antes] || ANTES_ESTILOS.antes);
 const txtPrecio = price => '$' + price.int + (price.dec ? ',' + price.dec : '');
 /** Ancho de la leyenda del precio anterior ("ANTES $20.600", "DE $20.600 A"…) a un tamaño dado. */
 function measureAntes(ctx, price, size) {
-  const [pre, post] = antesPartes(), gap = size * 0.3;
+  const [pre, post] = antesPartes(price), gap = size * 0.3;
   ctx.font = FM(800, size * 0.66); const wpre = pre ? measure(ctx, pre, size * 0.05) + gap : 0, wpost = post ? gap + measure(ctx, post, size * 0.05) : 0;
   ctx.font = FM(800, size); return wpre + measure(ctx, txtPrecio(price), 0) + wpost;
 }
@@ -280,7 +281,7 @@ function measureAntes(ctx, price, size) {
 function drawAntes(ctx, x, y, price, size, T, o = {}) {
   let sz = size; const w0 = measureAntes(ctx, price, sz);
   if (o.maxW && w0 > o.maxW) sz = Math.max(size * 0.6, sz * o.maxW / w0);
-  const [pre, post] = antesPartes(), gap = sz * 0.3, col = o.color || T.soft, s = txtPrecio(price);
+  const [pre, post] = antesPartes(price), gap = sz * 0.3, col = o.color || T.soft, s = txtPrecio(price);
   ctx.save();
   let cx = x;
   if (pre) cx += text(ctx, pre, cx, y, { font: FM(800, sz * 0.66), fill: col, tracking: sz * 0.05 }) + gap;

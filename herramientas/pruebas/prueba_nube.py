@@ -343,7 +343,7 @@ def main():
         clic_texto(d, ".mkt-cuerpo .btn.primary", "Agregar el combo")
         esperar(d, "return window.__estado.productos.some(p => p.etiqueta === 'COMBO')")
         combo = js(d, "const p = window.__estado.productos.find(p => p.etiqueta === 'COMBO'); return [p.nombre, p.regular, p.final, (p.img || '').slice(0, 22)]")
-        ok("combo agregado al folleto (con las fotos juntas)", combo[1] == "30.140" and combo[2] == "27.500" and combo[3] == "data:image/png;base64,", combo)
+        ok("combo agregado al folleto (con las fotos juntas)", combo[1] == "30.140" and combo[2] == "27.500" and combo[3].startswith("data:image/"), combo)   # WebP (o PNG si el navegador no tiene WebP)
         clic_texto(d, ".mkt-tab", "Fechas")
         ev = js(d, "return [...document.querySelectorAll('.evento b')].map(b => b.textContent)")
         ok("fechas que vienen", "Halloween" in ev and "Día de la Madre" in ev, ev[:4])
