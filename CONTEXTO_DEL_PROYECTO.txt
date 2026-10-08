@@ -1,6 +1,6 @@
 CONTEXTO DEL PROYECTO · RIVERO MARKET · FOLLETOS DE OFERTAS
 ==========================================================
-Actualizado: 8 de octubre de 2026 · versión 3.0 (herramienta online en GitHub)
+Actualizado: 8 de octubre de 2026 · versión 3.1 (herramienta online en GitHub)
 
 Este archivo cuenta qué pediste, qué decidimos, qué se hizo, cómo está armado y qué
 falta. Sirve para retomar el trabajo en otra conversación con Claude, en otra
@@ -21,7 +21,8 @@ computadora o con otra persona, sin tener que explicar todo de nuevo.
  11. Ideas para más adelante
  12. Cómo prefiere trabajar el dueño del negocio
  13. Versión 2.0 y cómo se numeran las versiones
- 14. Versión 3.0: la herramienta online (GitHub), la nube y Marketing (LO ÚLTIMO)
+ 14. Versión 3.0: la herramienta online (GitHub), la nube y Marketing
+ 15. Versión 3.1: tamaños del precio y del «Ahorrás», barra y pie del folleto (LO ÚLTIMO)
 
 
 0. CÓMO RETOMAR
@@ -49,7 +50,7 @@ computadora o con otra persona, sin tener que explicar todo de nuevo.
   uso), editor/src/*.js (el motor y la pantalla; 09_nube.js la nube, 10_marketing.js
   marketing), programa/servidor.py (el servidor local), productos/ (fotos),
   herramientas/ (armado de la página online y pruebas), .github/workflows/publicar.yml.
-- VERSIÓN ACTUAL: 3.0 (ver secciones 13 y 14, y CAMBIOS.txt). Se ve arriba a la izquierda del
+- VERSIÓN ACTUAL: 3.1 (ver secciones 13 a 15, y CAMBIOS.txt). Se ve arriba a la izquierda del
   programa. El dueño trabaja en su casa (esta PC) y lleva una copia al trabajo: el
   número sirve para saber si la copia del trabajo está al día.
 - El dueño también tiene una copia descomprimida del ZIP en
@@ -791,4 +792,36 @@ Pendientes de la 3.0
   4. Ideas: carteles de góndola (A4 con varias etiquetas de precio), página pública de
      ofertas para clientes (la web que pide la Res. 446/2025), registrar ventas de cada
      oferta para medir qué funciona.
+
+
+15. VERSIÓN 3.1: TAMAÑOS DEL PRECIO Y DEL «AHORRÁS», BARRA Y PIE (8/10/2026)
+---------------------------------------------------------------------------
+Pedidos del dueño (mandó capturas de folletos que armó en el negocio: un producto, historia con
+estrella + 2 y post de 4, todos con el fondo Mercado Pago y la barra «PAGANDO CON QR DE MERCADO
+PAGO (DINERO EN CUENTA)»):
+  1. Poder ajustar el tamaño del precio final (la placa) y del cartel y la letra de «Ahorrás».
+  2. La letra chica del pie («Ofertas válidas hasta… válidos hasta…») le parecía redundante.
+  3. La banda «Para más información…»: elegir si aparece y ajustar su tamaño.
+  4. La barra de la promo: ajustar tamaño, letra, posición, etc.
+  Además pidió un relevamiento de todo lo que se puede mejorar.
+Cómo quedó (código)
+  - 04_flyer.js: plateGeom() (medidas de la placa, compartidas por drawPlate y drawPlateMeasure)
+    y altoPlaca(): S.precio.placa (0,7–1,6). Al agrandar, la placa crece solo hasta donde la
+    cifra entra a lo ancho (nunca queda peor que en 100 %). S.precio.ahorroTam (0,6–2) en las
+    cuatro tarjetas y en las estrellas; si no entra, se achica o va al lado de la placa.
+    letraChica(S): la letra chica sin repetir la fecha ni «precios finales» (usa el texto propio
+    de la barra con fraseNatural, en 04b_temas.js); S.legal.letraChica (se puede apagar).
+    S.legal.bandaTam (0,6–1,8) en footerPlan. El pie agrega un HIT 'pie' (clic → «Pie del folleto»).
+    Se borró la segunda definición de measureAntes (pisaba a la buena y medía «ANTES» siempre).
+    hasA/hasAhorro de las estrellas ahora respetan PRECIO_CFG.ahorro.
+  - 04b_temas.js: barraOpciones(S) = S.promo.barra {tam 0,7–1,4, letra 'mont'|'barlow',
+    alinear 'izquierda'|'centro'|'derecha', dy −30…40}; barraPromoMedidas(…, letra).
+    promoLegal se reemplazó por promoLetraChica.
+  - 06_state.js: ESTADO_VERSION 7; comercio.legales por defecto «Imágenes ilustrativas.» (el viejo
+    «… Precios finales en pesos argentinos.» se cambia solo).
+  - 07_app.js: sliderTam() (control de tamaño con ↺), tamaños en «Leyenda del precio», bloque
+    «Tamaño, letra y posición» en la barra, sección «Pie del folleto» (seccionPie) con la vista
+    de la letra chica; «Dónde consultar» y el texto extra pasaron ahí desde Datos del local/Legales.
+Probado: autoprueba 89 OK (12 nuevas), programa local 53 de 53, versión online 60 de 60;
+muestras antes/después en _trabajo/tmp/muestras31 (solo en la PC).
 

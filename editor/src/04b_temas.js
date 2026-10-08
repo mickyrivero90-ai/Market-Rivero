@@ -508,14 +508,23 @@ const hayCondicionPorProducto = S => {
   const L = LAYOUTS[S.formato] || {}, gen = (S.promo || {}).tipo;
   return (S.productos || []).slice(0, L.slots || 0).some(p => !productoVacio(p) && p.pago && p.pago !== gen && p.pago !== 'ninguno');
 };
-/** Frase legal de la promo para el pie. */
-function promoLegal(PF, vig, general = false) {
-  const partes = [];
-  if (PF.pct && general) partes.push(`Promo: ${PF.pct}% de descuento ${PF.frase}${vig ? ', válida ' + vig : ''}.`);
-  else if (PF.pct) partes.push(PF.extra ? `Promo: ${PF.pct}% de descuento adicional sobre el precio final, ${PF.frase}${vig ? ', válida ' + vig : ''}.` : `Precios finales con ${PF.pct}% de descuento ${PF.frase}${vig ? ', válidos ' + vig : ''}.`);
-  if (PF.cuotas) partes.push(`${PF.cuotas} cuotas sin interés ${PF.frase}.`);
-  if (!PF.pct && !PF.cuotas) partes.push(`Promoción válida ${PF.frase}.`);
-  return partes.join(' ');
+/** Texto escrito en la barra ("PAGANDO CON QR DE MERCADO PAGO (DINERO EN CUENTA)") como frase para el medio de una oración. */
+function fraseNatural(t) {
+  let s = String(t || '').trim();
+  if (!/[a-záéíóúñü]/.test(s)) {                                   // escrito todo en mayúsculas: minúsculas, salvo siglas y marcas
+    s = s.toLocaleLowerCase('es-AR').replace(/\b(qr|mp|cft|tna|tea|modo)\b/g, x => x.toUpperCase())
+      .replace(/mercado pago/g, 'Mercado Pago').replace(/\bvisa\b/g, 'Visa').replace(/\bmastercard\b/g, 'Mastercard').replace(/\bnaranja x\b/g, 'Naranja X');
+  }
+  return /^[A-ZÁÉÍÓÚÑ][a-záéíóúñü]/.test(s) ? s.charAt(0).toLocaleLowerCase('es-AR') + s.slice(1) : s;
+}
+/** La condición de la promo para la letra chica del pie (sin repetir la fecha: va una sola vez, al principio). */
+function promoLetraChica(PF, S) {
+  const tb = String(((S || {}).promo || {}).textoBarra || '').trim(), cond = tb ? fraseNatural(tb) : PF.frase;
+  const mensaje = (LAYOUTS[(S || {}).formato] || {}).grupo === 'mensaje';
+  if (PF.pct && PF.extra) return `Además, ${PF.pct}% de descuento sobre el precio final ${cond}.`;
+  if (PF.pct) return mensaje ? `${PF.pct}% de descuento ${cond}.` : `Precios finales en pesos, con ${PF.pct}% de descuento ${cond}.`;
+  if (PF.cuotas) return `Precios finales en pesos. ${PF.cuotas} cuotas sin interés ${cond}.`;
+  return `Precios finales en pesos, ${cond}.`;
 }
 /** ¿Se anuncian cuotas (en la promo o en la franja de medios de pago)? Entonces va la leyenda del CFT. */
 const hayCuotas = (S, PF) => !!(PF && PF.cuotas) || pagosVisibles(S).some(x => /cuota/i.test(x.txt));
@@ -598,16 +607,23 @@ function drawPromoChip(ctx, x, y, h, label, price, P, align = 'left') {
   ctx.restore(); return w;
 }
 
-/** Barra grande de promo: [ícono] CONDICIÓN | +10 % OFF | fecha. Es lo primero que se ve bajo el título. */
-function barraPromoMedidas(ctx, P, str, h) {
+/** Diseño de la barra de la promo (paso 3): tamaño, letra, alineación y altura. */
+function barraOpciones(S) {
+  const B = ((S || {}).promo || {}).barra || {};
+  return { tam: clamp(+B.tam || 1, 0.7, 1.4), letra: B.letra === 'barlow' ? 'barlow' : 'mont', alinear: ['izquierda', 'derecha'].includes(B.alinear) ? B.alinear : 'centro', dy: clamp(+B.dy || 0, -30, 40) };
+}
+/** Barra grande de promo: [ícono] CONDICIÓN | +10 % OFF | fecha. Es lo primero que se ve bajo el título.
+ *  letra: 'mont' (redonda) o 'barlow' (angosta: entra más texto). */
+function barraPromoMedidas(ctx, P, str, h, letra = 'mont') {
   const fs = h * 0.37, fsP = h * 0.74, fsD = h * 0.33, fsC = h * 0.4;
-  ctx.font = FM(800, fs); const wT = measure(ctx, P.texto, fs * 0.05);
+  const fuente = letra === 'barlow' ? (z => FB(900, z * 1.22)) : (z => FM(800, z)), alto = letra === 'barlow' ? 0.43 : 0.35;
+  ctx.font = fuente(fs); const wT = measure(ctx, P.texto, fs * 0.05);
   let wP = 0; if (P.pct) { ctx.font = FB(900, fsP); wP = measure(ctx, pctTexto(P), 0) + h * 0.7; }
   const cTxt = P.cuotas ? (P.pct ? 'O ' : '') + P.cuotas + ' CUOTAS SIN INTERÉS' : '';
   let wC = 0; if (cTxt) { ctx.font = FB(900, fsC); wC = measure(ctx, cTxt, 0.5) + h * 0.6; }
-  let wD = 0; if (str) { ctx.font = FM(800, fsD); wD = measure(ctx, str, fsD * 0.05) + h * 0.5 + h * 0.62; }
+  let wD = 0; if (str) { ctx.font = fuente(fsD); wD = measure(ctx, str, fsD * 0.05) + h * 0.5 + h * 0.62; }
   const gap = h * 0.22, icon = h * 0.62;
-  return { fs, fsP, fsD, fsC, cTxt, wT, wP, wC, wD, gap, icon, total: h * 0.3 + icon + h * 0.3 + wT + h * 0.3 + (wP ? wP + gap : 0) + (wC ? wC + gap : 0) + (wD ? wD + h * 0.1 : 0) };
+  return { fuente, alto, fs, fsP, fsD, fsC, cTxt, wT, wP, wC, wD, gap, icon, total: h * 0.3 + icon + h * 0.3 + wT + h * 0.3 + (wP ? wP + gap : 0) + (wC ? wC + gap : 0) + (wD ? wD + h * 0.1 : 0) };
 }
 function drawBarraPromo(ctx, x, y, h, P, str, m, T) {
   ctx.save(); const w = m.total;
@@ -616,7 +632,7 @@ function drawBarraPromo(ctx, x, y, h, P, str, m, T) {
   rrPath(ctx, x + 3, y + 3, w - 6, h - 6, h / 2 - 3); ctx.strokeStyle = 'rgba(255,255,255,.8)'; ctx.lineWidth = 2; ctx.stroke();
   promoIcono(ctx, P.icon, x + h * 0.3, y + h * 0.19, m.icon, promoIconInk(P));
   let cx = x + h * 0.3 + m.icon + h * 0.3;
-  text(ctx, P.texto, cx, y + h / 2 + m.fs * 0.35, { font: FM(800, m.fs), fill: '#FFFFFF', tracking: m.fs * 0.05, shadow: ['rgba(0,30,70,.5)', 3, 0, 2] });
+  text(ctx, P.texto, cx, y + h / 2 + m.fs * m.alto, { font: m.fuente(m.fs), fill: '#FFFFFF', tracking: m.fs * 0.05, shadow: ['rgba(0,30,70,.5)', 3, 0, 2] });
   cx += m.wT + h * 0.3;
   if (P.pct) {
     rrPath(ctx, cx, y + h * 0.09, m.wP, h * 0.82, h * 0.41); ctx.fillStyle = vGrad(ctx, y, y + h, P.c2); ctx.fill();
@@ -631,26 +647,30 @@ function drawBarraPromo(ctx, x, y, h, P, str, m, T) {
   if (str) {
     const dw = m.wD; rrPath(ctx, cx - h * 0.04, y + h * 0.14, dw, h * 0.72, h * 0.36); ctx.fillStyle = '#FFFFFF'; ctx.fill();
     iconCalendar(ctx, cx + h * 0.2, y + (h - h * 0.4) / 2 - 1, h * 0.4, P.ink, '#FFFFFF');
-    text(ctx, str, cx + h * 0.2 + h * 0.4 + h * 0.18, y + h / 2 + m.fsD * 0.35, { font: FM(800, m.fsD), fill: P.ink, tracking: m.fsD * 0.05 });
+    text(ctx, str, cx + h * 0.2 + h * 0.4 + h * 0.18, y + h / 2 + m.fsD * m.alto, { font: m.fuente(m.fsD), fill: P.ink, tracking: m.fsD * 0.05 });
   }
   ctx.restore(); return w;
 }
 /** Fila de información: fechas y, si hay promo de pago, la barra grande de promo. Devuelve el borde inferior. */
 function drawInfoRow(ctx, W, S, T, g) {
-  const y0 = drawInfoRowCuerpo(ctx, W, S, T, g);
-  HITS.push({ tipo: 'barra', i: 0, x: g.M, y: g.y - 4, w: W - 2 * g.M, h: y0 - g.y + 8 });   // clic en la barra: lleva a "Barra de la promo"
+  const y0 = drawInfoRowCuerpo(ctx, W, S, T, g), yTop = g.y + barraOpciones(S).dy;
+  HITS.push({ tipo: 'barra', i: 0, x: g.M, y: yTop - 4, w: W - 2 * g.M, h: y0 - yTop + 8 });   // clic en la barra: lleva a "Barra de la promo"
   return y0;
 }
 function drawInfoRowCuerpo(ctx, W, S, T, g) {
-  const P = (S.promo || {}).verBarra === false ? null : promoInfo(S), M = g.M, avail = W - 2 * M;
-  if (!P) { drawDatePill(ctx, W / 2, g.y, g.h, fechaPillTexto(S), T); return g.y + g.h; }
+  const P = (S.promo || {}).verBarra === false ? null : promoInfo(S), M = g.M, avail = W - 2 * M, B = barraOpciones(S);
+  const y = g.y + B.dy, gh = g.h * B.tam;
+  const xDe = ancho => (B.alinear === 'izquierda' ? M : B.alinear === 'derecha' ? W - M - ancho : (W - ancho) / 2);
+  const pildora = (yy, hh) => { const str = fechaPillTexto(S); if (str) drawDatePill(ctx, xDe(datePillAncho(ctx, str, hh)) + datePillAncho(ctx, str, hh) / 2, yy, hh, str, T); };
+  if (!P) { pildora(y, gh); return y + gh; }
   const corto = fechaPillTexto(S, true);
-  let h = g.h * 1.3, m = barraPromoMedidas(ctx, P, corto, h);
-  while (m.total > avail && h > g.h * 0.82) { h *= 0.96; m = barraPromoMedidas(ctx, P, corto, h); }
-  if (m.total <= avail) { drawBarraPromo(ctx, (W - m.total) / 2, g.y, h, P, corto, m, T); return g.y + h; }
-  const m2 = barraPromoMedidas(ctx, P, '', g.h * 1.05), hh = g.h * 1.05;               // no entra: la fecha va aparte, abajo
-  const sc = Math.min(1, avail / m2.total); ctx.save(); ctx.translate(W / 2, g.y + hh / 2); ctx.scale(sc, sc); ctx.translate(-W / 2, -(g.y + hh / 2));
-  drawBarraPromo(ctx, (W - m2.total) / 2, g.y, hh, P, '', m2, T); ctx.restore();
-  if (corto) drawDatePill(ctx, W / 2, g.y + hh + 8, g.h, fechaPillTexto(S), T);
-  return g.y + hh + 8 + (corto ? g.h : 0);
+  let h = gh * 1.3, m = barraPromoMedidas(ctx, P, corto, h, B.letra);
+  while (m.total > avail && h > gh * 0.82) { h *= 0.96; m = barraPromoMedidas(ctx, P, corto, h, B.letra); }
+  if (m.total <= avail) { drawBarraPromo(ctx, xDe(m.total), y, h, P, corto, m, T); return y + h; }
+  const hh = gh * 1.05, m2 = barraPromoMedidas(ctx, P, '', hh, B.letra);              // no entra: la fecha va aparte, abajo
+  const sc = Math.min(1, avail / m2.total);
+  ctx.save(); ctx.translate(xDe(m2.total * sc), y); ctx.scale(sc, sc); drawBarraPromo(ctx, 0, 0, hh, P, '', m2, T); ctx.restore();
+  const yb = y + hh * sc + 8;
+  if (corto) pildora(yb, gh);
+  return yb + (corto ? gh : 0);
 }

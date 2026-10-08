@@ -1,5 +1,6 @@
 // ───────────────────────── estado y datos de ejemplo ─────────────────────────
-const ESTADO_VERSION = 6;
+const ESTADO_VERSION = 7;
+const LEGALES_VIEJO = 'Imágenes ilustrativas. Precios finales en pesos argentinos.';   // hasta la v3.0 (ahora «precios finales» ya va en la letra chica)
 
 // `archivo` = ruta de la foto dentro de la carpeta "productos" (programa local); `img` = foto incrustada (página suelta).
 const nuevoProducto = (o = {}) => ({ id: uid(), nombre: '', desc: '', regular: '', pct: '', final: '', unidad: '', etiqueta: '', nota: '', pago: '', img: null, imgV: 0, archivo: null, mtime: null, demo: null, recordado: false, alfa: false, quitarFondo: false, tol: 40, zoom: 1, dx: 0, dy: 0, ...o });
@@ -37,12 +38,12 @@ function estadoDemo() {
     subtitulo: 'Regalale lo mejor',
     sello: { modo: 'auto', l1: '', l2: '', l3: '' },
     vigencia: { desde: '', hasta: '2026-10-18', agotar: true },
-    promo: { tipo: 'mp', pct: '10', cuotas: '', texto: '', textoBarra: '', verBarra: true, etiqueta: '', logo: '', modo: 'incluido', verPrecio: true },
-    precio: { antes: 'antes', etiqueta: 'FINAL', ahorro: true, grande: true, insignia: 1.3 },
+    promo: { tipo: 'mp', pct: '10', cuotas: '', texto: '', textoBarra: '', verBarra: true, etiqueta: '', logo: '', modo: 'incluido', verPrecio: true, barra: { tam: 1, letra: 'mont', alinear: 'centro', dy: 0 } },
+    precio: { antes: 'antes', etiqueta: 'FINAL', ahorro: true, grande: true, insignia: 1.3, placa: 1, ahorroTam: 1 },
     pagos: { ver: false, lista: ['efectivo', 'debito', 'credito', 'mp', 'transferencia'], textos: {} },
     mensaje: { kicker: '¡Aprovechá!', titulo: 'Descuento en todos los productos', grande: '', grande2: '', condicion: '', texto: 'Válido para todas tus compras en el local.' },
     destacado: { mensaje: 'OFERTA IMPERDIBLE', mensaje2: 'SOLO EN EFECTIVO' },
-    legal: { banda: true, alcohol: 'no', stock: '' },
+    legal: { banda: true, bandaTam: 1, letraChica: true, alcohol: 'no', stock: '' },
     opciones: { pdf: true, destinos: ['a4', 'post', 'story'] },
     coleccion: {
       mensaje: 'Aquí tenemos todos los productos para tus recetas', kicker: 'Para reposteras y reposteros', ocasion: 'Especial Día de la Madre',
@@ -60,7 +61,7 @@ function estadoDemo() {
       qrUrl: '',
       consulta: 'Facebook: Fiambrería Rivero',
       razon: '', cuit: '',
-      legales: 'Imágenes ilustrativas. Precios finales en pesos argentinos.',
+      legales: 'Imágenes ilustrativas.',
     },
     productos: [...productosDemo(), ...Array.from({ length: MAX_SLOTS - 10 }, () => nuevoProducto())],
   };
@@ -94,6 +95,7 @@ function normalizarEstado(S, op = {}) {
   out.sello = { ...base.sello, ...(S.sello || {}) };
   out.vigencia = { ...base.vigencia, ...(S.vigencia || {}) };
   out.promo = { ...base.promo, ...(S.promo || {}) };
+  out.promo.barra = { ...base.promo.barra, ...((S.promo || {}).barra || {}) };
   out.destacado = { ...base.destacado, ...(S.destacado || {}) };
   out.legal = { ...base.legal, ...(S.legal || {}) };
   if (!(S.v >= 6) && out.promo.modo === 'extra') out.promo.modo = 'incluido';   // v2.1: el % ya está en el precio final; nunca se suma otro descuento sin querer
@@ -106,6 +108,7 @@ function normalizarEstado(S, op = {}) {
   out.coleccion.fotos = ((S.coleccion && S.coleccion.fotos) || base.coleccion.fotos).map(f => recuperar(nuevaFoto(f), A.colecciones));
   while (out.coleccion.fotos.length < 3) out.coleccion.fotos.push(nuevaFoto());
   out.comercio = { ...base.comercio, ...(S.comercio || {}) };
+  if (!(S.v >= 7) && out.comercio.legales === LEGALES_VIEJO) out.comercio.legales = base.comercio.legales;   // v3.1: sin repetir «precios finales» en la letra chica
   if (/facebook\.com\/search/.test(out.comercio.qrUrl || '')) out.comercio.qrUrl = '';   // era un marcador de posición
   if (!out.comercio.waCanal) out.comercio.waCanal = WA_CANAL;
   if (out.formato === 'cartel_1') out.formato = 'destacado_a4';

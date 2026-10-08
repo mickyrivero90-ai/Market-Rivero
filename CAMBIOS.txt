@@ -5,6 +5,27 @@ Desde la 3.0, la herramienta online (https://mickyrivero90-ai.github.io/Market-R
 se actualiza sola. Si usás el programa de la PC y muestra un número menor, bajá el nuevo
 desde la herramienta online (⋯ Más → Programa para usar sin internet).
 
+Versión 3.1 · 8 de octubre de 2026
+- Tamaños a gusto (paso 2, «Leyenda del precio» → Tamaños):
+    · Precio final: la placa con el número, de 70 % a 160 %. Si a lo ancho no entra, crece
+      hasta donde puede sin deformarse.
+    · «AHORRÁS $…»: de 60 % a 200 %. Si no entra al lado del precio anterior, va al lado
+      de la placa.
+- Barra de la promo (paso 3): nuevo bloque «Tamaño, letra y posición»: tamaño (70 % a
+  140 %), letra redonda o angosta (en la angosta entra más texto), alineación (izquierda,
+  centro o derecha) y altura (subirla o bajarla un poco). «Toda la barra como venía» la deja
+  como estaba.
+- Pie del folleto (sección nueva, o tocando el pie en la vista previa):
+    · Letra chica más corta y sin repetir: la fecha va una sola vez y «precios finales»
+      también. Si escribiste tu propio texto en la barra (por ejemplo «(dinero en cuenta)»),
+      la letra chica lo usa. Se puede sacar.
+    · Banda «Para más información o limitaciones aplicables consulte en…»: se puede sacar o
+      cambiar el tamaño de la letra (60 % a 180 %). En A4, por debajo de 100 % la revisión
+      avisa que queda más chica de lo que pide la norma.
+- Corregido: el «AHORRÁS» de los productos estrella y del folleto de un solo producto ahora
+  respeta la casilla «Mostrar AHORRÁS». Y el ancho del precio anterior se mide bien cuando
+  dice «PRECIO NORMAL», «PRECIO DE LISTA» o «DE … A» (antes se calculaba como si dijera ANTES).
+
 Versión 3.0 · 8 de octubre de 2026 · LA HERRAMIENTA ONLINE
 - Ahora se usa desde internet: https://mickyrivero90-ai.github.io/Market-Rivero/
   Anda en la PC de casa, en la del negocio y en el celular, sin instalar nada, y siempre

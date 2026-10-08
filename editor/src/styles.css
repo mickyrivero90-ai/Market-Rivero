@@ -459,3 +459,13 @@ label.chk.guia.hecho { opacity: .6; }
   .plan-item .plan-canal { display: none; }
   .plan-item > .btn { grid-column: 2 / -1; justify-self: start; }
 }
+
+/* ── tamaños, diseño de la barra y pie del folleto ── */
+.fld.tam > span:first-child { display: block; }
+.tam-fila { display: flex; gap: 8px; align-items: center; }
+.tam-fila input[type=range] { flex: 1; min-width: 0; }
+.tam-fila .btn { min-width: 36px; padding: 4px 8px; }
+.diseno-barra { border-top: 1px dashed var(--line); padding-top: 8px; }
+.diseno-barra select { width: 100%; }
+#caja-pie.resalta { box-shadow: 0 0 0 4px var(--pop); border-radius: 12px; transition: box-shadow .2s; }
+.pie-vista { margin: 0; padding: 8px 10px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--line); color: var(--muted); font-size: 12.5px; line-height: 1.45; }

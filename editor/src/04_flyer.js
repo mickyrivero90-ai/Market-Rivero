@@ -200,21 +200,28 @@ function drawBadge(ctx, cx, cy, R, p, T, pct, rot = -0.17, escala = null) {
 }
 
 // ───────── placa de precio ─────────
-/** Dibuja "$ 18.540" sobre una placa roja inclinada. Devuelve el rectángulo ocupado. */
-function drawPlate(ctx, x, yBottom, maxW, H, price, T, o = {}) {
-  const skew = 0.16, padX = H * 0.26;
-  let ds = H * 0.98;
-  const dollar = 0.44, gap = H * 0.05;
-  const measureAll = s => {
-    ctx.font = FB(900, s); const wi = measure(ctx, price.int, 0);
-    ctx.font = FB(900, s * dollar); const wd = measure(ctx, '$', 0), wc = price.dec ? measure(ctx, price.dec, 0) : 0;
-    return { wi, wd, wc, total: wd + gap + wi + (price.dec ? gap * 0.6 + wc : 0) };
+/** Medidas de la placa: alto, tamaño de la cifra y ancho. Con o.min (cuando se agranda), crece solo hasta donde la cifra entra entera a su tamaño. */
+function plateGeom(ctx, maxW, H0, price, o = {}) {
+  const skew = 0.16, dollar = 0.44, kFinal = o.final === false || !ETQ_PRECIO ? 0 : 0.27;
+  const medir = (h, ds) => {
+    const gap = h * 0.05; ctx.font = FB(900, ds); const wi = measure(ctx, price.int, 0);
+    ctx.font = FB(900, ds * dollar); const wd = measure(ctx, '$', 0), wc = price.dec ? measure(ctx, price.dec, 0) : 0;
+    return { gap, wi, wd, wc, total: wd + gap + wi + (price.dec ? gap * 0.6 + wc : 0) };
   };
-  let m = measureAll(ds);
-  const finalW = o.final === false || !ETQ_PRECIO ? 0 : H * 0.27;
-  const avail = maxW - padX * 2 - H * skew - finalW;
-  if (m.total > avail) { ds *= avail / m.total; m = measureAll(ds); }
-  const w = m.total + padX * 2 + H * skew * 0.5 + finalW, y = yBottom - H;
+  let H = H0;
+  if (o.min && H0 > o.min) { const a = medir(100, 98).total / 100; H = Math.max(o.min, Math.min(H0, maxW / (a + 0.52 + skew + kFinal))); }
+  let ds = H * 0.98, m = medir(H, ds);
+  const padX = H * 0.26, finalW = H * kFinal, avail = maxW - padX * 2 - H * skew - finalW;
+  if (m.total > avail) { ds *= avail / m.total; m = medir(H, ds); }
+  return { H, ds, m, gap: m.gap, padX, finalW, skew, dollar, w: m.total + padX * 2 + H * skew * 0.5 + finalW };
+}
+/** Alto de la placa según el tamaño elegido en «Leyenda del precio» → [alto, opciones para drawPlate]. */
+const altoPlaca = h0 => { const k = PRECIO_CFG.placa || 1; return [h0 * k, k > 1 ? { min: h0 } : {}]; };
+const tamAhorro = () => PRECIO_CFG.ahorroTam || 1;
+/** Dibuja "$ 18.540" sobre una placa roja inclinada. Devuelve el rectángulo ocupado. */
+function drawPlate(ctx, x, yBottom, maxW, H0, price, T, o = {}) {
+  const g = plateGeom(ctx, maxW, H0, price, o), { H, ds, m, gap, padX, finalW, skew, dollar } = g;
+  const w = g.w, y = yBottom - H;
   ctx.save();
   ctx.translate(x, y + H / 2); ctx.transform(1, 0, -skew, 1, 0, 0);
   shadow(ctx, 'rgba(70,0,10,.45)', 12, 0, 7);
@@ -242,7 +249,7 @@ function drawPlate(ctx, x, yBottom, maxW, H, price, T, o = {}) {
   return { x, y, w, h: H, right: x + w, ds };
 }
 /** Cómo se muestra el precio anterior y la palabra de la placa (se elige en "Leyenda del precio"). */
-let PRECIO_CFG = { antes: 'antes', ahorro: true, grande: true, insignia: 1.3 };
+let PRECIO_CFG = { antes: 'antes', ahorro: true, grande: true, insignia: 1.3, placa: 1, ahorroTam: 1 };
 /** Tamaño de la nota bajo el precio ("Llevando 2 pagás 1: $X c/u"): sigue al tamaño elegido para las insignias. */
 const notaTam = k => 15 * k * Math.min(1.5, PRECIO_CFG.insignia || 1);
 const ANTES_ESTILOS = { antes: ['ANTES', ''], normal: ['PRECIO NORMAL', ''], lista: ['PRECIO DE LISTA', ''], de_a: ['DE', 'A'], solo: ['', ''] };
@@ -295,8 +302,13 @@ function filaAntes(ctx, tx, tw, plate, info, p, T, k, o = {}) {
   const aw = drawAntes(ctx, tx, base, info.R, aSize, T, { maxW: tw - derecha, priceColor: T.ink });
   if (unidadEnFila) chip(ctx, tx + tw, base - uH * 0.8, unidad, { h: uH, font: uF, align: 'right', padX: 11 * k, tracking: 0.6 });
   else if (PRECIO_CFG.ahorro && info.ahorro > 0 && !p.noAhorro) {
-    const ch = Math.min(30 * k, aSize * 1.15), cw = chipAhorro(ctx, 0, 0, ch, info.ahorro, { medir: true });
-    if (tx + aw + 12 * k + cw <= tx + tw) chipAhorro(ctx, tx + tw, base - ch * 0.76, ch, info.ahorro, { align: 'right' });
+    const ch = Math.min(30 * k, aSize * 1.15) * tamAhorro(), cw = chipAhorro(ctx, 0, 0, ch, info.ahorro, { medir: true });
+    if (tx + aw + 12 * k + cw <= tx + tw) {                          // al lado del precio anterior (sin pisar la placa)
+      const cy = Math.min(base - ch * 0.76, plate.y - 3 * k - ch);
+      chipAhorro(ctx, tx + tw, cy, ch, info.ahorro, { align: 'right' });
+      return Math.min(base - aSize * 0.8, cy);
+    }
+    if (!unidad && plate.right + 10 * k + cw <= tx + tw) chipAhorro(ctx, plate.right + 10 * k, plate.y + (plate.h - ch) / 2, ch, info.ahorro);   // si no, al lado de la placa
   }
   return base - aSize * 0.8;
 }
@@ -318,9 +330,9 @@ function drawCard(ctx, r, p, T, env, o = {}) {
   const cwChip = mpH ? promoChipAncho(ctx, mpH, mpV.label, mpV.price) : 0;
   ctx.font = nF; const notaAlLado = mpH && nota && tw - cwChip - 14 * k >= measure(ctx, nota, 0) * 0.95;   // si no entra cómoda al lado, va abajo (sin apretar la letra)
   const notaAbajo = nota && !notaAlLado, notaH = notaAbajo ? nFs * 1.3 : 0;
-  const plateH = (mpH ? 58 : 70) * k, plateBottom = h - (mpH || notaAbajo ? 10 : 16) * k - (mpH ? mpH + 5 * k : 0) - notaH;
+  const [plateH, pOp] = altoPlaca((mpH ? 58 : 70) * k), plateBottom = h - (mpH || notaAbajo ? 10 : 16) * k - (mpH ? mpH + 5 * k : 0) - notaH;
   const price = info.F || { int: '0', dec: '' };
-  const plate = drawPlate(ctx, tx - 8 * k, plateBottom, tw + 8 * k, plateH, price, T);
+  const plate = drawPlate(ctx, tx - 8 * k, plateBottom, tw + 8 * k, plateH, price, T, pOp);
   if (mpH) {                                                      // fila inferior: "CON MP $…" y, si entra, la nota al lado
     const cw = drawPromoChip(ctx, tx - 4 * k, plateBottom + 5 * k, mpH, mpV.label, mpV.price, mpV.P);
     if (notaAlLado) text(ctx, nota, tx - 4 * k + cw + 10 * k, plateBottom + 5 * k + mpH * 0.5 + nFs * 0.36, { font: nF, fill: T.ink, maxW: tx + tw - (tx - 4 * k + cw) - 10 * k });
@@ -351,15 +363,16 @@ function drawCardV(ctx, r, p, T, env, o = {}) {
   let yb = h - 12 * k;
   if (nota) { const nFs = notaTam(k); text(ctx, nota, cx, yb - 3 * k, { font: FM(800, nFs), fill: T.ink, align: 'center', maxW: tw }); yb -= nFs * 1.35; }
   if (mpH) { drawPromoChip(ctx, cx, yb - mpH, mpH, mpV.label, mpV.price, mpV.P, 'center'); yb -= mpH + 6 * k; }
-  const plateH = 60 * k, price = info.F || { int: '0', dec: '' }, pw = drawPlateMeasure(ctx, tw, plateH, price);
-  const plate = drawPlate(ctx, cx - pw / 2 + plateH * 0.04, yb, tw, plateH, price, T);
+  const [plateH, pOp] = altoPlaca(60 * k), price = info.F || { int: '0', dec: '' }, pw = drawPlateMeasure(ctx, tw, plateH, price, pOp);
+  const plate = drawPlate(ctx, cx - pw / 2 + plateH * 0.04, yb, tw, plateH, price, T, pOp);
   yb = plate.y - 8 * k;
   if (info.R) {
     const aSize = (PRECIO_CFG.grande ? 28 : 21) * k, aw = Math.min(tw, measureAntes(ctx, info.R, aSize));
-    const conAhorro = PRECIO_CFG.ahorro && info.ahorro > 0 && !p.noAhorro, ch = 26 * k, cw = conAhorro ? chipAhorro(ctx, 0, 0, ch, info.ahorro, { medir: true }) : 0;
+    const conAhorro = PRECIO_CFG.ahorro && info.ahorro > 0 && !p.noAhorro, ch = 26 * k * tamAhorro(), cw = conAhorro ? chipAhorro(ctx, 0, 0, ch, info.ahorro, { medir: true }) : 0;
     if (conAhorro && aw + 12 * k + cw <= tw) {                    // en una sola fila: ANTES $X  [AHORRÁS $Y]
-      const x0 = cx - (aw + 12 * k + cw) / 2; drawAntes(ctx, x0, yb, info.R, aSize, T, { maxW: tw, priceColor: T.ink }); chipAhorro(ctx, x0 + aw + 12 * k, yb - ch * 0.76, ch, info.ahorro);
-      yb -= aSize * 0.82 + 7 * k;
+      const x0 = cx - (aw + 12 * k + cw) / 2, cy = Math.min(yb - ch * 0.76, plate.y - 3 * k - ch);
+      drawAntes(ctx, x0, yb, info.R, aSize, T, { maxW: tw, priceColor: T.ink }); chipAhorro(ctx, x0 + aw + 12 * k, cy, ch, info.ahorro);
+      yb = Math.min(yb - aSize * 0.82, cy) - 7 * k;
     } else {
       drawAntes(ctx, cx - aw / 2, yb, info.R, aSize, T, { maxW: tw, priceColor: T.ink }); yb -= aSize * 0.82 + 7 * k;
       if (conAhorro && h / w > 1.02) { chipAhorro(ctx, cx, yb - ch, ch, info.ahorro, { align: 'center' }); yb -= ch + 6 * k; }
@@ -390,14 +403,14 @@ function drawCardWide(ctx, r, p, T, env, o = {}) {
   wf.lines.forEach((ln, i) => text(ctx, ln, tx, top + wf.size * 0.82 + i * wf.size * 0.92, { font: FB(900, wf.size), fill: nm ? T.ink : 'rgba(60,25,10,.35)', tracking: 0.4 }));
   if (desc) { const df = wrapFit(ctx, desc, s => FM(600, s), dSize, 13 * k, tw, 1, 0); text(ctx, df.lines[0], tx, top + wf.size * 0.92 * wf.lines.length + 3 * k + df.size * 0.95, { font: FM(600, df.size), fill: T.soft }); }
   const nota = String(p.nota || '').trim(), mpV = chipProducto(p, S_DIBUJO), mpH = mpV != null ? 26 * k : 0;
-  const plateH = (mpH ? 64 : 74) * k, plateBottom = h - (mpH ? 12 : 16) * k - (mpH ? mpH + 5 * k : nota ? 18 * k : 0);
+  const [plateH, pOp] = altoPlaca((mpH ? 64 : 74) * k), plateBottom = h - (mpH ? 12 : 16) * k - (mpH ? mpH + 5 * k : nota ? 18 * k : 0);
   const price = info.F || { int: '0', dec: '' };
-  const pw = drawPlateMeasure(ctx, priceW, plateH, price);
-  const plate = drawPlate(ctx, pxr - pw, plateBottom, priceW, plateH, price, T);
+  const pw = drawPlateMeasure(ctx, priceW, plateH, price, pOp);
+  const plate = drawPlate(ctx, pxr - pw, plateBottom, priceW, plateH, price, T, pOp);
   if (mpH) drawPromoChip(ctx, pxr, plateBottom + 5 * k, mpH, mpV.label, mpV.price, mpV.P, 'right');
   else if (nota) text(ctx, nota, pxr, h - 14 * k, { font: FM(800, notaTam(k)), fill: T.ink, align: 'right', maxW: priceW + 60 * k });
   if (info.R) { const as = (PRECIO_CFG.grande ? 26 : 21) * k, aw = Math.min(priceW + 60 * k, measureAntes(ctx, info.R, as)); drawAntes(ctx, pxr - aw, plate.y - 10 * k, info.R, as, T, { maxW: priceW + 60 * k, priceColor: T.ink }); }
-  if (p.unidad) chip(ctx, plate.x - 10 * k, plate.y + plateH / 2 - 14 * k, String(p.unidad).toUpperCase(), { h: 28 * k, font: FB(900, 21 * k), align: 'right', padX: 11 * k, tracking: 0.6 });
+  if (p.unidad) chip(ctx, plate.x - 10 * k, plate.y + plate.h / 2 - 14 * k, String(p.unidad).toUpperCase(), { h: 28 * k, font: FB(900, 21 * k), align: 'right', padX: 11 * k, tracking: 0.6 });
   drawBadge(ctx, 40 * k, 34 * k, 42 * k, p, T, info.pct);
   ctx.restore();
 }
@@ -460,14 +473,20 @@ function drawHeroH(ctx, r, p, T, env, o = {}) {
   drawProductArt(ctx, p, z, T, env, { k, glowColor: 'rgba(255,255,255,.85)', glowR: 0.62 });
   stickerEstrella(ctx, w * 0.43 - 6 * k, 22 * k, k, T);
   const tx = w * 0.43, tw = w - tx - 34 * k;
-  const nota = String(p.nota || '').trim(), mpV = chipProducto(p, S_DIBUJO), hasA = info.ahorro > 0 && !p.noAhorro;
+  const nota = String(p.nota || '').trim(), mpV = chipProducto(p, S_DIBUJO), hasA = PRECIO_CFG.ahorro && info.ahorro > 0 && !p.noAhorro;
   const fila = mpV != null || hasA;                                // fila bajo la placa: "CON MP $…" a la izquierda, "AHORRÁS" a la derecha
-  const plateH = (fila ? 128 : 140) * k, plateBottom = h - (fila ? 30 : 38) * k - (fila ? 50 * k : 0) - (nota ? 24 * k : 0);
+  const at = tamAhorro(), hA = hasA ? 42 * k * at : 0, filaH = fila ? Math.max(mpV != null ? 42 * k : 0, hA) + 8 * k : 0;
+  const [plateH, pOp] = altoPlaca((fila ? 128 : 140) * k), plateBottom = h - (fila ? 30 : 38) * k - filaH - (nota ? 24 * k : 0);
   const price = info.F || { int: '0', dec: '' };
-  const plate = drawPlate(ctx, tx - 10 * k, plateBottom, tw + 10 * k, plateH, price, T);
+  const plate = drawPlate(ctx, tx - 10 * k, plateBottom, tw + 10 * k, plateH, price, T, pOp);
   if (nota) text(ctx, nota, tx, h - 34 * k, { font: FM(800, 21 * k * Math.min(1.4, PRECIO_CFG.insignia || 1)), fill: T.heroInk, maxW: tw });
-  if (mpV != null) drawPromoChip(ctx, tx - 6 * k, plateBottom + 8 * k, 42 * k, mpV.label, mpV.price, mpV.P);
-  if (hasA) chip(ctx, tx + tw, plateBottom + 8 * k, 'AHORRÁS ' + pesos(info.ahorro), { h: 42 * k, font: FB(900, 30 * k), align: 'right', padX: 18 * k, tracking: 0.5, fill: ['#2F2F2F', '#1A1A1A'], ink: '#FFE066' });
+  let libre = tw;
+  if (mpV != null) libre -= drawPromoChip(ctx, tx - 6 * k, plateBottom + 8 * k + (filaH - 8 * k - 42 * k) / 2, 42 * k, mpV.label, mpV.price, mpV.P) + 18 * k;
+  if (hasA) {                                                      // si no entra al lado de la condición de pago, se achica
+    const tA = 'AHORRÁS ' + pesos(info.ahorro); ctx.font = FB(900, 30 * k * at);
+    const s = Math.min(1, libre / (measure(ctx, tA, 0.5) + 36 * k * at)), hh = hA * s;
+    chip(ctx, tx + tw, plateBottom + 8 * k + (filaH - 8 * k - hh) / 2, tA, { h: hh, font: FB(900, 30 * k * at * s), align: 'right', padX: 18 * k * at * s, tracking: 0.5, fill: ['#2F2F2F', '#1A1A1A'], ink: '#FFE066' });
+  }
   const anteBase = plate.y - 14 * k, anteTop = info.R ? anteBase - (PRECIO_CFG.grande ? 36 : 31) * k : plate.y - 6 * k;
   if (info.R) drawAntes(ctx, tx, anteBase, info.R, (PRECIO_CFG.grande ? 42 : 36) * k, T, { color: T.heroSoft, priceColor: T.heroInk, maxW: tw });
   if (p.unidad) chip(ctx, tx + tw, plate.y - 54 * k, String(p.unidad).toUpperCase(), { h: 38 * k, font: FB(900, 28 * k), align: 'right', padX: 15 * k, tracking: 1, fill: T.price, ink: T.priceInk || '#fff' });
@@ -496,25 +515,28 @@ function drawHeroV(ctx, r, p, T, env, o = {}) {
   // reparto vertical (de abajo hacia arriba): nota, "ahorrás", placa, precio anterior, descripción, nombre y foto
   const nota = String(p.nota || '').trim(), cx = w / 2, tw = w - 80 * k;
   const mpV = chipProducto(p, S_DIBUJO);
-  const plateH = 140 * k * big, hasAhorro = info.ahorro > 0 && !p.noAhorro, unidadV = p.unidad ? String(p.unidad).toUpperCase() : '';
-  const padB = 26 * k, gapS = 10 * k, notaH = nota ? 26 * k : 0, chipH = (hasAhorro || unidadV || mpV != null) ? 44 * k : 0;
+  const [plateH, pOp] = altoPlaca(140 * k * big), hasAhorro = PRECIO_CFG.ahorro && info.ahorro > 0 && !p.noAhorro, unidadV = p.unidad ? String(p.unidad).toUpperCase() : '';
+  const at = tamAhorro(), hA = hasAhorro ? 44 * k * at : 0;
+  const padB = 26 * k, gapS = 10 * k, notaH = nota ? 26 * k : 0, chipH = Math.max(hA, (unidadV || mpV != null) ? 44 * k : 0);
   const stackTop = h - padB - (notaH ? notaH + gapS : 0), chipTop = stackTop - chipH;
   const plateBottom = (chipH ? chipTop : stackTop) - gapS;
   const maxW = w - 120 * k;
   const price = info.F || { int: '0', dec: '' };
-  const pw = drawPlateMeasure(ctx, maxW, plateH, price);
-  const plate = drawPlate(ctx, cx - pw / 2, plateBottom, maxW, plateH, price, T);
+  const pw = drawPlateMeasure(ctx, maxW, plateH, price, pOp);
+  const plate = drawPlate(ctx, cx - pw / 2, plateBottom, maxW, plateH, price, T, pOp);
   if (nota) text(ctx, nota, cx, h - padB - 5 * k, { font: FM(800, 22 * k * Math.min(1.3, PRECIO_CFG.insignia || 1)), fill: T.heroInk, align: 'center', maxW: tw });
   const aS = (PRECIO_CFG.grande ? 46 : 38) * k, anteBase = plate.y - 16 * k, anteTop = info.R ? anteBase - aS * 0.9 : plate.y - 8 * k;
   if (info.R) { const aw = Math.min(tw, measureAntes(ctx, info.R, aS)); drawAntes(ctx, cx - aw / 2, anteBase, info.R, aS, T, { color: T.heroSoft, priceColor: T.heroInk, maxW: tw }); }
-  if (chipH) {                                                   // fila centrada: "AHORRÁS $X" + unidad
-    const aTxt = hasAhorro ? 'AHORRÁS ' + pesos(info.ahorro) : '', f1 = FB(900, 32 * k), f2 = FB(900, 28 * k), mpTxt = mpV ? mpV.label + mpV.price : '';
-    ctx.font = f1; const wa = aTxt ? measure(ctx, aTxt, 0.5) + 40 * k : 0;
+  if (chipH) {                                                   // fila centrada: condición de pago + "AHORRÁS $X" + unidad
+    const aTxt = hasAhorro ? 'AHORRÁS ' + pesos(info.ahorro) : '', f2 = FB(900, 28 * k), mpTxt = mpV ? mpV.label + mpV.price : '', hM = 44 * k;
+    ctx.font = FB(900, 32 * k * at); let wa = aTxt ? measure(ctx, aTxt, 0.5) + 40 * k * at : 0;
     ctx.font = f2; const wu = unidadV ? measure(ctx, unidadV, 1) + 32 * k : 0;
-    const wm = mpTxt ? promoChipAncho(ctx, chipH, mpV.label, mpV.price) : 0, gp = 12 * k, n = (wa ? 1 : 0) + (wu ? 1 : 0) + (wm ? 1 : 0);
-    let x0 = cx - (wa + wu + wm + gp * Math.max(0, n - 1)) / 2;
-    if (mpTxt) { drawPromoChip(ctx, x0, chipTop, chipH, mpV.label, mpV.price, mpV.P); x0 += wm + gp; }
-    if (aTxt) { chip(ctx, x0, chipTop, aTxt, { h: chipH, font: f1, align: 'left', padX: 20 * k, tracking: 0.5, fill: ['#2F2F2F', '#1A1A1A'], ink: '#FFE066' }); x0 += wa + gp; }
+    const wm = mpTxt ? promoChipAncho(ctx, hM, mpV.label, mpV.price) : 0, gp = 12 * k, n = (wa ? 1 : 0) + (wu ? 1 : 0) + (wm ? 1 : 0);
+    const resto = wu + wm + gp * Math.max(0, n - 1), s = wa ? Math.min(1, Math.max(0.4, (w - 60 * k - resto) / wa)) : 1;   // si no entra todo, se achica el «AHORRÁS»
+    wa *= s;
+    let x0 = cx - (wa + resto) / 2;
+    if (mpTxt) { drawPromoChip(ctx, x0, chipTop + (chipH - hM) / 2, hM, mpV.label, mpV.price, mpV.P); x0 += wm + gp; }
+    if (aTxt) { const hh = hA * s; chip(ctx, x0, chipTop + (chipH - hh) / 2, aTxt, { h: hh, font: FB(900, 32 * k * at * s), align: 'left', padX: 20 * k * at * s, tracking: 0.5, fill: ['#2F2F2F', '#1A1A1A'], ink: '#FFE066' }); x0 += wa + gp; }
     if (unidadV) chip(ctx, x0, chipTop + (chipH - 40 * k) / 2, unidadV, { h: 40 * k, font: f2, align: 'left', padX: 16 * k, tracking: 1, fill: T.price, ink: T.priceInk || '#fff' });
   }
   const desc = String(p.desc || '').trim(), nm = String(p.nombre || '').trim().toUpperCase();
@@ -531,17 +553,7 @@ function drawHeroV(ctx, r, p, T, env, o = {}) {
   drawBadge(ctx, w - 100 * k, 120 * k, 82 * k, p, T, info.pct);
   ctx.restore();
 }
-function drawPlateMeasure(ctx, maxW, H, price) {
-  const skew = 0.16, padX = H * 0.26, dollar = 0.44, gap = H * 0.05; let ds = H * 0.98;
-  const f = s => { ctx.font = FB(900, s); const wi = measure(ctx, price.int, 0); ctx.font = FB(900, s * dollar); const wd = measure(ctx, '$', 0), wc = price.dec ? measure(ctx, price.dec, 0) : 0; return wd + gap + wi + (price.dec ? gap * 0.6 + wc : 0); };
-  const finalW = ETQ_PRECIO ? H * 0.27 : 0;
-  let t = f(ds); const avail = maxW - padX * 2 - H * skew - finalW; if (t > avail) { ds *= avail / t; t = f(ds); }
-  return t + padX * 2 + H * skew * 0.5 + finalW;
-}
-function measureAntes(ctx, price, size) {
-  ctx.font = FM(700, size * 0.78); const lw = measure(ctx, 'ANTES ', size * 0.05);
-  ctx.font = FM(800, size); return lw + size * 0.12 + measure(ctx, '$' + price.int + (price.dec ? ',' + price.dec : ''), 0);
-}
+function drawPlateMeasure(ctx, maxW, H, price, o = {}) { return plateGeom(ctx, maxW, H, price, o).w; }
 
 // ───────── pie: datos del local + banda legal ─────────
 const RE_ALCOHOL = /\b(vino|vinos|fernet|cerveza|cervezas|vodka|whisky|whiskey|gin|ron|licor|aperitivo|espumante|champagne|champa[ñn]a|sidra|tequila|amargo|malbec|cabernet|aperol|campari|gancia)\b/i;
@@ -562,15 +574,35 @@ function legalParrafos(S) {
   if (alcoholActivo(S)) out.push('BEBER CON MODERACIÓN. PROHIBIDA SU VENTA A MENORES DE 18 AÑOS.');
   return out;
 }
+/** Letra chica del pie: vigencia, condición de la promo y lo legal, en pocas palabras y sin repetir datos. */
+function letraChica(S) {
+  const L = S.legal || {}, C = S.comercio || {}, V = S.vigencia || {};
+  if (L.letraChica === false) return '';
+  const colec = (LAYOUTS[S.formato] || {}).grupo === 'coleccion', partes = [];
+  const vig = rangoLargo(V.desde, V.hasta), stock = String(L.stock || '').trim();
+  if (colec) partes.push(String((S.coleccion || {}).pie || '').trim());
+  else if (vig) partes.push(`Válido ${vig}${V.agotar ? ' o hasta agotar stock' + (stock ? ' (' + stock + ')' : '') : ''}.`);
+  else if (V.agotar) partes.push('Válido hasta agotar stock' + (stock ? ' (' + stock + ')' : '') + '.');
+  const PF = !colec && typeof promoInfo === 'function' ? promoInfo(S) : null;
+  if (PF) partes.push(promoLetraChica(PF, S));
+  else if (!colec) partes.push('Precios finales en pesos argentinos.');
+  if (!colec && hayCondicionPorProducto(S)) partes.push('Cada descuento vale solo con el medio de pago indicado debajo del precio.');
+  if (hayCuotas(S, PF)) partes.push(LEYENDA_CUOTAS);
+  if (C.legales && !colec) partes.push(String(C.legales).trim());
+  const id = [C.razon, C.cuit ? 'CUIT ' + C.cuit : ''].filter(Boolean).join(' · ');
+  if (id) partes.push(id + '.');
+  return partes.filter(Boolean).join(' ');
+}
 /** Calcula alturas del pie. kind: 'print' (A4: capitales ≥ 4 mm) | 'post' | 'story'. */
 function footerPlan(ctx, S, W, H, kind = 'print', o = {}) {
   const L = S.legal || {};
   const infoH = o.infoH || (kind === 'print' ? 172 : kind === 'post' ? 150 : 156);
   const pagosH = pagosVisibles(S).length ? (kind === 'print' ? 62 : kind === 'post' ? 58 : 64) : 0;
   if (!L.banda) return { infoH, pagosH, legalH: 0, total: infoH + pagosH, lines: [], fs: 0, lh: 0 };
-  const mm = W / 210, fs = kind === 'print' ? Math.round(6.1 * mm) : kind === 'post' ? 25 : 27, pad = Math.round(W * 0.025), lh = fs * 1.14;
+  const mm = W / 210, tam = clamp(+L.bandaTam || 1, 0.6, 1.8);
+  const fs = (kind === 'print' ? Math.round(6.1 * mm) : kind === 'post' ? 25 : 27) * tam, pad = Math.round(W * 0.025), lh = fs * 1.14;
   const lines = [];
-  legalParrafos(S).forEach(par => { const wf = wrapFit(ctx, par, s => FB(800, fs, false), fs, fs, W - pad * 2, 2, 0.4); lines.push(...wf.lines); });
+  legalParrafos(S).forEach(par => { const wf = wrapFit(ctx, par, s => FB(800, fs, false), fs, fs, W - pad * 2, 3, 0.4); lines.push(...wf.lines); });
   const legalH = Math.max(H * 0.05, lines.length * lh + fs * 0.85);
   return { infoH, pagosH, legalH, total: pagosH + infoH + legalH, lines, fs, lh };
 }
@@ -618,21 +650,7 @@ function drawFooter(ctx, S, T, env, r, plan, o = {}) {
     const fs = fitSize(ctx, tel, s => FM(800, s), 27 * k, 14 * k, lx + lw - rx - 44 * k, 0);
     text(ctx, tel, rx + 42 * k, ry, { font: FM(800, fs), fill: T.footerInk });
   }
-  const vig = rangoLargo(S.vigencia && S.vigencia.desde, S.vigencia && S.vigencia.hasta), L = S.legal || {};
-  const colec = (LAYOUTS[S.formato] || {}).grupo === 'coleccion';
-  const partes = [];
-  const stock = String(L.stock || '').trim();
-  if (colec) partes.push(String((S.coleccion || {}).pie || '').trim());
-  else if (vig) partes.push(`Ofertas válidas ${vig}${S.vigencia.agotar ? ' o hasta agotar stock' + (stock ? ' (' + stock + ')' : '') : ''}.`);
-  else if (S.vigencia && S.vigencia.agotar) partes.push('Ofertas válidas hasta agotar stock' + (stock ? ' (' + stock + ')' : '') + '.');
-  const PF = typeof promoInfo === 'function' && !colec ? promoInfo(S) : null;
-  if (PF) partes.push(promoLegal(PF, vig, (LAYOUTS[S.formato] || {}).grupo === 'mensaje'));
-  if (!colec && hayCondicionPorProducto(S)) partes.push('Cada precio con descuento vale solo con el medio de pago indicado debajo del precio.');
-  if (hayCuotas(S, PF)) partes.push(LEYENDA_CUOTAS);
-  if (C.legales && !colec) partes.push(String(C.legales).trim());
-  const id = [C.razon, C.cuit ? 'CUIT ' + C.cuit : ''].filter(Boolean).join(' · ');
-  if (id) partes.push(id + '.');
-  const legal = partes.join(' ');
+  const legal = letraChica(S);
   if (legal) {
     const lf = wrapFit(ctx, legal, s => FM(500, s), 15.5 * k, 10.5 * k, lw, 2, 0);
     const ly = hI - 15 * k - (lf.lines.length - 1) * lf.size * 1.25;
@@ -647,6 +665,7 @@ function drawFooter(ctx, S, T, env, r, plan, o = {}) {
     plan.lines.forEach((ln, i) => text(ctx, ln, w / 2, y0 + i * plan.lh, { font: FB(800, plan.fs, false), fill: T.accentInk, align: 'center', tracking: 0.4 }));
   }
   ctx.restore();
+  HITS.push({ tipo: 'pie', i: 0, x, y: r.y + plan.pagosH, w, h: plan.infoH + plan.legalH });   // clic en el pie: lleva a «Pie del folleto»
 }
 
 // ───────── encabezado ─────────
@@ -774,7 +793,7 @@ function renderFlyer(canvas, S, opts = {}) {
   ctx.clearRect(0, 0, L.w, L.h); HITS = [];
   const T = THEMES[S.tema] || THEMES.naranja;
   const PR = S.precio || {};
-  PRECIO_CFG = { antes: PR.antes || 'antes', ahorro: PR.ahorro !== false, grande: PR.grande !== false, insignia: clamp(+PR.insignia || 1.3, 0.8, 2) };
+  PRECIO_CFG = { antes: PR.antes || 'antes', ahorro: PR.ahorro !== false, grande: PR.grande !== false, insignia: clamp(+PR.insignia || 1.3, 0.8, 2), placa: clamp(+PR.placa || 1, 0.7, 1.6), ahorroTam: clamp(+PR.ahorroTam || 1, 0.6, 2) };
   const PI = typeof promoInfo === 'function' ? promoInfo(S) : null;
   ETQ_PRECIO = PR.etiqueta != null ? PR.etiqueta : 'FINAL';        // la placa dice FINAL (o lo que se elija): es el precio que paga el cliente
   PROMO_ACT = PI && PI.verPrecio ? PI : null;                      // debajo de cada precio: la condición de pago (o la cuota)

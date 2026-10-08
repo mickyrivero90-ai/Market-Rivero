@@ -223,6 +223,7 @@ const casilleroVacio = (tipo, i) => (tipo === 'foto' ? !srcDe(S.coleccion.fotos[
 function textoCasillero(h_) {
   if (h_.tipo === 'barra') return 'Barra de la promo y fechas · clic para editar';
   if (h_.tipo === 'sello') return 'Sello · clic para cambiar lo que dice';
+  if (h_.tipo === 'pie') return 'Pie del folleto · clic para cambiar la letra chica o la banda';
   const vacio = casilleroVacio(h_.tipo, h_.i), que = h_.tipo === 'foto' ? 'foto' : 'casillero';
   return `${que[0].toUpperCase() + que.slice(1)} ${h_.i + 1} · clic para ${vacio ? 'elegir ' + (h_.tipo === 'foto' ? 'la foto' : 'el producto') : 'editarlo'}`;
 }
@@ -234,6 +235,7 @@ function hitEn(e) {
 }
 function activarCasillero(tipo, i) {
   if (tipo === 'sello') { const b = $('#caja-sello', DOM.panel); if (b) { b.scrollIntoView({ block: 'center', behavior: 'smooth' }); b.classList.add('resalta'); setTimeout(() => b.classList.remove('resalta'), 1600); const inp = $('input[type=text]', b); if (inp && !inp.closest('[hidden]')) inp.focus({ preventScroll: true }); } return; }
+  if (tipo === 'pie') { const b = $('#caja-pie', DOM.panel); if (b) { b.scrollIntoView({ block: 'center', behavior: 'smooth' }); b.classList.add('resalta'); setTimeout(() => b.classList.remove('resalta'), 1600); } return; }
   if (tipo === 'barra') { const b = $('#caja-barra', DOM.panel); if (b) { b.scrollIntoView({ block: 'center', behavior: 'smooth' }); b.classList.add('resalta'); setTimeout(() => b.classList.remove('resalta'), 1600); const inp = $('input[type=text]', b); if (inp) inp.focus({ preventScroll: true }); } return; }
   setActivo(tipo, i);
   if (casilleroVacio(tipo, i)) { elegirParaCasillero(i, tipo); return; }
@@ -483,7 +485,7 @@ function refrescarLecturas() {
     else if (srcDe(o) && !o.alfa && !o.quitarFondo) c.textContent = 'La foto tiene fondo: sale dentro de un marco blanco. Probá «Quitar fondo».';
     else c.textContent = '';
   });
-  pintarRevision();
+  pintarRevision(); pintarPieVista();
 }
 function calcularRevision() {
   const L = L_ACTUAL(), g = L.grupo, V = S.vigencia, out = [];
@@ -520,6 +522,8 @@ function calcularRevision() {
     if (g !== 'mensaje') info('El precio “Antes” tiene que ser el real', 'Si nunca lo cobraste, es publicidad engañosa (Dto. 274/2019, art. 11). El % que se muestra se redondea hacia abajo, así nunca anunciás más descuento que el real.');
     if (g !== 'mensaje') info('Precios finales', 'Mostrá siempre el precio final (con impuestos incluidos). Si hay precio por kg o litro, ponelo en letra menor.');
   }
+  if (S.legal.banda && (+S.legal.bandaTam || 1) < 1 && (L.pdf === 'A4' || planDestino(S, 'a4').length)) warn('La letra de la banda quedó chica para A4', 'La Res. 446/2025 pide letras de al menos 4 mm en el folleto impreso: subí el tamaño a 100 % en «Pie del folleto».');
+  if (S.legal.letraChica === false && g !== 'coleccion') info('Letra chica apagada', 'Las fechas y la condición de pago se siguen viendo en la barra de arriba. Las demás condiciones tienen que estar en: ' + (S.comercio.consulta || 'el lugar que indica la banda') + '.');
   if (S.legal.banda) ok('Banda legal al pie activada', 'Res. 446/2025: ancho completo, mínimo 5 % del alto y letras de 4 mm (en A4). Asegurate de que la info esté en: ' + (S.comercio.consulta || '—'));
   else warn('Banda legal desactivada', 'Para folletos, la Res. 446/2025 pide la leyenda “Para más información o limitaciones aplicables consulte en…” al pie.');
   if (S.comercio.waCanal && qrMatrix(S.comercio.waCanal)) ok('QR del canal de WhatsApp', 'Para redes: pegá también el link en el texto de la publicación, porque desde el mismo celular no se puede escanear.');
@@ -624,14 +628,17 @@ async function abrirPegarPlanilla() {
   pintar(); setTimeout(() => area.focus(), 30);
 }
 
-/** Control del tamaño de las insignias (-10 %, 2x1, 3x2…) y de la nota bajo el precio. */
-function tamInsignias() {
-  const PR = S.precio, val = () => Math.round((+PR.insignia || 1.3) * 100) + ' %';
-  const etq = h('b', null, val());
-  const r = h('input', { type: 'range', min: '0.8', max: '2', step: '0.05', value: String(PR.insignia || 1.3), 'aria-label': 'Tamaño de las insignias y notas',
-    oninput: e => { PR.insignia = +e.target.value; etq.textContent = val(); cambio(); } });
-  return h('label', { class: 'fld' }, h('span', null, 'Tamaño de insignias (2x1, 3x2, -10 %…) y notas: ', etq), r);
+/** Control de tamaño en % (insignias, placa del precio, «Ahorrás», barra, banda), con botón para volver al normal. */
+function sliderTam(etq, obj, key, min, max, def, o = {}) {
+  const actual = () => (+obj[key] > 0 ? +obj[key] : def), val = () => Math.round(actual() * 100) + ' %';
+  const etqV = h('b', null, val());
+  const listo = () => { etqV.textContent = val(); if (o.alCambiar) o.alCambiar(); cambio(); };
+  const r = h('input', { type: 'range', min: String(min), max: String(max), step: '0.05', value: String(actual()), 'aria-label': etq, oninput: e => { obj[key] = +e.target.value; listo(); } });
+  const normal = h('button', { type: 'button', class: 'btn small ghost', title: 'Volver al tamaño normal', 'aria-label': 'Volver al tamaño normal: ' + etq, onclick: () => { obj[key] = def; r.value = String(def); listo(); } }, '↺');
+  return h('div', { class: 'fld tam' }, h('span', null, etq + ': ', etqV, o.ayuda ? h('em', null, ' · ' + o.ayuda) : null), h('span', { class: 'tam-fila' }, r, normal));
 }
+/** Control del tamaño de las insignias (-10 %, 2x1, 3x2…) y de la nota bajo el precio. */
+const tamInsignias = () => sliderTam('Insignias (2x1, 3x2, -10 %…) y notas', S.precio, 'insignia', 0.8, 2, 1.3);
 /** Cómo se ve "antes vs. ahora" en todo el folleto, y el descuento para todos de un clic. */
 function cajaLeyendaPrecio() {
   const PR = S.precio;
@@ -639,8 +646,9 @@ function cajaLeyendaPrecio() {
   const ejemplo = h('div', { class: 'ley-ejemplo', 'aria-live': 'polite' });
   const pintarEjemplo = () => {
     const [pre, post] = ANTES_ESTILOS[PR.antes] || ANTES_ESTILOS.antes;
-    ejemplo.replaceChildren(h('span', { class: 'ley-antes' }, pre ? pre + ' ' : '', h('s', null, '$20.600'), post ? ' ' + post : ''),
-      h('span', { class: 'ley-placa' }, '$18.540', PR.etiqueta ? h('small', null, PR.etiqueta) : null), PR.ahorro ? h('span', { class: 'ley-ahorro' }, 'AHORRÁS $2.060') : null);
+    llenar(ejemplo, h('span', { class: 'ley-antes' }, pre ? pre + ' ' : '', h('s', null, '$20.600'), post ? ' ' + post : ''),
+      h('span', { class: 'ley-placa', style: `font-size:${Math.round(26 * (+PR.placa || 1))}px` }, '$18.540', PR.etiqueta ? h('small', null, PR.etiqueta) : null),
+      PR.ahorro ? h('span', { class: 'ley-ahorro', style: `font-size:${Math.round(15 * (+PR.ahorroTam || 1))}px` }, 'AHORRÁS $2.060') : null);
   };
   pintarEjemplo();
   const upd = () => { pintarEjemplo(); cambio(); };
@@ -663,6 +671,9 @@ function cajaLeyendaPrecio() {
         campo('Palabra en la placa', sel('ley-etq', [['FINAL', 'FINAL'], ['AHORA', 'AHORA'], ['OFERTA', 'OFERTA'], ['', '(ninguna)']], PR.etiqueta, v => { PR.etiqueta = v; upd(); }))),
       check('Mostrar “AHORRÁS $…”', 'Hace la cuenta por el cliente: atrae más que el porcentaje solo.', PR.ahorro, v => { PR.ahorro = v; upd(); }),
       check('Precio anterior grande', 'Más fácil de leer en el celular.', PR.grande, v => { PR.grande = v; upd(); }),
+      h('p', { class: 'lab', style: 'margin:6px 0 0' }, 'Tamaños'),
+      sliderTam('Precio final (la placa con el número)', PR, 'placa', 0.7, 1.6, 1, { alCambiar: pintarEjemplo, ayuda: 'si no entra a lo ancho, crece hasta donde puede' }),
+      sliderTam('«Ahorrás $…»', PR, 'ahorroTam', 0.6, 2, 1, { alCambiar: pintarEjemplo }),
       tamInsignias(),
       h('div', { class: 'todos' }, h('span', null, 'Descuento para todos:'), h('span', { class: 'pct' }, pctTodos), h('button', { class: 'btn small primary', type: 'button', onclick: aplicarTodos }, 'Calcular ofertas')),
       h('p', { class: 'hint', style: 'margin:0' }, 'Precio normal − % de descuento = precio final (con centavos si los hay, sin redondear). El precio final es el que paga el cliente: no se le resta nada más. También podés poner un % distinto en cada producto.')));
@@ -693,7 +704,7 @@ function pintarBarraPrev() {
   const c = DOM.barraPrev; if (!c || !document.contains(c)) return;
   const T = THEMES[S.tema] || THEMES.naranja, P = S.promo.verBarra === false ? null : promoInfo(S), h0 = 60;
   const m = document.createElement('canvas').getContext('2d');
-  const corto = fechaPillTexto(S, true), med = P ? barraPromoMedidas(m, P, corto, h0) : null;
+  const corto = fechaPillTexto(S, true), med = P ? barraPromoMedidas(m, P, corto, h0, barraOpciones(S).letra) : null;
   const wLog = P ? med.total + 16 : Math.max(260, datePillAncho(m, fechaPillTexto(S), h0 * 0.8) + 16), hLog = h0 + 16;
   const ancho = Math.max(200, c.parentNode.clientWidth || 420), esc = ancho / wLog, dpr = window.devicePixelRatio || 1;
   c.width = Math.round(ancho * dpr); c.height = Math.round(hLog * esc * dpr); c.style.width = ancho + 'px'; c.style.height = Math.round(hLog * esc) + 'px';
@@ -726,9 +737,28 @@ function cajaBarra() {
       conCuotas ? campo('Cuotas sin interés', texto(S.promo, 'cuotas', { ph: '3, 6, 12', mode: 'numeric', max: 2 }), 'opcional') : h('span')) : null,
     h('div', { class: 'grid2' }, fecha('desde', 'Desde'), fecha('hasta', 'Hasta')),
     check('Agregar “hasta agotar stock”', 'Crea urgencia. Indicá la cantidad en Legales.', S.vigencia.agotar, v => { S.vigencia.agotar = v; cambio(); }),
-    PT && g !== 'mensaje' ? check('Mostrar la barra de la promo', 'Si la apagás, debajo del título quedan solo las fechas.', S.promo.verBarra !== false, v => { S.promo.verBarra = v; cambio(); }) : null);
+    PT && g !== 'mensaje' ? check('Mostrar la barra de la promo', 'Si la apagás, debajo del título quedan solo las fechas.', S.promo.verBarra !== false, v => { S.promo.verBarra = v; cambio(); }) : null,
+    g !== 'mensaje' ? disenoBarra() : null);
   setTimeout(pintarBarraPrev, 0);
   return caja;
+}
+/** Tamaño, letra, alineación y altura de la barra de la promo (o de las fechas, si no hay promo). */
+function disenoBarra() {
+  const B = S.promo.barra || (S.promo.barra = { tam: 1, letra: 'mont', alinear: 'centro', dy: 0 });
+  const selLetra = h('select', { 'aria-label': 'Letra de la barra', onchange: e => { B.letra = e.target.value; cambio(); } },
+    h('option', { value: 'mont' }, 'Redonda (Montserrat)'), h('option', { value: 'barlow' }, 'Angosta y en cursiva (Barlow): entra más texto'));
+  selLetra.value = B.letra === 'barlow' ? 'barlow' : 'mont';
+  const alin = h('div', { class: 'quick', role: 'group', 'aria-label': 'Alineación de la barra' });
+  const pintarAlin = () => alin.replaceChildren(...[['izquierda', '⇤ Izquierda'], ['centro', 'Centro'], ['derecha', 'Derecha ⇥']].map(([v, t]) => h('button', { type: 'button', class: 'q' + ((B.alinear || 'centro') === v ? ' on' : ''), 'aria-pressed': String((B.alinear || 'centro') === v), onclick: () => { B.alinear = v; pintarAlin(); cambio(); } }, t)));
+  pintarAlin();
+  const dyTxt = h('b', null), pintarDy = () => { const v = +B.dy || 0; dyTxt.textContent = v === 0 ? 'en su lugar' : v < 0 ? `${-v} px más arriba` : `${v} px más abajo`; };
+  const dy = h('input', { type: 'range', min: '-30', max: '40', step: '2', value: String(+B.dy || 0), 'aria-label': 'Subir o bajar la barra', oninput: e => { B.dy = +e.target.value; pintarDy(); cambio(); } });
+  pintarDy();
+  return h('div', { class: 'stack diseno-barra' }, h('p', { class: 'lab', style: 'margin:4px 0 0' }, 'Tamaño, letra y posición'),
+    sliderTam('Tamaño', B, 'tam', 0.7, 1.4, 1, { ayuda: 'si no entra a lo ancho, se achica sola' }),
+    h('div', { class: 'fld tam' }, h('span', null, 'Letra'), selLetra), h('div', { class: 'fld tam' }, h('span', null, 'Alineación'), alin),
+    h('div', { class: 'fld tam' }, h('span', null, 'Altura: ', dyTxt), h('span', { class: 'tam-fila' }, dy, h('button', { type: 'button', class: 'btn small ghost', title: 'Volver a su lugar', onclick: () => { B.dy = 0; dy.value = '0'; pintarDy(); cambio(); } }, '↺'))),
+    h('button', { class: 'btn small ghost', type: 'button', onclick: () => { Object.assign(B, { tam: 1, letra: 'mont', alinear: 'centro', dy: 0 }); construirPanel(); cambio(); const c = $('#caja-barra', DOM.panel); if (c) c.scrollIntoView({ block: 'center' }); } }, '↺ Toda la barra como venía'));
 }
 /** % de la barra: al cambiarlo, los productos que van "como el folleto" y tenían el % anterior pasan al nuevo (un solo dato en todo el folleto). */
 function pctBarra() {
@@ -841,6 +871,26 @@ function seccionMensaje() {
     campo('Condición', texto(M, 'condicion', { ph: PF ? PF.texto : 'Ej.: PAGANDO CON QR DE MERCADO PAGO', max: 50 }), 'vacío = la de la promo'),
     campo('Texto', h('textarea', { rows: 3, maxlength: 220, placeholder: 'Ej.: Válido para todas tus compras en el local. No acumulable con otras promociones.', oninput: e => { M.texto = e.target.value; cambio(); } }, M.texto || ''), 'opcional')));
 }
+/** Pie del folleto: la letra chica (se arma sola, sin repetir) y la banda de la Res. 446/2025, con su tamaño. */
+function seccionPie() {
+  const L = S.legal, C = S.comercio;
+  DOM.pieVista = h('p', { class: 'pie-vista', 'aria-live': 'polite' });
+  const cajaChica = h('div', { class: 'stack', hidden: L.letraChica === false || null }, DOM.pieVista,
+    campo('Agregar al final', texto(C, 'legales', { ph: 'Imágenes ilustrativas.', max: 140 }), 'opcional'));
+  const cajaBanda = h('div', { class: 'stack', hidden: !L.banda || null },
+    campo('Dónde consultar', texto(C, 'consulta', { ph: 'Facebook: Fiambrería Rivero', max: 70 }), 'web, WhatsApp o 0800'),
+    sliderTam('Tamaño de la letra de la banda', L, 'bandaTam', 0.6, 1.8, 1, { ayuda: 'en A4, con menos de 100 % queda más chica que los 4 mm que pide la norma' }));
+  setTimeout(pintarPieVista, 0);
+  return h('section', { class: 'sec', id: 'caja-pie' }, h('h2', null, 'Pie del folleto', h('small', null, 'letra chica y banda de abajo')),
+    h('div', { class: 'stack' },
+      check('Letra chica (fechas y condiciones)', 'Va arriba de la banda. Se arma sola con la vigencia y la promo, sin repetir datos.', L.letraChica !== false, v => { L.letraChica = v; cajaChica.hidden = !v; cambio(); }), cajaChica,
+      check('Banda «Para más información o limitaciones aplicables consulte en…»', 'La pide la Res. 446/2025 en los folletos. Si la sacás, te lo recuerdo antes de terminar.', !!L.banda, v => { L.banda = v; cajaBanda.hidden = !v; cambio(); }), cajaBanda,
+      h('p', { class: 'hint', style: 'margin:0' }, 'Tip: tocando el pie en la vista previa venís directo acá.')));
+}
+function pintarPieVista() {
+  const v = DOM.pieVista; if (!v || !document.contains(v)) return;
+  const t = letraChica(S); v.textContent = t ? 'Así sale: «' + t + '»' : 'No hay nada para mostrar en la letra chica.';
+}
 function seccionRevision() {
   DOM.checks = h('ul', { class: 'checks' });
   return seccion('Revisión antes de terminar', null, DOM.checks,
@@ -861,12 +911,10 @@ function seccionLocalYLegales() {
       campo('WhatsApp o teléfono', texto(C, 'telefono', { ph: 'Ej.: 11 5555-5555', mode: 'tel', max: 30 }), 'opcional'),
       campo('Link del canal de WhatsApp', texto(C, 'waCanal', { ph: 'https://whatsapp.com/channel/…', mode: 'url', max: 200 }), 'sale como QR'),
       campo('Link de Facebook', texto(C, 'qrUrl', { ph: 'https://www.facebook.com/tu-pagina', mode: 'url', max: 200 }), 'opcional · 2.º QR'),
-      campo('Link de Google Maps', texto(C, 'mapa', { ph: 'https://maps.app.goo.gl/…', mode: 'url', max: 200 }), 'opcional · para «cómo llegar» en los textos'),
-      campo('Texto extra del pie', texto(C, 'legales', { ph: 'Imágenes ilustrativas. Precios finales en pesos argentinos.', max: 140 }))),
+      campo('Link de Google Maps', texto(C, 'mapa', { ph: 'https://maps.app.goo.gl/…', mode: 'url', max: 200 }), 'opcional · para «cómo llegar» en los textos')),
       h('p', { class: 'note' }, 'Estos datos se guardan solos y salen en todos los folletos. El QR del canal de WhatsApp se leyó de la foto del cartel del local.')),
     detalles('Legales', h('div', { class: 'stack' },
-      check('Banda legal al pie', 'Leyenda “Para más información o limitaciones aplicables consulte en…” a todo el ancho (Res. 446/2025).', S.legal.banda, v => { S.legal.banda = v; cambio(); }),
-      campo('Dónde consultar', texto(C, 'consulta', { ph: 'Facebook: Fiambrería Rivero', max: 70 }), 'web, WhatsApp o 0800'),
+      h('p', { class: 'hint', style: 'margin:0' }, 'La banda de abajo y la letra chica se cambian en «Pie del folleto» (arriba).'),
       campo('Leyenda de alcohol', selAlcohol, 'Ley 24.788'),
       campo('Stock por producto', texto(S.legal, 'stock', { ph: 'Ej.: 24 unidades por producto', max: 50 }), 'opcional'),
       h('div', { class: 'grid2' }, campo('Razón social', texto(C, 'razon', { ph: 'Opcional', max: 50 })), campo('CUIT', texto(C, 'cuit', { ph: 'XX-XXXXXXXX-X', mode: 'numeric', max: 14 })))))];
@@ -910,7 +958,7 @@ function construirPanel() {
   if (g === 'coleccion') secs.push(seccionFotos(), seccionMensajes());
   else if (g === 'mensaje') secs.push(seccionMensaje(), seccionFechasPromo());
   else secs.push(seccionProductos(), seccionFechasPromo());
-  secs.push(seccionRevision(), seccionMarketing(), ...seccionLocalYLegales(), ...(CARPETA.nube ? [seccionNube()] : []), seccionProyecto());
+  secs.push(seccionPie(), seccionRevision(), seccionMarketing(), ...seccionLocalYLegales(), ...(CARPETA.nube ? [seccionNube()] : []), seccionProyecto());
   DOM.panel.replaceChildren(...secs);
   pintarFormatos(); pintarTemas(); if (g !== 'mensaje') pintarProductos(); else { DOM.prods = null; refrescarLecturas(); }
   DOM.panel.scrollTop = st;
@@ -1151,6 +1199,28 @@ async function autotest() {
     const n = estadoNuevo(S); t('folleto nuevo vacío', n.productos.every(productoVacio) && n.coleccion.fotos.every(f => !srcDe(f)) && n.formato === S.formato);
     const m = normalizarEstado({ productos: [nuevoProducto(), nuevoProducto({ nombre: 'A', final: '1' })] }); t('casilleros vacíos al final', m.productos[0].nombre === 'A' && productoVacio(m.productos[1]));
     const es = estadoParaGuardar(S); t('estado liviano', JSON.stringify(es).length < 400000, Math.round(JSON.stringify(es).length / 1024) + ' KB');
+    { // v3.1: tamaños, letra chica, banda y barra
+      const cx = document.createElement('canvas').getContext('2d'), pr = { int: '2.520', dec: '' };
+      const PCbak = PRECIO_CFG; PRECIO_CFG = { ...PCbak, placa: 1.4 };
+      const [hp, op] = altoPlaca(70); t('placa más grande si entra', plateGeom(cx, 900, hp, pr, op).H > 70 && plateGeom(cx, 900, hp, pr, op).H <= 98, plateGeom(cx, 900, hp, pr, op).H.toFixed(1));
+      t('placa: si no entra a lo ancho, no se deforma', plateGeom(cx, 160, hp, pr, op).H === 70, plateGeom(cx, 160, hp, pr, op).H.toFixed(1));
+      PRECIO_CFG = { ...PCbak, placa: 0.8 }; t('placa más chica', altoPlaca(70)[0] === 56);
+      PRECIO_CFG = PCbak;
+      const S2 = { ...S, formato: 'a4_10', vigencia: { desde: '', hasta: '2026-10-18', agotar: false }, promo: { ...S.promo, tipo: 'mp', pct: '10', modo: 'incluido', textoBarra: 'PAGANDO CON QR DE MERCADO PAGO (DINERO EN CUENTA)' }, comercio: { ...S.comercio, legales: 'Imágenes ilustrativas.' }, legal: { ...S.legal, letraChica: true } };
+      const lc = letraChica(S2);
+      t('letra chica sin repetir la fecha', (lc.match(/18 de octubre/g) || []).length === 1 && (lc.match(/[Pp]recios finales/g) || []).length === 1, lc);
+      t('letra chica usa el texto de la barra', /pagando con QR de Mercado Pago \(dinero en cuenta\)/.test(lc), lc);
+      t('letra chica apagada', letraChica({ ...S2, legal: { ...S2.legal, letraChica: false } }) === '');
+      const f1 = footerPlan(cx, { ...S2, legal: { ...S2.legal, banda: true, bandaTam: 1 } }, 1080, 1350, 'post'), f2 = footerPlan(cx, { ...S2, legal: { ...S2.legal, banda: true, bandaTam: 1.5 } }, 1080, 1350, 'post');
+      t('banda: tamaño de letra', f2.fs > f1.fs && f2.legalH >= f1.legalH, f1.fs + ' → ' + f2.fs);
+      t('banda: se puede sacar', footerPlan(cx, { ...S2, legal: { ...S2.legal, banda: false } }, 1080, 1350, 'post').legalH === 0);
+      const PI = promoInfo(S2), mM = barraPromoMedidas(cx, PI, 'HASTA EL 18 DE OCTUBRE', 60, 'mont'), mB = barraPromoMedidas(cx, PI, 'HASTA EL 18 DE OCTUBRE', 60, 'barlow');
+      t('barra: letra angosta ocupa menos', mB.total < mM.total, Math.round(mM.total) + ' / ' + Math.round(mB.total));
+      t('barra: opciones con límites', barraOpciones({ promo: { barra: { tam: 9, dy: -99, alinear: 'x' } } }).tam === 1.4 && barraOpciones({ promo: { barra: { tam: 9, dy: -99 } } }).dy === -30 && barraOpciones({ promo: {} }).alinear === 'centro');
+      t('legales viejos sin repetir', normalizarEstado({ v: 6, comercio: { legales: 'Imágenes ilustrativas. Precios finales en pesos argentinos.' } }).comercio.legales === 'Imágenes ilustrativas.');
+      PRECIO_CFG = { ...PCbak, antes: 'normal' }; const wN = measureAntes(cx, { int: '20.600', dec: '' }, 28); PRECIO_CFG = { ...PCbak, antes: 'antes' }; const wA = measureAntes(cx, { int: '20.600', dec: '' }, 28); PRECIO_CFG = PCbak;
+      t('mide bien «PRECIO NORMAL» (una sola medida)', wN > wA, Math.round(wN) + ' > ' + Math.round(wA));
+    }
   } catch (e) { t('excepción', false, e.message + ' ' + (e.stack || '').split('\n')[1]); }
   const pre = document.createElement('pre'); pre.id = 'autotest'; pre.textContent = out.join('\n'); pre.style.cssText = 'position:fixed;left:0;top:0;z-index:99;background:#111;color:#9f9;padding:10px;margin:0;font:13px monospace;max-width:100vw;overflow:auto;max-height:100vh'; document.body.append(pre);
   window.__autotest = out;
