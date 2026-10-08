@@ -252,7 +252,7 @@ async function guardarCopiaFolleto() {
 /** Copia de un folleto para la semana que viene: las fechas se corren de a 7 días hasta que el «desde» sea hoy o después
  *  (mismos días de la semana), y los precios quedan marcados para revisar. */
 function paraLaSemanaQueViene(N) {
-  N.archivoFolleto = ''; N.avisoEjemplo = false;
+  N.archivoFolleto = ''; N.avisoEjemplo = false; N.resultados = null;
   const a = parseISO(N.vigencia.desde), b = parseISO(N.vigencia.hasta), h0 = hoy0(), mas = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + 7 * n); return x; };
   const ref = a || b; if (ref) { let n = 1; while (mas(ref, n) < h0) n++; if (a) N.vigencia.desde = isoDe(mas(a, n)); if (b) N.vigencia.hasta = isoDe(mas(b, n)); }
   N.productos.forEach(p => { if (!productoVacio(p) && parsePrecio(p.final)) p.recordado = true; });
@@ -333,12 +333,13 @@ function elegirDestinos() {
         try { const hd = await CARPETA_PC.elegir(); nomCarpeta.textContent = hd.name; rCarpeta.disabled = false; rCarpeta.checked = true; modo = 'carpeta'; }
         catch (e) { if (e && e.name !== 'AbortError') aviso('No pude usar esa carpeta: ' + (e.message || e)); } } }, CARPETA_PC.handle ? 'Cambiar carpeta…' : 'Elegir carpeta…'))) : null;
     const btn = h('button', { class: 'btn primary', type: 'button', onclick: () => {
-      r = { destinos: [...sel], modo };
+      r = { destinos: [...sel], modo, publicar: puedePublicar() && !!S.opciones.publicar };
       if (modo === 'carpeta') r.permiso = CARPETA_PC.permiso();      // se pide ahora, mientras dura el clic
       m.cerrar(); } }, API.activo ? 'Generar y guardar' : 'Generar y descargar');
     const m = abrirModal({ titulo: '¿Para dónde es este folleto?', ancho: 620, alCerrar: () => res(r),
       cuerpo: h('div', { class: 'stack' }, h('p', { class: 'hint', style: 'margin:0' }, 'Cada destino sale con su medida. En redes van menos productos por imagen (se reparten en varias) para que el precio, el “antes” y el descuento se lean bien en el celular.'), ...filas,
         L_ACTUAL().pdf || planDestino(S, 'a4')[0] ? check('Con el A4, guardar también el PDF para imprimir', null, S.opciones.pdf !== false, v => { S.opciones.pdf = v; guardarAuto(); }) : null,
+        puedePublicar() ? check('Publicar estas ofertas en tu página', 'Quedan en ' + urlPaginaOfertas() + ' (se actualiza en 1 o 2 minutos). Sale solo lo que se ve en el folleto: nombres, precios, fechas y tus datos del local.', !!S.opciones.publicar, v => { S.opciones.publicar = v; guardarAuto(); }) : null,
         entrega,
         h('p', { class: 'hint', style: 'margin:0' }, 'Consejo: para el canal y los chats de WhatsApp, mandá la imagen en calidad HD. Para que llegue sin perder nada, mandá el PDF como documento.')),
       acciones: [h('button', { class: 'btn ghost', type: 'button', onclick: () => m.cerrar() }, 'Cancelar'), btn] });
@@ -388,6 +389,7 @@ async function finalizarFolleto() {
           m.cuerpo.firstChild.textContent = 'Guardando una copia en la nube…';
           try { await guardarCopiaFolleto(); await recordarPrecios(); notaNube = 'También quedó una copia en «Mis folletos» (en la nube) y se recordaron los precios para la próxima, en cualquier computadora.'; }
           catch (e) { console.error(e); notaNube = 'Las imágenes están listas, pero no pude guardar la copia en la nube: ' + e.message; }
+          if (eleccion.publicar) { try { await publicarOfertas(); notaNube += ' Tus ofertas se publican en ' + urlPaginaOfertas() + ' en 1 o 2 minutos.'; } catch (e) { console.error(e); notaNube += ' No pude publicar las ofertas en tu página: ' + e.message; } }
         } else notaNube = 'Conectá tu cuenta de GitHub (botón ☁ de arriba) para que quede una copia en «Mis folletos» y se recuerden los precios.';
       }
     }
@@ -457,18 +459,85 @@ async function abrirMisFolletos() {
   const pintar = () => cuerpo.replaceChildren(...(lista.length ? lista.map(p => {
     const nombreFormato = (LAYOUTS[p.formato] || {}).corto || p.formato || '', fecha = p.mtime ? new Date(p.mtime * 1000).toLocaleString('es-AR', { dateStyle: 'medium', timeStyle: 'short' }) : '';
     const borrar = puedeBorrar ? h('button', { class: 'btn small danger ghost', type: 'button', onclick: async () => { if (await confirmar('¿Borrar este folleto?', nube ? 'Se borra de «Mis folletos» en la nube (para todas las computadoras). Las imágenes que ya descargaste no se tocan.' : 'Se borra de «Mis folletos». Las imágenes que ya guardaste en el Escritorio no se tocan.', 'Borrar', 'Cancelar')) { try { await CARPETA.borrarProyecto(p.archivo); lista = lista.filter(x => x !== p); pintar(); } catch (e) { aviso(e.message); } } } }, 'Borrar') : null;
-    return h('div', { class: 'proy' }, h('div', { class: 'proy-datos' }, h('b', null, p.titulo || p.archivo.replace(/\.json$/, '')), h('small', null, [nombreFormato, fecha].filter(Boolean).join(' · '))),
+    return h('div', { class: 'proy' }, h('div', { class: 'proy-datos' }, h('b', null, p.titulo || p.archivo.replace(/\.json$/, '')), h('small', null, [nombreFormato, fecha].filter(Boolean).join(' · ')),
+        p.resultados ? h('small', { class: 'proy-res' }, resumenResultados(p.resultados)) : null),
       h('div', { class: 'row-actions' }, h('button', { class: 'btn small primary', type: 'button', onclick: () => abrirFolleto(p.archivo, m) }, 'Abrir'),
-        h('button', { class: 'btn small', type: 'button', title: 'Copia con las fechas de la semana que viene (el original no se toca)', onclick: () => duplicarFolleto(p.archivo, m) }, 'Duplicar'), borrar));
+        h('button', { class: 'btn small', type: 'button', title: 'Copia con las fechas de la semana que viene (el original no se toca)', onclick: () => duplicarFolleto(p.archivo, m) }, 'Duplicar'),
+        puedeBorrar ? h('button', { class: 'btn small', type: 'button', onclick: () => comoTeFue(p, () => pintar()) }, p.resultados ? '¿Cómo te fue? ✓' : '¿Cómo te fue?') : null, borrar));
   }) : [h('p', { class: 'hint' }, nube ? 'Todavía no hay folletos guardados en la nube. Cada vez que finalizás uno, queda una copia acá para retocarlo después, desde cualquier computadora.' : 'Todavía no hay folletos guardados. Cada vez que finalizás uno, queda una copia acá para retocarlo después.')]));
   pintar();
+  const comparar = h('button', { class: 'btn small', type: 'button', onclick: () => compararSemanas(lista) }, '📊 Comparar semanas');
+  const mostrarComparar = () => { comparar.hidden = lista.filter(p => p.resultados).length < 2; };
+  mostrarComparar(); cuerpo.before(h('div', { class: 'row-actions' }, comparar));
   if (nube) {                                                     // en la nube el formato no está en el nombre: se lee de a poco
     const repintar = debounce(pintar, 120);
     lista.slice(0, 40).forEach(p => NUBE.leerProyecto(p.archivo).then(j => {
       if (!j) return; const f = String(j.formato || '');
-      p.formato = j.formato; p.titulo = (f.startsWith('coleccion') ? (j.coleccion || {}).mensaje : f.startsWith('mensaje') ? (j.mensaje || {}).titulo : j.titulo) || p.titulo; repintar();
+      p.formato = j.formato; p.resultados = j.resultados || null; mostrarComparar(); p.titulo = (f.startsWith('coleccion') ? (j.coleccion || {}).mensaje : f.startsWith('mensaje') ? (j.mensaje || {}).titulo : j.titulo) || p.titulo; repintar();
     }).catch(() => {}));
   }
+}
+/** «¿Cómo te fue?»: lo que se vendió esa semana y cuántos dijeron cada palabra clave. Queda guardado en el folleto. */
+const CANALES_MEDIR = [['canal', 'CANAL', 'Canal de WhatsApp'], ['estado', 'ESTADO', 'Estados'], ['grupos', 'GRUPO', 'Grupos y chats'], ['facebook', 'FACE', 'Facebook / Instagram']];
+function resumenResultados(r) {
+  const v = parsePrecio(r.ventas), c = r.claves || {}, tot = CANALES_MEDIR.reduce((t, [k]) => t + (+c[k] || 0), 0);
+  return [v ? 'Vendiste ' + txtPrecio(v) : '', tot ? `${tot} dijeron la palabra (` + CANALES_MEDIR.filter(([k]) => +c[k]).map(([k, w]) => `${w.toLowerCase()} ${c[k]}`).join(', ') + ')' : ''].filter(Boolean).join(' · ') || 'Resultados anotados';
+}
+async function comoTeFue(p, alGuardar) {
+  let j; try { j = await CARPETA.leerProyecto(p.archivo); } catch (e) { aviso(e.message); return; }
+  if (!j) { aviso('No encuentro ese folleto.'); return; }
+  const r = { ventas: '', claves: {}, nota: '', ...(j.resultados || {}) }; r.claves = { ...(r.claves || {}) };
+  const inVentas = h('input', { type: 'text', inputmode: 'decimal', value: r.ventas || '', placeholder: 'ej.: 1.250.000', autocomplete: 'off', id: 'res-ventas' });
+  const nums = CANALES_MEDIR.map(([k, w, t]) => [k, h('input', { type: 'number', min: '0', max: '9999', value: String(+r.claves[k] || 0), id: 'res-' + k, 'aria-label': t })]);
+  const inNota = h('input', { type: 'text', value: r.nota || '', placeholder: 'ej.: el aceite se agotó el jueves', maxlength: 120, autocomplete: 'off', id: 'res-nota' });
+  const m = abrirModal({ titulo: '¿Cómo te fue con «' + (p.titulo || 'este folleto') + '»?', ancho: 560,
+    cuerpo: h('div', { class: 'stack' }, h('p', { class: 'hint', style: 'margin:0' }, 'Anotalo cada semana y vas a ver qué ofertas y qué canales te traen más gente.'),
+      campo('Lo que vendiste esa semana', h('span', { class: 'peso' }, inVentas), 'aproximado'),
+      h('p', { class: 'lab', style: 'margin:4px 0 0' }, '¿Cuántos dijeron la palabra en la caja?'),
+      h('div', { class: 'grid2' }, ...nums.map(([k, inp]) => campo('«' + CANALES_MEDIR.find(c => c[0] === k)[1] + '» · ' + CANALES_MEDIR.find(c => c[0] === k)[2], inp))),
+      campo('Nota', inNota, 'opcional')),
+    acciones: [h('button', { class: 'btn ghost', type: 'button', onclick: () => m.cerrar() }, 'Cancelar'), h('button', { class: 'btn primary', type: 'button', onclick: async () => {
+      const res = { ventas: inVentas.value.trim(), claves: Object.fromEntries(nums.map(([k, inp]) => [k, Math.max(0, Math.round(+inp.value || 0))])), nota: inNota.value.trim(), ts: Date.now() };
+      try {
+        await CARPETA.guardarProyecto(p.archivo, { ...j, resultados: res });
+        if (S.archivoFolleto === p.archivo) S.resultados = res;                // si es el que está abierto, que no se pierda al guardarlo otra vez
+        p.resultados = res; m.cerrar(); aviso('Listo: anotado.'); if (alGuardar) alGuardar();
+      } catch (e) { aviso(e.message); }
+    } }, 'Guardar')] });
+}
+/** Las semanas con resultados, una al lado de la otra. */
+function compararSemanas(lista) {
+  const con = lista.filter(p => p.resultados).slice(0, 12), max = Math.max(1, ...con.map(p => (parsePrecio(p.resultados.ventas) || {}).num || 0));
+  const fila = p => { const v = (parsePrecio(p.resultados.ventas) || {}).num || 0, c = p.resultados.claves || {};
+    return h('tr', null, h('td', null, h('b', null, p.titulo || p.archivo.replace(/\.json$/, '')), h('small', null, p.mtime ? new Date(p.mtime * 1000).toLocaleDateString('es-AR') : '')),
+      h('td', { class: 'num' }, v ? txtPrecio(parsePrecio(p.resultados.ventas)) : '—', h('span', { class: 'barrita', style: `width:${Math.round(v / max * 100)}%` })),
+      ...CANALES_MEDIR.map(([k]) => h('td', { class: 'num' }, String(+c[k] || 0)))); };
+  abrirModal({ titulo: 'Cómo te fue, semana por semana', ancho: 860, cuerpo: h('div', { class: 'stack' },
+    h('div', { class: 'tabla-res' }, h('table', null, h('thead', null, h('tr', null, h('th', null, 'Folleto'), h('th', null, 'Vendiste'), ...CANALES_MEDIR.map(([, w]) => h('th', null, '«' + w + '»')))), h('tbody', null, ...con.map(fila)))),
+    h('p', { class: 'hint', style: 'margin:0' }, 'La palabra que más se repite te dice dónde conviene publicar primero. Si una semana vendiste más, mirá qué ofertas tenía.')) });
+}
+/** Página pública de ofertas (/ofertas/ de la herramienta online): la arma GitHub con datos/publico/ofertas.json. */
+const puedePublicar = () => !!(NUBE.activo && NUBE.puedeEscribir && !NUBE.llaveMala && ['folleto', 'redes', 'unico'].includes(L_ACTUAL().grupo));
+const urlPaginaOfertas = () => { try { return new URL('ofertas/', location.href.split(/[?#]/)[0]).href; } catch (e) { return 'ofertas/'; } };
+/** Lo que va a la página: solo lo que se ve en el folleto (sin costos ni datos internos). */
+function ofertasPublicas(S) {
+  const L = LAYOUTS[S.formato] || LAYOUTS.a4_10, C = S.comercio || {}, V = S.vigencia || {}, P = promoInfo(S), hasta = parseISO(V.hasta);
+  const prods = ['folleto', 'redes', 'unico'].includes(L.grupo) ? S.productos.slice(0, L.slots).filter(p => !productoVacio(p) && parsePrecio(p.final)) : [];
+  const categoria = ruta => { const partes = String(ruta || '').split('/'); return partes.length > 1 ? partes[partes.length - 2] : ''; };
+  return {
+    v: 1, publicado: new Date().toISOString(), titulo: String(S.titulo || 'Ofertas de la semana').trim(), subtitulo: String(S.subtitulo || '').trim(),
+    vigencia: { desde: V.desde || '', hasta: V.hasta || '', agotar: !!V.agotar, texto: rangoLargo(V.desde, V.hasta), hastaTexto: hasta ? fechaLinda(hasta) : '' },
+    promo: P ? ((P.pct ? (P.extra ? '+' : '') + P.pctTxt + '% OFF ' : '') + P.texto).trim() : '',
+    comercio: { nombre: C.nombre || 'Rivero Market', direccion: C.direccion || '', horario: C.horario || '', whatsapp: waNumero(C.whatsapp), whatsappTexto: String(C.whatsapp || '').trim(), canal: C.waCanal || '', facebook: C.facebook || '', facebookUrl: C.qrUrl || '', mapa: C.mapa || '', razon: C.razon || '', cuit: C.cuit || '' },
+    legal: { letraChica: letraChica(S) || '', stock: String((S.legal || {}).stock || '').trim() },
+    alcohol: alcoholActivo(S),
+    productos: prods.map(p => { const I = infoProducto(p), cp = chipProducto(p, S); return { nombre: String(p.nombre || '').trim(), desc: String(p.desc || '').trim(), final: p.final, regular: I.R && I.F && I.R.num > I.F.num ? p.regular : '', pct: I.pct || 0,
+      unidad: p.unidad || '', etiqueta: p.etiqueta || '', nota: String(p.nota || '').trim(), porUnidad: porUnidad(p), condicion: cp ? (cp.label + (cp.price ? ' ' + cp.price : '')).trim() : '', combo: !!p.combo, foto: p.archivo || '', categoria: categoria(p.archivo) }; }),
+  };
+}
+async function publicarOfertas(vacia = false) {
+  const d = ofertasPublicas(S); if (vacia) d.productos = [];
+  await NUBE.escribirArchivo('datos/publico/ofertas.json', JSON.stringify(d, null, 1), vacia ? 'Página de ofertas: sin ofertas' : 'Página de ofertas: ' + d.titulo);
 }
 async function cerrarPrograma() {
   if (!(await confirmar('¿Cerrar el programa?', 'Tu trabajo queda guardado. Para volver a usarlo, abrí «Folletos Rivero Market» desde el Escritorio.', 'Cerrar programa', 'Cancelar'))) return;

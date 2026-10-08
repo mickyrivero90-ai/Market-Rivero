@@ -1,6 +1,6 @@
 CONTEXTO DEL PROYECTO · RIVERO MARKET · FOLLETOS DE OFERTAS
 ==========================================================
-Actualizado: 8 de octubre de 2026 · versión 3.9 (herramienta online en GitHub)
+Actualizado: 8 de octubre de 2026 · versión 4.0 (herramienta online en GitHub)
 
 Este archivo cuenta qué pediste, qué decidimos, qué se hizo, cómo está armado y qué
 falta. Sirve para retomar el trabajo en otra conversación con Claude, en otra
@@ -31,7 +31,8 @@ computadora o con otra persona, sin tener que explicar todo de nuevo.
  21. Versión 3.6: uso (21 a 26 del relevamiento)
  22. Versión 3.7: versión online (27 a 32 del relevamiento)
  23. Versión 3.8: agregados 33, 35 y 37 (pedidos por WhatsApp, ¼ kg, «¡Último día!»)
- 24. Versión 3.9: carteles de góndola y tarjeta de sellos (34) (LO ÚLTIMO)
+ 24. Versión 3.9: carteles de góndola y tarjeta de sellos (34)
+ 25. Versión 4.0: página pública de ofertas (36) y «¿Cómo te fue?» (38) (LO ÚLTIMO)
 
 
 0. CÓMO RETOMAR
@@ -1008,3 +1009,20 @@ Probado: autoprueba 137 OK.
  - 10_marketing.js: pestaña «sellos»: dibujarTarjetaSellos() (85 × 55 mm a 300 dpi) y hojaSellos() (A4, 2 × 5);
    la configuración queda en S.sellos.
 Probado: autoprueba 142 OK.
+
+25. VERSIÓN 4.0: PÁGINA PÚBLICA DE OFERTAS (36) Y «¿CÓMO TE FUE?» (38) (8/10/2026)
+--------------------------------------------------------------------------------
+ 36. 08_programa.js: ofertasPublicas(S) (solo lo que se ve: nombres, precios, «antes», %, unidad, porUnidad(),
+     condición de pago, foto = ruta en productos/, categoría = carpeta) y publicarOfertas() → datos/publico/ofertas.json
+     (NUBE.escribirArchivo). Casilla en elegirDestinos() (S.opciones.publicar) si puedePublicar().
+     herramientas/armar_sitio.py: armar_ofertas() + pagina_ofertas() → _site/ofertas/index.html (HTML estático con las
+     fuentes y el logo, fotos de ../fotos/, og:image, filtro por rubro y buscador, aviso de vencida con la fecha) y
+     robots.txt con «Allow: /ofertas/». publicar.yml publica también con cambios en datos/publico/**.
+     Prueba sin navegador: herramientas/pruebas/prueba_ofertas.py.
+     Ojo: las reglas de GitHub Pages no la quieren para un negocio online; para la vidriera conviene un dominio propio
+     (.com.ar en NIC: $8.500 por año) en Cloudflare Pages (gratis), conectado al mismo repositorio.
+ 38. 10_marketing.js: CLAVES por destino y lineaClave() (op.clave; S.medir.premio). 08_programa.js: «¿Cómo te fue?»
+     (comoTeFue(): j.resultados = { ventas, claves: {canal, estado, grupos, facebook}, nota, ts } en el mismo archivo de
+     «Mis folletos»; si es el folleto abierto, también S.resultados), resumenResultados() en la lista y
+     compararSemanas() con dos o más. servidor.py: meta_proyecto() devuelve «resultados».
+Probado: autoprueba 146 OK; prueba_ofertas.py 16 de 16.

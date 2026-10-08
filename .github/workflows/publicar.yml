@@ -1,7 +1,7 @@
 # Publica la herramienta de folletos en GitHub Pages cada vez que cambia algo, y antes le quita
 # el fondo con IA a las fotos que se subieron a productos/_entrada (desde la herramienta online).
 # Los cambios de datos/ (precios, «Mis folletos», folletos en curso) no hace falta publicarlos:
-# la herramienta los lee directo del repositorio.
+# la herramienta los lee directo del repositorio. Sí se publica datos/publico/ (la página de ofertas).
 name: Publicar la herramienta
 
 on:
@@ -10,6 +10,7 @@ on:
     paths:
       - 'editor/**'
       - 'productos/**'
+      - 'datos/publico/**'
       - 'programa/**'
       - 'logo/**'
       - 'assets/**'

@@ -1551,6 +1551,14 @@ async function autotest() {
       { const c = document.createElement('canvas'); renderFlyer(c, estadoParaPagina(conProds('a4_10', 10), pl[2]), { scale: 0.2, getImg, exportar: true }); t('carteles: se dibujan', c.width === 248); }
       { const h = hojaSellos({ cantidad: 8, premio: 'un regalo', minimo: '5.000', vence: '2026-12-31' }, S.comercio); t('tarjeta de sellos: hoja A4 a 300 dpi', h.width === 2480 && h.height === 3508); }
     }
+    { // v4.0: página pública de ofertas (36) y «¿Cómo te fue?» (38)
+      const conProds = n => ({ ...S, formato: 'a4_10', comercio: { ...S.comercio, whatsapp: '387 512-3456' }, productos: Array.from({ length: 16 }, (_, i) => i < n ? nuevoProducto({ nombre: 'P' + i, regular: '1.000', final: '900', archivo: 'Bebidas/P' + i + '.png' }) : nuevoProducto()) });
+      const O = ofertasPublicas({ ...conProds(3), productos: [...conProds(3).productos.slice(0, 3), nuevoProducto({ nombre: 'Sin precio' }), ...Array.from({ length: 12 }, () => nuevoProducto())] });
+      t('ofertas para la página: solo lo que se ve', O.v === 1 && O.productos.length === 3 && O.productos[0].final === '900' && O.productos[0].categoria === 'Bebidas' && O.comercio.whatsapp === '5493875123456' && !JSON.stringify(O).includes('costo'), O.productos.length + ' ' + O.comercio.whatsapp);
+      t('palabra clave por canal', textoPublicacion(S, 'canal', 'clasico', { clave: true }).includes('«CANAL»') && textosEstados(S, { clave: true }).general.includes('«ESTADO»'));
+      t('¿cómo te fue?: resumen', resumenResultados({ ventas: '1.250.000', claves: { canal: 7, estado: 3 } }) === 'Vendiste $1.250.000 · 10 dijeron la palabra (canal 7, estado 3)', resumenResultados({ ventas: '1.250.000', claves: { canal: 7, estado: 3 } }));
+      t('duplicar: sin los resultados de la semana anterior', paraLaSemanaQueViene(normalizarEstado({ ...estadoParaGuardar(S), resultados: { ventas: '1' } })).resultados === null);
+    }
   } catch (e) { t('excepción', false, e.message + ' ' + (e.stack || '').split('\n')[1]); }
   const pre = document.createElement('pre'); pre.id = 'autotest'; pre.textContent = out.join('\n'); pre.style.cssText = 'position:fixed;left:0;top:0;z-index:99;background:#111;color:#9f9;padding:10px;margin:0;font:13px monospace;max-width:100vw;overflow:auto;max-height:100vh'; document.body.append(pre);
   window.__autotest = out;

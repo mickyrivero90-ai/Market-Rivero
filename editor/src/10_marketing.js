@@ -79,6 +79,9 @@ const INTRO_VECINAL = ['¡Hola, {vecinos}! 👋', '¡Buen día, {vecinos}! ☀�
 const elegirV = (arr, k) => arr[((k % arr.length) + arr.length) % arr.length];
 
 /** Arma el texto para publicar. destino: canal | grupos | facebook | estado. tono: clasico | urgente | vecinal. */
+/** Palabra que el cliente dice en la caja para saber de qué canal vino (se anota en «Mis folletos» → «¿Cómo te fue?»). */
+const CLAVES = { canal: 'CANAL', grupos: 'GRUPO', estado: 'ESTADO', facebook: 'FACE' };
+const lineaClave = (S, destino) => { const c = CLAVES[destino], pr = String((S.medir || {}).premio || '').trim(); return c ? `🗣 Decí «${c}» en la caja${pr ? ' ' + pr : ''}.` : ''; };
 function textoPublicacion(S, destino = 'canal', tono = 'clasico', op = {}) {
   const D = datosDelFolleto(S), k = op.variante || 0, wa = destino !== 'facebook';
   const b = s => (wa ? `*${s}*` : s), out = [];
@@ -94,6 +97,7 @@ function textoPublicacion(S, destino = 'canal', tono = 'clasico', op = {}) {
       if (D.C.telefono && !pedir) c.push(`💬 Consultas y pedidos por WhatsApp: ${D.C.telefono}`);
       if (op.hashtags !== false) c.push('\n' + ['#' + D.nombre.replace(/\s+/g, ''), D.barrio ? '#' + D.barrio.replace(/\s+/g, '') : '', '#Ofertas', HASHTAG_TEMA[S.tema] || ''].filter(Boolean).join(' '));
     }
+    if (op.clave) c.push(lineaClave(S, destino));
     if (op.alcohol) c.push((wa ? '_' : '') + LEYENDA_ALCOHOL_TXT + (wa ? '_' : ''));
     return c;
   };
@@ -162,7 +166,7 @@ function textosEstados(S, op = {}) {
     if (op.alcohol && x.alcohol) t += ` · ${LEYENDA_ALCOHOL_TXT}`;
     return { nombre: x.nombre, texto: t };
   });
-  return { general: general + (op.alcohol && D.alcohol ? ' · ' + LEYENDA_ALCOHOL_TXT : ''), porProducto };
+  return { general: general + (op.clave ? ' ' + lineaClave(S, 'estado') : '') + (op.alcohol && D.alcohol ? ' · ' + LEYENDA_ALCOHOL_TXT : ''), porProducto };
 }
 
 // ───────── plan de publicación ─────────
@@ -342,8 +346,8 @@ function aWhatsApp(texto) { return 'https://wa.me/?text=' + encodeURIComponent(t
 
 function mktTextos() {
   const D = datosDelFolleto(S), sinProductos = !D.prods.length && !['mensaje', 'coleccion'].includes(D.g);
-  const st = lsJSON('rm.mkt.textos', {}), op = { destino: st.destino || 'canal', tono: st.tono || 'clasico', hashtags: st.hashtags !== false, mapa: st.mapa !== false, alcohol: st.alcohol != null ? st.alcohol : alcoholActivo(S), variante: 0 };
-  const guardarOp = () => lsGuardar('rm.mkt.textos', { destino: op.destino, tono: op.tono, hashtags: op.hashtags, mapa: op.mapa, alcohol: op.alcohol });
+  const st = lsJSON('rm.mkt.textos', {}), op = { destino: st.destino || 'canal', tono: st.tono || 'clasico', hashtags: st.hashtags !== false, mapa: st.mapa !== false, alcohol: st.alcohol != null ? st.alcohol : alcoholActivo(S), clave: !!st.clave, variante: 0 };
+  const guardarOp = () => lsGuardar('rm.mkt.textos', { destino: op.destino, tono: op.tono, hashtags: op.hashtags, mapa: op.mapa, alcohol: op.alcohol, clave: op.clave });
   const area = h('textarea', { rows: 14, class: 'mkt-texto', 'aria-label': 'Texto para publicar' });
   const cuenta = h('small', { class: 'hint' });
   const estados = h('div', { class: 'stack' });
@@ -358,6 +362,8 @@ function mktTextos() {
     llenar(extras,
       op.destino === 'facebook' ? check('Hashtags', null, op.hashtags, v => { op.hashtags = v; guardarOp(); actualizar(); }) : null,
       D.C.mapa && op.destino !== 'estado' ? check('Link de «cómo llegar»', null, op.mapa, v => { op.mapa = v; guardarOp(); actualizar(); }) : null,
+      check('Palabra clave para saber de dónde vienen', `Agrega «Decí «${CLAVES[op.destino] || 'CANAL'}» en la caja». Anotá cuántos la dicen en «Mis folletos» → «¿Cómo te fue?».`, op.clave, v => { op.clave = v; guardarOp(); actualizar(); }),
+      op.clave ? campo('Premio por decirla', texto(S.medir || (S.medir = { premio: '' }), 'premio', { ph: 'opcional · ej.: y sumás un sello extra', max: 50, after: () => { guardarAuto(); actualizar(); } }), 'opcional') : null,
       D.alcohol ? check('Leyenda de alcohol', 'Ley 24.788. En el folleto ' + (alcoholActivo(S) ? 'está activada.' : 'está apagada.'), op.alcohol, v => { op.alcohol = v; guardarOp(); actualizar(); }) : null);
     if (op.destino === 'estado') {
       const T = textosEstados(S, op);

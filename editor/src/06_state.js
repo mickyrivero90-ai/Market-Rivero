@@ -47,7 +47,9 @@ function estadoDemo() {
     cuadros: { sep: 1, margen: 1, foto: 1, estrella: 1, alinear: 'auto', dx: 0, dy: 0 },
     historia: { ver: true, cta: '' },
     urgencia: '',
-    sellos: { cantidad: 10, premio: 'un producto de regalo', minimo: '', vence: '' },                                                 // sticker «¡Último día!» / «¡Quedan pocas!» / «Solo hoy»
+    sellos: { cantidad: 10, premio: 'un producto de regalo', minimo: '', vence: '' },
+    medir: { premio: '' },                                        // «Decí «CANAL» en la caja…» (Marketing → Textos)
+    resultados: null,                                             // «¿Cómo te fue?» (Mis folletos)                                                 // sticker «¡Último día!» / «¡Quedan pocas!» / «Solo hoy»
     opciones: { pdf: true, destinos: ['a4', 'post', 'story'] },
     coleccion: {
       mensaje: 'Aquí tenemos todos los productos para tus recetas', kicker: 'Para reposteras y reposteros', ocasion: 'Especial Día de la Madre',
@@ -86,6 +88,7 @@ function estadoNuevo(S) {
     coleccion: { ...S.coleccion, fotos: [nuevaFoto(), nuevaFoto(), nuevaFoto()] },
     avisoEjemplo: false,
     archivoFolleto: '',
+    resultados: null,
   });
 }
 

@@ -5,6 +5,23 @@ Desde la 3.0, la herramienta online (https://mickyrivero90-ai.github.io/Market-R
 se actualiza sola. Si usás el programa de la PC y muestra un número menor, bajá el nuevo
 desde la herramienta online (⋯ Más → Programa para usar sin internet).
 
+Versión 4.0 · 8 de octubre de 2026 · PÁGINA PÚBLICA DE OFERTAS Y «¿CÓMO TE FUE?»
+- Página pública de ofertas, para tus clientes: al terminar un folleto en la herramienta online,
+  con la nube conectada, tildá «Publicar estas ofertas en tu página». En 1 o 2 minutos quedan en
+  …/Market-Rivero/ofertas/ (la dirección aparece al publicar), ordenadas por rubro, con buscador,
+  foto, precio, «antes», «Ahorrás», precio por kilo o litro, condición de pago y un botón «Pedir
+  por WhatsApp» con el mensaje ya escrito. Abajo van la dirección, el horario, el canal y lo legal
+  (vigencia, stock y CUIT, y la leyenda de alcohol si corresponde). Cuando las ofertas vencen, la
+  página lo avisa sola. Se publica solo lo que se ve en el folleto (nada de costos ni datos
+  internos). Sirve para la bio de Facebook e Instagram y como el lugar de «consulte en…» de la
+  banda legal. Al compartir el link por WhatsApp sale la vista previa con una foto.
+- «¿Cómo te fue?» en «Mis folletos»: anotás lo que vendiste esa semana y cuántos clientes dijeron
+  cada palabra clave. Con dos semanas o más, «📊 Comparar semanas» las muestra una al lado de la
+  otra.
+- Palabra clave por canal (Marketing → Textos para publicar): agrega «Decí «CANAL» en la caja»
+  (o ESTADO, GRUPO, FACE), con un premio opcional («y sumás un sello extra»). Así sabés qué canal
+  te trae más gente.
+
 Versión 3.9 · 8 de octubre de 2026 · CARTELES DE GÓNDOLA Y TARJETA DE SELLOS
 - Carteles de góndola: al terminar el folleto aparece el destino nuevo «Carteles de góndola · 4 por
   hoja A4 para recortar». Sale un cartel por producto (tamaño A6, 105 × 148 mm) con el mismo precio

@@ -20,6 +20,7 @@ import subprocess
 import sys
 import threading
 import time
+import urllib.parse
 import urllib.request
 import zipfile
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -269,6 +270,8 @@ def main():
             clic_texto(d, ".modal-pie .btn.primary", "Seguir igual")
         esperar(d, "return [...document.querySelectorAll('.modal-cab h2')].some(h => /para dónde/i.test(h.textContent))")
         js(d, """document.querySelectorAll('.dest input').forEach(i => { const t = i.closest('.dest').textContent; const quiero = /Imprimir en hoja A4|Estados e Historias · UN PRODUCTO/.test(t); if (i.checked !== quiero) i.click(); });""")
+        publicar = js(d, "const l = [...document.querySelectorAll('label.chk')].find(x => /Publicar estas ofertas/.test(x.textContent)); if (l && !l.querySelector('input').checked) l.querySelector('input').click(); return !!l")
+        ok("ofrece publicar en la página de ofertas", publicar)
         clic_texto(d, ".modal-pie .btn.primary", "Generar")
         esperar(d, "return [...document.querySelectorAll('.modal-cab h2')].some(h => /terminado|No pude/.test(h.textContent))", 90)
         titulo = js(d, "return [...document.querySelectorAll('.modal-cab h2')].map(h => h.textContent).join('|')")
@@ -294,9 +297,24 @@ def main():
         a = arbol()
         proys = [p for p in a if p.startswith("datos/proyectos/")]
         ok("copia en «Mis folletos» (en la nube)", len(proys) == 1, proys)
+        pub = json.loads(urllib.request.urlopen(GH + "/_prueba/archivo?ruta=datos/publico/ofertas.json").read()) if "datos/publico/ofertas.json" in a else {}
+        ok("ofertas publicadas para la página (solo lo que se ve)", len(pub.get("productos", [])) >= 2 and pub["productos"][0].get("final") and "costo" not in json.dumps(pub), [p.get("nombre") for p in pub.get("productos", [])][:3])
         cat = json.loads(urllib.request.urlopen(GH + "/_prueba/archivo?ruta=datos/catalogo.json").read())
         ok("memoria de precios en la nube", cat.get("Repostería/Mapsa Cuber semiamargo 500 g.png", {}).get("final") == "25.990" and "Almacén/Yerba de prueba 1 kg.png" in cat, list(cat)[:3])
         clic_texto(d, ".modal-pie button", "Seguir editando")
+
+        # ── 6b) «¿Cómo te fue?» en «Mis folletos»: queda guardado en el mismo folleto ──
+        clic_texto(d, ".actions button", "Mis folletos")
+        esperar(d, "return [...document.querySelectorAll('.proy button')].some(b => /Cómo te fue/.test(b.textContent))", 15)
+        clic_texto(d, ".proy button", "¿Cómo te fue?")
+        esperar(d, "return !!document.getElementById('res-ventas')", 15)
+        js(d, "const v = document.getElementById('res-ventas'); v.value = '1.250.000'; const c = document.getElementById('res-canal'); c.value = '7';")
+        clic_texto(d, ".modal-pie .btn.primary", "Guardar")
+        time.sleep(1.5)
+        proy = json.loads(urllib.request.urlopen(GH + "/_prueba/archivo?ruta=" + urllib.parse.quote(proys[0])).read())
+        ok("«¿Cómo te fue?» queda guardado en el folleto", (proy.get("resultados") or {}).get("ventas") == "1.250.000" and (proy["resultados"].get("claves") or {}).get("canal") == 7, proy.get("resultados"))
+        js(d, "document.querySelectorAll('.modal-cab button').forEach(b => b.click())")
+        time.sleep(0.5)
 
         # ── 7) marketing ──
         clic_texto(d, ".actions button", "Marketing")

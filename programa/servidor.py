@@ -609,8 +609,8 @@ def meta_proyecto(p):
     d = leer_json(p, {}) or {}
     fmt = str(d.get("formato", ""))
     titulo = (d.get("coleccion", {}) or {}).get("mensaje") if fmt.startswith("coleccion") else (d.get("mensaje", {}) or {}).get("titulo") if fmt.startswith("mensaje") else d.get("titulo")
-    return {"archivo": p.name, "titulo": titulo,
-            "formato": d.get("formato"), "tema": d.get("tema"), "mtime": int(p.stat().st_mtime)}
+    return {"archivo": p.name, "titulo": titulo, "formato": d.get("formato"), "tema": d.get("tema"), "mtime": int(p.stat().st_mtime),
+            "resultados": d.get("resultados") if isinstance(d.get("resultados"), dict) else None}
 
 
 @ruta("GET", "/api/proyectos")

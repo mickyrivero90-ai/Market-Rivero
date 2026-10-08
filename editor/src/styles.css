@@ -398,6 +398,13 @@ textarea.planilla { font: 600 13.5px/1.45 ui-monospace, Menlo, Consolas, monospa
   .stage-box { padding: 10px; }
   .stage-bar { padding: 6px 12px; }
 }
+.proy-res { color: var(--ok) !important; font-weight: 700; }
+.tabla-res { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; }
+.tabla-res table { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+.tabla-res th, .tabla-res td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.tabla-res td small { display: block; color: var(--muted); }
+.tabla-res .num { text-align: right; white-space: nowrap; }
+.tabla-res .barrita { display: block; height: 6px; margin-top: 4px; border-radius: 3px; background: var(--accent); min-width: 2px; }
 .sellos-marco { background: var(--surface-2); border-radius: 12px; padding: 12px; display: flex; justify-content: center; }
 .sellos-prev { max-width: 100%; height: auto; border-radius: 10px; box-shadow: 0 6px 18px rgba(0, 0, 0, .25); }
 .ver-grande { position: fixed; inset: 0; z-index: 70; background: rgba(10, 6, 4, .93); display: flex; align-items: center; justify-content: center; padding: 1.5vh 2vw; cursor: zoom-out; }
