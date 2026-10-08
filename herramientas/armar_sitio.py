@@ -10,7 +10,9 @@ Sale:
   version.json                    versión y momento del armado: la herramienta avisa cuando hay una nueva
   catalogo/productos.json         lista de fotos de productos (con su huella de git)
   catalogo/mini/<huella>.webp     miniaturas para el buscador (cargan rápido)
-  descargas/Rivero-Market-Folletos.zip     el programa para usar sin internet (Windows o Linux)
+  fotos/<huella>.<ext>            copia de cada foto de productos: la herramienta las baja de acá (mismo sitio, sin el
+                                  límite de raw.githubusercontent.com) y el programa de la PC las trae con un botón
+  descargas/Rivero-Market-Folletos.zip     el programa para usar sin internet (Windows o Linux), sin las fotos
   manifest.webmanifest, icono-*.png        para instalarla como aplicación en la PC o el celular
 """
 import argparse
@@ -57,6 +59,8 @@ def armar_catalogo(salida):
     base = RAIZ / "productos"
     mini_dir = salida / "catalogo" / "mini"
     mini_dir.mkdir(parents=True, exist_ok=True)
+    fotos_dir = salida / "fotos"
+    fotos_dir.mkdir(parents=True, exist_ok=True)
     productos = []
     for raiz, dirs, archivos in os.walk(base):
         dirs[:] = sorted(d for d in dirs if not d.startswith((".", "_")))
@@ -66,7 +70,8 @@ def armar_catalogo(salida):
                 continue
             datos = p.read_bytes()
             sha = huella_git(datos)
-            item = {"ruta": p.relative_to(base).as_posix(), "sha": sha, "tam": len(datos)}
+            item = {"ruta": p.relative_to(base).as_posix(), "sha": sha, "tam": len(datos), "foto": f"fotos/{sha}{p.suffix.lower()}"}
+            (fotos_dir / f"{sha}{p.suffix.lower()}").write_bytes(datos)
             if Image is not None:
                 try:
                     with Image.open(p) as im:
@@ -121,9 +126,10 @@ def main():
     subprocess.run([sys.executable, str(RAIZ / "editor" / "build.py")], cwd=RAIZ / "editor", check=True)
     html = (RAIZ / "editor" / "ofertas_rivero_market.html").read_text(encoding="utf-8")
     version = (RAIZ / "editor" / "VERSION").read_text(encoding="utf-8").strip()
+    codigo = hashlib.sha256(html.encode("utf-8")).hexdigest()[:16]    # cambia solo si cambia la herramienta (no con fotos nuevas)
     armado = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     commit = git("rev-parse", "HEAD") or os.environ.get("GITHUB_SHA", "")
-    cfg = {"owner": dueno, "repo": repo, "rama": args.rama, "armado": armado, "commit": commit, "v": version}
+    cfg = {"owner": dueno, "repo": repo, "rama": args.rama, "armado": armado, "commit": commit, "v": version, "codigo": codigo}
     conectar = ["'self'", "https://api.github.com", "https://raw.githubusercontent.com"]
     imagenes = ["'self'", "data:", "blob:", "https://raw.githubusercontent.com"]
     if args.pruebas:
@@ -141,7 +147,7 @@ def main():
         sys.exit("No encontré dónde poner los datos de la nube en la página")
     html = html.replace("<style>", cabeza + "<style>", 1)
     (salida / "index.html").write_text(html, encoding="utf-8")
-    (salida / "version.json").write_text(json.dumps({"v": version, "armado": armado, "commit": commit[:12]}, ensure_ascii=False), encoding="utf-8")
+    (salida / "version.json").write_text(json.dumps({"v": version, "armado": armado, "commit": commit[:12], "codigo": codigo}, ensure_ascii=False), encoding="utf-8")
     (salida / "robots.txt").write_text("User-agent: *\nDisallow: /\n", encoding="utf-8")
     print(f"herramienta: {len(html) // 1024} KB · versión {version} · {dueno}/{repo}")
 
@@ -153,7 +159,8 @@ def main():
     # 3) el programa para usar sin internet
     if not args.sin_zip:
         z = salida / "descargas" / "Rivero-Market-Folletos.zip"
-        subprocess.run([sys.executable, str(RAIZ / "editor" / "empaquetar.py"), "--salida", str(z)], cwd=RAIZ, check=True)
+        sitio = "http://127.0.0.1:8793/" if args.pruebas else f"https://{dueno.lower()}.github.io/{repo}/"
+        subprocess.run([sys.executable, str(RAIZ / "editor" / "empaquetar.py"), "--salida", str(z), "--sin-fotos", "--sitio", sitio], cwd=RAIZ, check=True)
 
     # 4) para instalarla como aplicación
     if armar_iconos(salida):

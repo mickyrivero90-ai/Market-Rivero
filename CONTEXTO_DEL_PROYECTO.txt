@@ -1,6 +1,6 @@
 CONTEXTO DEL PROYECTO · RIVERO MARKET · FOLLETOS DE OFERTAS
 ==========================================================
-Actualizado: 8 de octubre de 2026 · versión 3.4 (herramienta online en GitHub)
+Actualizado: 8 de octubre de 2026 · versión 3.7 (herramienta online en GitHub)
 
 Este archivo cuenta qué pediste, qué decidimos, qué se hizo, cómo está armado y qué
 falta. Sirve para retomar el trabajo en otra conversación con Claude, en otra
@@ -26,7 +26,10 @@ computadora o con otra persona, sin tener que explicar todo de nuevo.
  16. Versión 3.2: cuadros de productos y posición del precio
  17. Relevamiento de mejoras (38 puntos): lo que queda para hacer
  18. Versión 3.3: arreglos 1 a 6 del relevamiento
- 19. Versión 3.4: arreglos 7 a 14 del relevamiento (LO ÚLTIMO)
+ 19. Versión 3.4: arreglos 7 a 14 del relevamiento
+ 20. Versión 3.5: diseño (15 a 20, 19 y 35 del relevamiento)
+ 21. Versión 3.6: uso (21 a 26 del relevamiento)
+ 22. Versión 3.7: versión online (27 a 32 del relevamiento) (LO ÚLTIMO)
 
 
 0. CÓMO RETOMAR
@@ -924,3 +927,57 @@ Probado: autoprueba 113 OK (13 nuevas; en Firefox tarda ~70 s), programa local 5
  13. 01_util.js: conDescuento(n, pct) redondea los centavos hacia abajo (ofertaDesde, promo extra, Marketing).
  14. 03_draw.js: wrapFit() sin la palabra repetida; cada renglón que no entra se corta con «…».
 Probado: autoprueba 121 OK (Firefox y Chrome; 8 nuevas).
+
+20. VERSIÓN 3.5: DISEÑO, PUNTOS 15 A 20 (Y 35) DEL RELEVAMIENTO (8/10/2026)
+--------------------------------------------------------------------------
+ 15. 04_flyer.js: LIMPIO = modoLimpio(S) en renderFlyer (promo con %, sin extra ni cuotas, y todos los productos
+     usados con infoProducto(p).pct === floor(P.pct) y la misma condición). chipCard(p) reemplaza a chipProducto(p,
+     S_DIBUJO) en las tarjetas; drawBadge no dibuja el «-N %» en modo limpio (sí las etiquetas como 2x1).
+     S.precio.limpio (true de fábrica; casilla en «Leyenda del precio»).
+ 16. drawHeroV / drawHeroH aceptan o.techo (lo libre hasta la barra): story_3, a4_star4, post_star4 y layoutDestacado.
+ 17. drawBackground deja los adornos pendientes (ADORNO_PEND); adornos(ctx, zonas) los dibuja con ZONAS_LIBRES
+     (zonaLogo: el logo y un margen). Cada primitiva de adorno (heart, flower, coin, …, burstPath) arranca con
+     libre(x, y, r). Los encabezados y los formatos sin encabezado común llaman a adornos() antes del logo.
+ 18. franjaHistoria(ctx, S, T, W, H, SAFE) en las 5 historias: banda con «RESPONDÉ Y TE LO SEPARAMOS» (S.historia
+     { ver, cta }, caja en «Pie del folleto»).
+ 19. drawCardV / precioMovidoV: la unidad al lado de la placa si entra (si no, en la esquina como antes).
+     porUnidad(p) + notaDe(p): precio por kilo o litro con el contenido del nombre (ml, cc, l, g, gr, kg; «x 3u»,
+     «3x100 g», «pack de 6»); con unidad «x kg», «$X los 100 g» (S.precio.porUnidad y S.precio.fraccion).
+ 20. drawFooter: en post y story, con comercio.canalNombre y un solo QR, el QR es más grande y al lado dice
+     «BUSCÁ EN WHATSAPP EL CANAL …». Campo nuevo en «Datos del local» (CAMPOS_LOCAL).
+Probado: autoprueba 126 OK (Firefox y Chrome).
+
+21. VERSIÓN 3.6: USO, PUNTOS 21 A 26 DEL RELEVAMIENTO (8/10/2026)
+-----------------------------------------------------------------
+ 21. styles.css: con menos de 600 px de ancho, .brand y .actions ocupan un renglón cada uno; 07_app.js mide el
+     encabezado con un ResizeObserver y actualiza --top-h (la vista previa fija queda justo debajo).
+ 22. Encabezado en un renglón (.brand-fila: título + versión + nube; .brand-sub abajo, oculto con poca altura).
+     @media (max-height: 820px): barras más finas. verGrande(): capa .ver-grande con el folleto de exportación.
+ 23. calcularRevision(): aviso «N precios son de la última vez» (p.recordado) con accion { texto, fn };
+     filaAviso() (08_programa.js) dibuja el botón de la acción.
+ 24. filaProducto(): .pextra con «Unidad» y tamFoto(p) (− 100 % +, de 0,5 a 1,7). En «Más opciones» queda mover la foto.
+ 25. S.archivoFolleto: guardarCopiaFolleto() crea la entrada la primera vez y después la actualiza; abrirFolleto() la
+     toma del archivo abierto; estadoNuevo() la vacía. duplicarFolleto(archivo|null) + paraLaSemanaQueViene(N):
+     fechas corridas de a 7 días hasta que «desde» sea hoy o después, precios con recordado = true.
+ 26. pintarRevision(): primero los «warn» (o «No hay nada para corregir»); ok e info en un <details>.
+Probado: autoprueba 131 OK.
+
+22. VERSIÓN 3.7: VERSIÓN ONLINE, PUNTOS 27 A 32 DEL RELEVAMIENTO (8/10/2026)
+--------------------------------------------------------------------------
+ 27. armar_sitio.py copia cada foto a _site/fotos/<huella git><ext> y la anota en catalogo/productos.json («foto»).
+     NUBE.urlImagen() usa esa copia si la huella del árbol coincide con la del catálogo; si no (foto recién subida), raw.
+ 28. NUBE.programarBorrador: como mucho cada 10 minutos (y al ocultar la pestaña, como antes).
+ 29. urlNuevaLlave(): expires_in = LLAVE_DIAS (365). CLAVE.llaveFecha en localStorage (al conectar; a las llaves de antes
+     se les pone la fecha del primer arranque). pintarChipNube(): «☁ Renová la llave» desde 30 días antes.
+     Riesgo conocido: cualquier otra página de GitHub Pages de la misma cuenta comparte el origen
+     (mickyrivero90-ai.github.io) y podría leer la llave. Se evita publicando la herramienta en un dominio propio
+     (por ejemplo, un subdominio del .com.ar) o no publicando otras páginas en esa cuenta.
+ 30. esBrave(): con 2 archivos, solo baja la imagen; el modal final tiene «⬇ PDF para imprimir» en todos los navegadores.
+ 31. armar_sitio.py: «codigo» = sha256 del HTML de la herramienta (antes de ponerle los datos de la nube), en RM_NUBE y en
+     version.json. revisarVersionNueva() compara «codigo» (o «armado», si alguno no lo tiene).
+ 32. empaquetar.py --sin-fotos --sitio URL: el ZIP de la página va sin productos/ y con programa/nube.json. servidor.py:
+     POST /api/traer-fotos (baja catalogo/productos.json y las fotos que faltan o cambiaron, verifica la huella, no borra)
+     y «sitio» en /api/hola. Botón «☁ Traer las fotos de la nube» y ofrecerFotosDeLaNube() al abrir con la carpeta vacía.
+     El ZIP de _entregas sigue con fotos (y también lleva nube.json).
+Probado: autoprueba 134 OK; descarga de fotos del programa contra una copia local de la página (44 nuevas, 44 iguales,
+1 cambiada).

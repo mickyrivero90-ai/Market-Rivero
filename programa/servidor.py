@@ -58,6 +58,7 @@ DATOS = Path(os.environ.get("RIVERO_DATOS") or AQUI / "datos").expanduser()
 WEB = AQUI / "web" / "index.html"
 PROYECTOS = DATOS / "proyectos"
 MINIATURAS = DATOS / "cache" / "miniaturas"
+NUBE_CFG = AQUI / "nube.json"                       # {"sitio": "https://dueño.github.io/repo/"}: de ahí se traen las fotos de la nube
 EXT_IMG = {".png", ".jpg", ".jpeg", ".webp", ".avif", ".gif", ".bmp"}
 LOCK_ARCHIVOS = threading.Lock()
 LOCK_IA = threading.Lock()
@@ -406,10 +407,62 @@ class Handler(BaseHTTPRequestHandler):
 
 
 # ───────────────────────── rutas de la API ─────────────────────────
+def sitio_nube():
+    """La herramienta online de donde se traen las fotos (programa/nube.json, lo pone el armado del ZIP)."""
+    s = str((leer_json(NUBE_CFG, {}) or {}).get("sitio") or "").strip()
+    if not re.match(r"^https://[a-z0-9.-]+\.github\.io/[^\s?#]+/$|^http://127\.0\.0\.1:\d+/$", s):
+        return ""
+    return s
+
+
+def huella_git(datos):
+    """La misma huella que usa GitHub (y el catálogo de la página) para cada foto."""
+    return hashlib.sha1(b"blob %d\0" % len(datos) + datos).hexdigest()
+
+
 @ruta("GET", "/api/hola")
 def api_hola(h, q):
     h._json({"ok": True, "programa": "rivero-market", "version": VERSION, "productos": str(PRODUCTOS), "escritorio": str(ESCRITORIO),
-             "datos": str(DATOS), "ia": bool(IA_PY), "miniaturas": PIL_OK})
+             "datos": str(DATOS), "ia": bool(IA_PY), "miniaturas": PIL_OK, "sitio": sitio_nube()})
+
+
+@ruta("POST", "/api/traer-fotos")
+def api_traer_fotos(h, q):
+    """Trae a la carpeta de productos las fotos de la herramienta online que faltan o cambiaron (no borra nada)."""
+    sitio = sitio_nube()
+    if not sitio:
+        raise Rechazo(400, "Este programa no sabe cuál es la herramienta online (falta programa/nube.json). Bajá el programa de nuevo desde la herramienta online.")
+    def bajar(url, limite):
+        with urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "RiveroMarket/" + VERSION}), timeout=60) as r:
+            return r.read(limite + 1)
+    try:
+        cat = json.loads(bajar(sitio + "catalogo/productos.json", 20 * 1024 * 1024).decode("utf-8"))
+    except Exception as e:
+        raise Rechazo(502, f"No pude leer la lista de fotos de la nube ({e}). ¿Hay internet?")
+    nuevas, cambiadas, iguales, fallidas = [], [], 0, []
+    with LOCK_ARCHIVOS:
+        for it in cat.get("productos", []):
+            rel, foto, sha = limpiar_ruta_relativa(str(it.get("ruta", ""))), str(it.get("foto") or ""), str(it.get("sha") or "")
+            if not rel or not re.match(r"^fotos/[0-9a-f]{40}\.[a-z0-9]{2,5}$", foto) or Path(rel).suffix.lower() not in EXT_IMG:
+                continue
+            try:
+                destino = dentro(PRODUCTOS, rel)
+                if destino.is_file() and huella_git(destino.read_bytes()) == sha:
+                    iguales += 1
+                    continue
+                datos = bajar(sitio + foto, 40 * 1024 * 1024)
+                if huella_git(datos) != sha:
+                    raise ValueError("la foto llegó incompleta")
+                habia = destino.is_file()
+                destino.parent.mkdir(parents=True, exist_ok=True)
+                tmp = destino.with_name(destino.name + ".bajando")
+                tmp.write_bytes(datos)
+                tmp.replace(destino)
+                (cambiadas if habia else nuevas).append(rel)
+            except Exception as e:
+                fallidas.append(f"{rel}: {e}")
+    registrar(f"fotos de la nube: {len(nuevas)} nuevas, {len(cambiadas)} cambiadas, {iguales} iguales, {len(fallidas)} con error")
+    h._json({"ok": True, "nuevas": len(nuevas), "cambiadas": len(cambiadas), "iguales": iguales, "fallidas": fallidas[:20]})
 
 
 @ruta("GET", "/api/productos")

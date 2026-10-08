@@ -17,7 +17,10 @@ const NUBE_CFG = (() => {
   } catch (e) { /* sin parámetros */ }
   return cfg;
 })();
-const CLAVE = { llave: 'rm.github.llave', usuario: 'rm.github.usuario', pc: 'rm.pc.id', nombrePC: 'rm.pc.nombre', borradorVisto: 'rm.borrador.visto' };
+const CLAVE = { llave: 'rm.github.llave', llaveFecha: 'rm.github.llave.fecha', usuario: 'rm.github.usuario', pc: 'rm.pc.id', nombrePC: 'rm.pc.nombre', borradorVisto: 'rm.borrador.visto' };
+/** Días que dura la llave nueva (GitHub permite hasta 366): pasado ese tiempo hay que crear otra. Se avisa un mes antes. */
+const LLAVE_DIAS = 365;
+function diasDeLlave() { const f = +LS.get(CLAVE.llaveFecha) || 0; return f ? Math.floor((Date.now() - f) / 86400000) : null; }
 const LS = {
   get(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } },
   set(k, v) { try { if (v) localStorage.setItem(k, v); else localStorage.removeItem(k); } catch (e) { /* navegador sin almacenamiento */ } },
@@ -92,6 +95,7 @@ const NUBE = {
     this.pc = LS.get(CLAVE.pc) || ('pc-' + uid()); LS.set(CLAVE.pc, this.pc);
     this.nombrePC = LS.get(CLAVE.nombrePC);
     this.puedeEscribir = !!this.llave;
+    if (this.llave && !LS.get(CLAVE.llaveFecha)) LS.set(CLAVE.llaveFecha, String(Date.now()));   // llaves de antes (sin vencimiento): se cuenta desde hoy y se avisa en 11 meses
     await Promise.all([this.cargarManifiesto(), this.refrescar().catch(e => { this.ultimoError = e; })]);
     if (this.llave) {
       try { const u = await this.gh('GET', this.cfg.api + '/user'); this.usuario = u.login; LS.set(CLAVE.usuario, u.login); }
@@ -175,6 +179,9 @@ const NUBE = {
     return ruta;
   },
   urlImagen(ruta) {
+    ruta = this.rutaReal(ruta);                                     // la copia de la página (mismo sitio, sin el límite de raw.githubusercontent.com) si está al día
+    const m = this.manif && this.manif.porRuta.get(ruta), actual = this.arbol ? (this.arbol.get('productos/' + ruta) || {}).sha : null;
+    if (m && m.foto && (!actual || actual === m.sha)) return m.foto;
     const ref = this.commit || (this.manif && this.manif.commit) || this.cfg.rama;
     return `${this.cfg.raw}/${rutaURL(this.cfg.owner)}/${rutaURL(this.cfg.repo)}/${ref}/productos/${rutaURL(this.rutaReal(ruta))}`;
   },
@@ -285,7 +292,7 @@ const NUBE = {
   guardarProyecto(nombre, estado) { const archivo = limpiarNombre(nombre.replace(/\.json$/i, ''), 150) + '.json'; return this.escribirArchivo('datos/proyectos/' + archivo, JSON.stringify(estado), 'Mis folletos: ' + archivo.replace(/\.json$/, '')).then(() => archivo); },
   borrarProyecto(archivo) { return this.borrar('datos/proyectos/' + archivo, 'Mis folletos: borrar ' + archivo.replace(/\.json$/, '')); },
   rutaBorrador() { return `datos/borradores/${this.pc}.json`; },
-  /** El folleto en curso de esta PC queda también en la nube (un minuto después del último cambio), para seguirlo en la otra. */
+  /** El folleto en curso de esta PC queda también en la nube (cada 10 minutos o al salir), para seguirlo en la otra. */
   programarBorrador: null,
   async guardarBorrador() {
     if (!this.puedeEscribir || !S || !hayContenido()) return false;
@@ -400,7 +407,9 @@ const NUBE = {
   alCambiar() { this.oyentes.forEach(fn => { try { fn(); } catch (e) { console.error(e); } }); },
   pintarEstado() { if (DOM.nubeChip) pintarChipNube(); },
 };
-NUBE.programarBorrador = debounce(() => { NUBE.guardarBorrador().catch(e => { if (e.codigo !== 'red') console.error(e); }); }, 60000);
+/** El folleto en curso se sube como mucho cada 10 minutos (y al salir de la pestaña): antes era cada minuto, llenaba el
+ *  historial y dejaba ver los precios en el repositorio público antes de publicarlos. */
+NUBE.programarBorrador = (() => { let t = null; return () => { if (t) return; t = setTimeout(() => { t = null; NUBE.guardarBorrador().catch(e => { if (e.codigo !== 'red') console.error(e); }); }, 10 * 60000); }; })();
 
 /** Achica la foto si hace falta (no se pierde nada: el folleto usa hasta 1400 px) y arma una miniatura. */
 async function prepararFotoParaSubir(file, paraIA) {
@@ -443,18 +452,19 @@ function pintarChipNube() {
   if (NUBE.sinRed) { txt = '☁ Sin conexión'; det = 'No hay conexión con GitHub. Lo que hagas queda en esta computadora y se sube cuando vuelva internet.'; cls = 'err'; }
   else if (NUBE.llaveMala) { txt = '☁ Reconectar'; det = 'La llave de GitHub de esta computadora ya no sirve. Tocá para cargar una nueva.'; cls = 'err'; }
   else if (!NUBE.puedeEscribir) { txt = '☁ Conectar'; det = 'Conectá tu cuenta de GitHub para guardar fotos, precios y folletos en la nube.'; cls = 'off'; }
+  else if (diasDeLlave() >= LLAVE_DIAS - 30) { const q = LLAVE_DIAS - diasDeLlave(); txt = '☁ Renová la llave'; det = q > 0 ? `La llave de GitHub de esta computadora vence en ${q} ${q === 1 ? 'día' : 'días'}. Tocá para crear una nueva (son 2 minutos).` : 'La llave de GitHub de esta computadora ya venció o está por vencer. Tocá para crear una nueva.'; cls = 'off'; }
   else { txt = '☁ En la nube'; det = `Conectado como ${NUBE.usuario || 'tu cuenta'}${NUBE.nombrePC ? ' · esta PC: ' + NUBE.nombrePC : ''}${NUBE.borradorTs ? ' · folleto en curso guardado ' + haceCuanto(NUBE.borradorTs) : ''}`; cls = 'ok'; }
   b.className = 'nube-chip ' + cls; b.textContent = txt; b.title = det; b.setAttribute('aria-label', det);
 }
 function chipNube() {
-  DOM.nubeChip = h('button', { type: 'button', class: 'nube-chip', onclick: () => (NUBE.puedeEscribir && !NUBE.llaveMala ? abrirPanelNube() : abrirConectar()) });
+  DOM.nubeChip = h('button', { type: 'button', class: 'nube-chip', onclick: () => (NUBE.puedeEscribir && !NUBE.llaveMala && diasDeLlave() < LLAVE_DIAS - 30 ? abrirPanelNube() : abrirConectar()) });
   pintarChipNube();
   return DOM.nubeChip;
 }
 const urlRepo = (sub = '') => `https://github.com/${NUBE.cfg.owner}/${NUBE.cfg.repo}${sub}`;
 function urlNuevaLlave(nombrePC) {
   const d = new Date(), nom = `Folletos Rivero ${nombrePC || 'PC'} ${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`.slice(0, 40);
-  const q = new URLSearchParams({ name: nom, description: `Herramienta de folletos (${NUBE.cfg.repo}): guardar fotos, precios y folletos desde ${nombrePC || 'esta computadora'}.`, target_name: NUBE.cfg.owner, expires_in: 'none', contents: 'write' });
+  const q = new URLSearchParams({ name: nom, description: `Herramienta de folletos (${NUBE.cfg.repo}): guardar fotos, precios y folletos desde ${nombrePC || 'esta computadora'}.`, target_name: NUBE.cfg.owner, expires_in: String(LLAVE_DIAS), contents: 'write' });
   return 'https://github.com/settings/personal-access-tokens/new?' + q.toString();
 }
 /** Asistente para conectar la cuenta de GitHub (una sola vez en cada computadora). */
@@ -476,7 +486,7 @@ function abrirConectar() {
         try { await NUBE.gh('POST', '/git/blobs', { content: 'Prueba de la llave de la herramienta de folletos', encoding: 'utf-8' }, { llave }); }
         catch (e) { if (e.codigo === 'permiso' || e.codigo === 'no-existe') throw new ErrorNube('permiso', `La llave funciona, pero no tiene permiso para guardar en «${NUBE.cfg.repo}». En GitHub, en «Repository access», marcá «Only select repositories» → ${NUBE.cfg.repo}, y en «Contents» elegí «Read and write». Después creá la llave de nuevo.`); throw e; }
         Object.assign(NUBE, { llave, usuario: u.login, puedeEscribir: true, llaveMala: false, nombrePC: nombre });
-        LS.set(CLAVE.llave, llave); LS.set(CLAVE.usuario, u.login); LS.set(CLAVE.nombrePC, nombre);
+        LS.set(CLAVE.llave, llave); LS.set(CLAVE.usuario, u.login); LS.set(CLAVE.nombrePC, nombre); LS.set(CLAVE.llaveFecha, String(Date.now()));
         conectado = true; m.cerrar();
         pintarChipNube(); construirPanel();
         aviso(`Listo: conectado como ${u.login}. Desde ahora tus fotos, precios y folletos se guardan en la nube.`, 6000);
@@ -501,7 +511,7 @@ function abrirConectar() {
 function desconectarNube() {
   return confirmar('¿Desconectar esta computadora?', 'Se borra la llave de GitHub de este navegador. Tus fotos y folletos siguen en la nube; para volver a guardar, conectá de nuevo.', 'Desconectar', 'Cancelar').then(ok => {
     if (!ok) return;
-    LS.set(CLAVE.llave, ''); LS.set(CLAVE.usuario, '');
+    LS.set(CLAVE.llave, ''); LS.set(CLAVE.usuario, ''); LS.set(CLAVE.llaveFecha, '');
     Object.assign(NUBE, { llave: '', usuario: '', puedeEscribir: false, llaveMala: false });
     pintarChipNube(); construirPanel(); aviso('Listo: esta computadora quedó desconectada de GitHub.');
   });
@@ -635,7 +645,7 @@ async function revisarVersionNueva() {
   try {
     const r = await fetch('version.json', { cache: 'no-store' }); if (!r.ok) return;
     const v = await r.json();
-    if (!v.armado || v.armado === NUBE.cfg.armado) return;
+    if (v.codigo && NUBE.cfg.codigo ? v.codigo === NUBE.cfg.codigo : (!v.armado || v.armado === NUBE.cfg.armado)) return;   // subir fotos rearma la página, pero la herramienta es la misma
     DOM.bannerVersion = h('div', { class: 'banner-version', role: 'status' }, h('span', null, `Hay una versión nueva de la herramienta${v.v ? ' (' + v.v + ')' : ''}.`),
       h('button', { class: 'btn small primary', type: 'button', onclick: async () => {
         try { await KV.set('estado', estadoParaGuardar(S)); await KV.set('estado_ts', Date.now()); } catch (e) { /* igual se actualiza */ }
@@ -723,6 +733,11 @@ async function entregarArchivos(archivos, carpetaNombre, modo) {
     for (const a of archivos) { const fh = await dir.getFileHandle(await nombreLibreEn(dir, limpiarNombre(a.nombre, 180)), { create: true }); const w = await fh.createWritable(); await w.write(a.blob); await w.close(); }
     return { modo: 'carpeta', texto: sub ? `Guardé ${n} archivos en la carpeta «${sub}», dentro de «${CARPETA_PC.handle.name}».` : `Guardé tu folleto en la carpeta «${CARPETA_PC.handle.name}».` };
   }
+  if (n === 2 && (await esBrave())) {
+    const img = archivos.find(a => a.tipo === 'png') || archivos[0], r = await guardarArchivo(img.blob, img.nombre);
+    if (r !== 'ok') throw new Error('No se pudo descargar (' + r + ').');
+    return { modo: 'descarga', texto: 'Descargué la imagen (está en la carpeta Descargas). El PDF para imprimir lo bajás con el botón «⬇ PDF para imprimir» de acá abajo: Brave no deja bajar dos archivos seguidos.' };
+  }
   if (n <= 2) {
     for (const a of archivos) { const r = await guardarArchivo(a.blob, a.nombre); if (r !== 'ok') throw new Error(r === 'no-disponible' ? 'Este visor no permite descargar. Abrí la herramienta en el navegador.' : 'No se pudo descargar (' + r + ').'); await esperar(350); }
     return { modo: 'descarga', texto: n === 1 ? 'Descargué tu folleto (está en la carpeta Descargas).' : 'Descargué tu folleto: la imagen y el PDF (están en la carpeta Descargas).' };
@@ -732,6 +747,8 @@ async function entregarArchivos(archivos, carpetaNombre, modo) {
   if (r !== 'ok') throw new Error('No se pudo descargar (' + r + ').');
   return { modo: 'zip', texto: `Descargué los ${n} archivos juntos en «${base}.zip» (carpeta Descargas). Abrilo con doble clic para ver las imágenes; cada una también se puede bajar o compartir desde acá abajo.` };
 }
+/** Brave bloquea la segunda descarga seguida y no deja elegir carpeta. */
+async function esBrave() { try { return !!(navigator.brave && (await navigator.brave.isBrave())); } catch (e) { return false; } }
 /** Compartir una imagen (en el celular abre WhatsApp, Facebook, etc.). */
 const puedeCompartir = blob => { try { return !!(navigator.canShare && navigator.canShare({ files: [new File([blob], 'x.png', { type: blob.type || 'image/png' })] })); } catch (e) { return false; } };
 async function compartirArchivo(blob, nombre, texto) {

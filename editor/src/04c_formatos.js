@@ -49,13 +49,14 @@ function layoutMensaje(ctx, S, T, env, kind) {
     story: { M: 40, logoW: 520, logoY: 120, kY: 296, kH: 42, ribY: 356, ribH: 200, foot: 'story' } }[kind];
   const SAFE = kind === 'story' ? 176 : 0;
   drawBackground(ctx, W, H, T, 0.5, 0.1, P.ribY + P.ribH);
+  adornos(ctx, [zonaLogo((W - P.logoW) / 2, P.logoY, P.logoW)]);
   const L = RES.logoH;
   if (L) { const lh = P.logoW * (L.naturalHeight || L.height) / (L.naturalWidth || L.width); shadow(ctx, 'rgba(90,25,0,.40)', 18, 0, 8); ctx.drawImage(L, (W - P.logoW) / 2, P.logoY, P.logoW, lh); noShadow(ctx); }
   const kk = String(Mj.kicker || '').trim().toUpperCase();
   if (kk) chip(ctx, W / 2, P.kY, kk, { h: P.kH, font: FM(900, P.kH * 0.5), fill: 'rgba(50,15,3,.92)', ink: T.accent[0], padX: P.kH * 0.6, tracking: P.kH * 0.06, align: 'center' });
   const rb = drawRibbonMulti(ctx, P.M, P.ribY, W - 2 * P.M, P.ribH, Mj.titulo || 'Aprovechá nuestras promos', T);
   const fp = footerPlan(ctx, S, W, H, P.foot), fy = H - SAFE - fp.total;
-  if (SAFE) { ctx.fillStyle = T.footer; ctx.fillRect(0, H - SAFE - 2, W, SAFE + 2); }
+  if (SAFE) franjaHistoria(ctx, S, T, W, H, SAFE);
   // tarjeta central
   const cx = P.M + 10, cy = rb.bottom + 34, cw = W - 2 * cx, chh = fy - 34 - cy, k = Math.min(cw / 1130, chh / 900);
   ctx.save(); ctx.translate(cx, cy);
@@ -115,16 +116,17 @@ function layoutDestacado(ctx, S, T, env, kind) {
   }[kind];
   const SAFE = kind === 'story' ? 176 : 0;
   drawBackground(ctx, W, H, T, 0.5, 0.2, P.bY + P.bH);
+  adornos(ctx, [zonaLogo(P.M + 6, P.logoY, P.logoW)]);
   const L = RES.logoH;
   if (L) { const lh = P.logoW * (L.naturalHeight || L.height) / (L.naturalWidth || L.width); shadow(ctx, 'rgba(0,0,0,.45)', 16, 0, 8); ctx.drawImage(L, P.M + 6, P.logoY, P.logoW, lh); noShadow(ctx); }
   drawBanner(ctx, W, P.bY, P.bH, D.mensaje || 'OFERTA IMPERDIBLE', T, { M: P.M, max: P.bMax });
   const hb = drawInfoRow(ctx, W, S, T, { M: P.M, y: P.infoY, h: P.infoH });
   const fp = footerPlan(ctx, S, W, H, P.foot), fh = fp.total, fy = H - SAFE - fh;
-  if (SAFE) { ctx.fillStyle = T.footer; ctx.fillRect(0, H - SAFE - 2, W, SAFE + 2); }
+  if (SAFE) franjaHistoria(ctx, S, T, W, H, SAFE);
   const heroY = hb + P.heroGap, bottom = fy - 24;
   const caja = conMargen({ x: P.M, y: heroY, w: W - 2 * P.M, h: bottom - heroY });
   casillero(ctx, env, 'producto', 0, caja);
-  drawHeroV(ctx, caja, prodAt(S, 0), T, env, { big: kind === 'post' ? 0.9 : 1.02, imgFrac: kind === 'post' ? 0.45 : 0.46, pop: 26, sticker: false });
+  drawHeroV(ctx, caja, prodAt(S, 0), T, env, { big: kind === 'post' ? 0.9 : 1.02, imgFrac: kind === 'post' ? 0.45 : 0.46, pop: 26, sticker: false, techo: P.heroGap - 6 });
   if (D.mensaje2) drawBadge(ctx, P.M + P.bR * 0.98 + 10, heroY + P.bR * 1.02 + 8, P.bR, { etiqueta: D.mensaje2 }, T, 0, -0.16, 1);
   if (T.decorTop) T.decorTop(ctx, W, H, P.bY + P.bH, { footerY: fy });
   drawFooter(ctx, S, T, env, { x: 0, y: fy, w: W }, fp, { m: P.M });
@@ -141,7 +143,7 @@ function layoutStory4(ctx, S, T, env) {
   drawBackground(ctx, W, H, T, 0.5, 0.05, 540);
   const hb = drawHeaderStack(ctx, W, S, T, { M, logoW: 600, logoY: 112, subY: 322, subSize: 22, ribbonY: 350, ribbonH: 104, titleMax: 98, pillY: 486, pillH: 48 });
   const fp = footerPlan(ctx, S, W, H, 'story'), fh = fp.total, fy = H - SAFE - fh;
-  ctx.fillStyle = T.footer; ctx.fillRect(0, H - SAFE - 2, W, SAFE + 2);
+  franjaHistoria(ctx, S, T, W, H, SAFE);
   const top = hb + 28, bottom = fy - 22, llenos = (S.productos || []).slice(0, 4).filter(p => !productoVacio(p)).length;
   const n = env.preview ? 4 : clamp(llenos, 2, 4);
   gridCards(ctx, S, T, env, Array.from({ length: n }, (_, i) => i), { x: M, y: top, w: W - 2 * M, h: bottom - top }, 1, n, 22, 16);

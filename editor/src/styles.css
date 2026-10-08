@@ -37,7 +37,8 @@ button { cursor: pointer; }
 .brand { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; }
 .brand img { width: 38px; height: 38px; flex: none; }
 .brand b { display: block; font: 900 italic 22px/1 var(--f-disp); text-transform: uppercase; letter-spacing: .03em; white-space: nowrap; }
-.brand span { display: block; font-size: 12px; color: var(--muted); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.brand-txt { min-width: 0; }
+.brand .brand-sub { display: block; font-size: 12px; color: var(--muted); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
 .top .actions { display: flex; gap: 8px; align-items: center; position: relative; }
 
 .btn { border: 1px solid var(--line); background: var(--surface-2); border-radius: 10px; padding: 9px 14px; font-weight: 800; font-size: 14px; line-height: 1.2; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; }
@@ -124,6 +125,9 @@ details.more > summary { cursor: pointer; font-weight: 800; font-size: 13px; col
 .checks .warn .ic { background: var(--warn); color: #3A2500; }
 .checks .info .ic { background: var(--surface-2); color: var(--muted); border: 1px solid var(--line); }
 .checks small { display: block; color: var(--muted); font-weight: 500; font-size: 12.5px; }
+.checks li.resto { display: block; }
+.checks li.resto > details > summary { cursor: pointer; font: 800 12.5px var(--f-body); color: var(--muted); padding: 4px 0; }
+.checks li.resto .checks { margin-top: 8px; }
 .tips { margin: 0; padding-left: 18px; display: grid; gap: 7px; font-size: 13.5px; }
 .tips b { font-weight: 800; }
 .note { font-size: 12px; color: var(--muted); margin: 10px 0 0; }
@@ -152,7 +156,7 @@ details.more > summary { cursor: pointer; font-weight: 800; font-size: 13px; col
 }
 @media (max-width: 440px) {
   .grid2 { grid-template-columns: 1fr; }
-  .brand span { display: none; }
+  .brand .brand-sub { display: none; }
   .photo { grid-template-columns: 92px 1fr; }
 }
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
@@ -208,6 +212,10 @@ details.guardados > summary { cursor: pointer; font-weight: 800; font-size: 13px
 .peso input { padding-left: 26px; font-weight: 800; }
 .prow.recordado .peso input { border-color: var(--pop); }
 .pmas { grid-column: 1 / -1; }
+.pextra { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: end; }
+.stepper { display: flex; align-items: center; gap: 6px; }
+.stepper .btn { min-width: 40px; font-size: 18px; line-height: 1; }
+.stepper .tam-val { min-width: 52px; text-align: center; font-weight: 800; font-size: 14px; }
 .pmas > summary { cursor: pointer; font: 800 12.5px var(--f-body); color: var(--muted); padding: 2px 0; }
 .pmas[open] > summary { margin-bottom: 10px; }
 .calc:empty { display: none; }
@@ -351,8 +359,9 @@ textarea.planilla { font: 600 13.5px/1.45 ui-monospace, Menlo, Consolas, monospa
   .actions .btn:not(.primary):not(.icono) { padding: 8px 10px; }
 }
 @media (max-width: 600px) {
-  .top { flex-wrap: wrap; }
-  .top .actions { flex-wrap: wrap; justify-content: flex-end; }
+  .top { flex-wrap: wrap; row-gap: 8px; }                              /* en el celular: la marca arriba y los botones abajo, sin taparse */
+  .brand { flex: 1 1 100%; }
+  .top .actions { flex: 1 1 100%; flex-wrap: wrap; justify-content: flex-end; }
   .pprecios { grid-template-columns: 1fr 64px 1fr; gap: 6px; }
 }
 
@@ -380,7 +389,18 @@ textarea.planilla { font: 600 13.5px/1.45 ui-monospace, Menlo, Consolas, monospa
 @media (max-width: 440px) { .sello-edit { grid-template-columns: 1fr; } .sello-prev { margin: 0 auto; } }
 
 /* ── nube (GitHub): estado arriba, aviso de versión nueva, asistentes ── */
-.brand-fila { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.brand-fila { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.brand-fila .version, .brand-fila .nube-chip { margin-top: 0; }
+/* pantallas bajas (1366 × 768): encabezado de un renglón y barras finas, así la vista previa queda más grande */
+@media (max-height: 820px) and (min-width: 901px) {
+  .top { min-height: 52px; padding: 6px 16px; }
+  .brand .brand-sub { display: none; }
+  .stage-box { padding: 10px; }
+  .stage-bar { padding: 6px 12px; }
+}
+.ver-grande { position: fixed; inset: 0; z-index: 70; background: rgba(10, 6, 4, .93); display: flex; align-items: center; justify-content: center; padding: 1.5vh 2vw; cursor: zoom-out; }
+.ver-grande img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 4px; box-shadow: 0 20px 60px rgba(0, 0, 0, .6); }
+.ver-grande .btn { position: absolute; top: 12px; right: 12px; }
 .nube-chip { display: inline-flex; align-items: center; gap: 4px; margin-top: 3px; padding: 1px 9px; border-radius: 99px; border: 1px solid var(--line); background: var(--surface-2); color: var(--fg); font: 800 11px/1.6 var(--f-body); white-space: nowrap; }
 .nube-chip.ok { border-color: color-mix(in srgb, var(--ok) 70%, transparent); color: var(--ok); }
 .nube-chip.off { border-color: var(--pop); background: var(--pop); color: var(--pop-ink); }

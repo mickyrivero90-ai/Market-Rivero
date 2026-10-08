@@ -100,8 +100,12 @@ function wrapFit(ctx, str, mk, max, min, maxW, maxLines, tracking = 0) {
 }
 
 // ── formas ──
+/** Lugares donde no van los adornos del tema (el logo): solo valen mientras se dibujan los adornos (ver adornos()). */
+let ZONAS_LIBRES = [];
+const libre = (x, y, r) => !ZONAS_LIBRES.length || !ZONAS_LIBRES.some(z => x + r > z.x && x - r < z.x + z.w && y + r > z.y && y - r < z.y + z.h);
 function burstPath(ctx, cx, cy, R, r, n, rot = 0) {
   ctx.beginPath();
+  if (!libre(cx, cy, R)) return;                                  // adorno sobre el logo: camino vacío (el fill() que sigue no pinta nada)
   for (let i = 0; i < n * 2; i++) {
     const a = rot + (i * Math.PI) / n, rad = i % 2 ? r : R;
     const px = cx + rad * Math.cos(a), py = cy + rad * Math.sin(a);

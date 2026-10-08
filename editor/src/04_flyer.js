@@ -77,7 +77,20 @@ function drawBackground(ctx, W, H, T, rayCx = 0.5, rayCy = 0.1, hh = H * 0.27) {
     halftone(ctx, W, H, T.dots, 0, H, H * 0.34, 26);
     halftone(ctx, W, H, T.dots, W, H * 0.30, H * 0.26, 26);
   }
-  if (T.decor) { ctx.save(); T.decor(ctx, W, H, hh, T); ctx.restore(); noShadow(ctx); }
+  ADORNO_PEND = T.decor ? { W, H, hh, T } : null;                 // los adornos se dibujan con adornos(), cuando ya se sabe dónde va el logo
+}
+/** Adornos del tema, detrás de todo pero sin pasar por detrás del logo (antes una moneda o un corazón hacía leer «RIVÉRO»). */
+let ADORNO_PEND = null;
+function adornos(ctx, zonas = []) {
+  const A = ADORNO_PEND; ADORNO_PEND = null; if (!A) return;
+  ZONAS_LIBRES = zonas.filter(Boolean);
+  try { ctx.save(); A.T.decor(ctx, A.W, A.H, A.hh, A.T); ctx.restore(); noShadow(ctx); } finally { ZONAS_LIBRES = []; }
+}
+/** Lugar que ocupa el logo dibujado en (x, y) con ancho lw, con un margen alrededor. */
+function zonaLogo(x, y, lw) {
+  const L = RES.logoH; if (!L) return null;
+  const lh = lw * (L.naturalHeight || L.height) / (L.naturalWidth || L.width), m = lh * 0.12;
+  return { x: x - m, y: y - m * 1.8, w: lw + m * 2, h: lh + m * 2.8 };
 }
 
 // ───────── cinta con el título ─────────
@@ -182,7 +195,7 @@ function drawBadge(ctx, cx, cy, R, p, T, pct, rot = -0.17, escala = null) {
       parts = [w.slice(0, best).join(' '), w.slice(best).join(' ')];
     }
     lines = parts.slice(0, 2);
-  } else if (pct >= 1) { lines = ['-' + pct + '%', 'OFF']; pctMode = true; }
+  } else if (pct >= 1 && !LIMPIO) { lines = ['-' + pct + '%', 'OFF']; pctMode = true; }   // en modo limpio el % ya está arriba
   else return false;
   ctx.save(); ctx.translate(cx, cy); ctx.rotate(rot);
   shadow(ctx, 'rgba(60,15,0,.45)', R * 0.35, 0, R * 0.16);
@@ -255,7 +268,35 @@ function drawPlate(ctx, x, yBottom, maxW, H0, price, T, o = {}) {
   return { x, y, w, h: H, right: x + w, ds };
 }
 /** Cómo se muestra el precio anterior y la palabra de la placa (se elige en "Leyenda del precio"). */
-let PRECIO_CFG = { antes: 'antes', ahorro: true, grande: true, insignia: 1.3, placa: 1, ahorroTam: 1 };
+let PRECIO_CFG = { antes: 'antes', ahorro: true, grande: true, insignia: 1.3, placa: 1, ahorroTam: 1, porUnidad: true, fraccion: true };
+/** Modo limpio: si todos los productos tienen el % de la promo, el «-10 %» y «pagando con…» no se repiten en cada cuadro
+ *  (ya están en la barra y en el sello) y la foto usa ese lugar. Se apaga en «Leyenda del precio». */
+let LIMPIO = false;
+function modoLimpio(S) {
+  if ((S.precio || {}).limpio === false) return false;
+  const P = typeof promoInfo === 'function' ? promoInfo(S) : null; if (!P || !P.pct || P.extra || P.cuotas) return false;
+  const L = LAYOUTS[S.formato] || {}, usados = (S.productos || []).slice(0, L.slots || 0).filter(p => !productoVacio(p)), pb = Math.floor(P.pct);
+  return usados.length > 0 && usados.every(p => (!p.pago || p.pago === P.tipo) && infoProducto(p).pct === pb);
+}
+/** Precio por kilo o litro con el contenido que dice el nombre (Res. 4/2025: «Aceite 850 ml» → «$2.964,71 x litro»).
+ *  Lo que se vende por kilo dice cuánto salen 100 g («$783 los 100 g»). '' si no corresponde. */
+function porUnidad(p) {
+  const F = parsePrecio(p.final); if (!F || !(F.num > 0)) return '';
+  const u = String(p.unidad || '').toLowerCase().trim();
+  if (/kg|kilo/.test(u)) return PRECIO_CFG.fraccion === false ? '' : '$' + precioATexto(aCentavos(F.num / 10)) + ' los 100 g';
+  if (PRECIO_CFG.porUnidad === false || (u && !/^(c\/u|x u|x unidad|unidad|c\/u\.)$/.test(u))) return '';   // x fardo, x docena…: no se calcula
+  const nm = String(p.nombre || '') + ' ' + String(p.desc || '');
+  const m = /(\d+(?:[.,]\d+)?)\s*(ml|cc|cm3|lts|lt|l|litros?|grs|gr|g|gramos|kgs|kg|kilos?)(?![a-záéíóúñ])/i.exec(nm); if (!m) return '';
+  const un = m[2].toLowerCase(), liq = /^(ml|cc|cm3|l|lt|lts|litros?)$/.test(un), chico = /^(ml|cc|cm3|g|gr|grs|gramos)$/.test(un);
+  const x = /\bx\s*(\d{1,2})\s*(?:u|un|uni|unid|unidades)\b/i.exec(nm) || /\b(\d{1,2})\s*x\s*\d+(?:[.,]\d+)?\s*(?:ml|cc|l|lt|g|gr|kg)\b/i.exec(nm) || /\bpack\s*(?:de|x)\s*(\d{1,2})\b/i.exec(nm);
+  const total = parseFloat(m[1].replace(',', '.')) / (chico ? 1000 : 1) * (x ? +x[1] : 1);
+  if (!(total > 0) || Math.abs(total - 1) < 1e-9) return '';     // 1 kg o 1 litro: el precio ya es por kilo o litro
+  return '$' + precioATexto(aCentavos(F.num / total)) + (liq ? ' x litro' : ' x kg');
+}
+/** Nota debajo del precio: la que escribió la persona y el precio por kilo o litro. */
+const notaDe = p => [String(p.nota || '').trim(), porUnidad(p)].filter(Boolean).join(' · ');
+/** Condición de pago debajo del precio de un cuadro (en modo limpio no se repite la de la barra). */
+const chipCard = p => { const c = chipProducto(p, S_DIBUJO); return c && LIMPIO && !c.price && (!p.pago || p.pago === c.P.tipo) ? null : c; };
 /** Cuadros de productos (se eligen en "Cuadros de productos"): separación, margen a los costados, fotos, producto estrella
  *  y dónde va el precio adentro de cada cuadro (alinear: 'auto' = como venía; dx y dy en % del cuadro, dy positivo = más arriba). */
 let CUADROS_CFG = { sep: 1, margen: 1, foto: 1, estrella: 1, alinear: 'auto', dx: 0, dy: 0 };
@@ -380,7 +421,7 @@ function filaAntes(ctx, tx, tw, plate, info, p, T, k, o = {}) {
 }
 /** Precio de la tarjeta apaisada (foto | texto) ubicado donde se eligió. Devuelve el techo para el nombre. */
 function precioMovidoCard(ctx, p, info, T, k, w, h, tx, tw) {
-  const a = alinPrecio('izquierda'), nota = String(p.nota || '').trim(), mpV = chipProducto(p, S_DIBUJO), mpH = mpV != null ? 33 * k : 0, filas = [];
+  const a = alinPrecio('izquierda'), nota = notaDe(p), mpV = chipCard(p), mpH = mpV != null ? 33 * k : 0, filas = [];
   const nFs = notaTam(k), pn = nota ? piezaTexto(ctx, nota, FM(800, nFs), nFs, T.ink, tw) : null, pz = mpH ? piezaPromo(ctx, mpH, mpV) : null;
   if (pz && pn && pz.w + 10 * k + pn.w <= tw) filas.push({ h: mpH, items: [pz, pn], sep: 10 * k });
   else { if (pn) filas.push({ h: nFs * 1.3, items: [pn] }); if (pz) filas.push({ h: mpH, items: [pz] }); }
@@ -419,7 +460,7 @@ function drawCard(ctx, r, p, T, env, o = {}) {
   let techo;
   if (precioMovido()) techo = precioMovidoCard(ctx, p, info, T, k, w, h, tx, tw);
   else {
-    const nota = String(p.nota || '').trim(), mpV = chipProducto(p, S_DIBUJO), mpH = mpV != null ? 33 * k : 0;
+    const nota = notaDe(p), mpV = chipCard(p), mpH = mpV != null ? 33 * k : 0;
     const nFs = notaTam(k), nF = FM(800, nFs);
     const cwChip = mpH ? promoChipAncho(ctx, mpH, mpV.label, mpV.price) : 0;
     ctx.font = nF; const notaAlLado = mpH && nota && tw - cwChip - 14 * k >= measure(ctx, nota, 0) * 0.95;   // si no entra cómoda al lado, va abajo (sin apretar la letra)
@@ -447,12 +488,14 @@ function drawCard(ctx, r, p, T, env, o = {}) {
   ctx.restore();
 }
 /** Precio de la tarjeta vertical ubicado donde se eligió. Devuelve dónde termina el nombre (abajo). */
-function precioMovidoV(ctx, p, info, T, k, w, h, a) {
-  const pad = 14 * k, tw = w - pad * 2, nota = String(p.nota || '').trim(), mpV = chipProducto(p, S_DIBUJO), mpH = mpV != null ? 28 * k : 0, filas = [];
+function precioMovidoV(ctx, p, info, T, k, w, h, a, out = {}) {
+  const pad = 14 * k, tw = w - pad * 2, nota = notaDe(p), mpV = chipCard(p), mpH = mpV != null ? 28 * k : 0, filas = [];
   if (nota) { const nFs = notaTam(k); filas.push({ h: nFs * 1.35, items: [piezaTexto(ctx, nota, FM(800, nFs), nFs, T.ink, tw)] }); }
   if (mpH) filas.push({ h: mpH, items: [piezaPromo(ctx, mpH, mpV)] });
   const [plateH, pOp] = altoPlaca(60 * k), pp = piezaPlaca(ctx, tw - plateH * 0.08, plateH, info.F || { int: '0', dec: '' }, T, pOp, {});
-  filas.push({ h: pp.h, items: [pp], gap: mpH ? 6 * k : 0 });
+  const unidad = p.unidad ? String(p.unidad).toUpperCase() : '', pu = unidad ? piezaChip(ctx, unidad, 26 * k, { font: FB(900, 19 * k), padX: 10 * k, tracking: 0.6 }) : null;
+  out.unidad = !!pu && pp.w + 8 * k + pu.w <= tw;                 // la unidad («X KG») al lado del precio si entra
+  filas.push({ h: pp.h, items: out.unidad ? ordenar(a, pp, pu) : [pp], sep: 8 * k, gap: mpH ? 6 * k : 0 });
   if (info.R) {
     const aSize = (PRECIO_CFG.grande ? 28 : 21) * k, pa = piezaAntes(ctx, info.R, aSize, T, { maxW: tw, priceColor: T.ink });
     const ps = PRECIO_CFG.ahorro && info.ahorro > 0 && !p.noAhorro ? piezaAhorro(ctx, 26 * k * tamAhorro(), info.ahorro, tw) : null;
@@ -469,14 +512,18 @@ function drawCardV(ctx, r, p, T, env, o = {}) {
   rrPath(ctx, 0, 0, w, h, 24 * k); ctx.fillStyle = T.card; ctx.fill(); noShadow(ctx);
   ctx.save(); rrPath(ctx, 0, 0, w, h, 24 * k); ctx.clip(); ctx.fillStyle = 'rgba(255,196,0,.10)'; ctx.fillRect(0, h * 0.6, w, h * 0.4); ctx.restore();
   const pad = 14 * k, tw = w - pad * 2, cx = w / 2;
-  let yb = h - 12 * k, a = 'centro';
-  if (precioMovido()) { a = alinPrecio('centro'); yb = precioMovidoV(ctx, p, info, T, k, w, h, a); }
+  let yb = h - 12 * k, a = 'centro', unidadJunto = false;
+  if (precioMovido()) { a = alinPrecio('centro'); const out = {}; yb = precioMovidoV(ctx, p, info, T, k, w, h, a, out); unidadJunto = out.unidad; }
   else {
-    const nota = String(p.nota || '').trim(), mpV = chipProducto(p, S_DIBUJO), mpH = mpV != null ? 28 * k : 0;
+    const nota = notaDe(p), mpV = chipCard(p), mpH = mpV != null ? 28 * k : 0;
     if (nota) { const nFs = notaTam(k); text(ctx, nota, cx, yb - 3 * k, { font: FM(800, nFs), fill: T.ink, align: 'center', maxW: tw }); yb -= nFs * 1.35; }
     if (mpH) { drawPromoChip(ctx, cx, yb - mpH, mpH, mpV.label, mpV.price, mpV.P, 'center'); yb -= mpH + 6 * k; }
     const [plateH, pOp] = altoPlaca(60 * k), price = info.F || { int: '0', dec: '' }, pw = drawPlateMeasure(ctx, tw, plateH, price, pOp);
-    const plate = drawPlate(ctx, cx - pw / 2 + plateH * 0.04, yb, tw, plateH, price, T, pOp);
+    const unidad = p.unidad ? String(p.unidad).toUpperCase() : '', uH = 26 * k, uF = FB(900, 19 * k);
+    ctx.font = uF; const uw = unidad ? measure(ctx, unidad, 0.6) + 20 * k : 0;
+    unidadJunto = !!unidad && pw + 8 * k + uw <= tw;              // «$7.830 X KG»: la unidad al lado del precio (Res. 4/2025), si entra
+    const plate = drawPlate(ctx, cx - (pw + (unidadJunto ? 8 * k + uw : 0)) / 2 + plateH * 0.04, yb, tw, plateH, price, T, pOp);
+    if (unidadJunto) chip(ctx, plate.right + 8 * k, plate.y + (plate.h - uH) / 2, unidad, { h: uH, font: uF, padX: 10 * k, tracking: 0.6 });
     yb = plate.y - 8 * k;
     if (info.R) {
       const aSize = (PRECIO_CFG.grande ? 28 : 21) * k, aw = Math.min(tw, measureAntes(ctx, info.R, aSize));
@@ -496,7 +543,7 @@ function drawCardV(ctx, r, p, T, env, o = {}) {
   const nameTop = yb - wf.size * 0.92 * wf.lines.length;
   wf.lines.forEach((ln, i) => text(ctx, ln, nx, nameTop + wf.size * 0.82 + i * wf.size * 0.92, { font: FB(900, wf.size), fill: nm ? T.ink : 'rgba(60,25,10,.35)', align: nAl, tracking: 0.4 }));
   drawProductArt(ctx, p, { x: pad, y: 6 * k, w: tw, h: Math.max(40 * k, nameTop - 12 * k) }, T, env, { k, glowR: 0.5, lim: [4 * k, w - 4 * k], aire: o.aire });
-  if (p.unidad) chip(ctx, w - 10 * k, 10 * k, String(p.unidad).toUpperCase(), { h: 26 * k, font: FB(900, 19 * k), align: 'right', padX: 10 * k, tracking: 0.6 });
+  if (p.unidad && !unidadJunto) chip(ctx, w - 10 * k, 10 * k, String(p.unidad).toUpperCase(), { h: 26 * k, font: FB(900, 19 * k), align: 'right', padX: 10 * k, tracking: 0.6 });
   drawBadge(ctx, 36 * k, 34 * k, 36 * k, p, T, info.pct);
   ctx.restore();
 }
@@ -519,7 +566,7 @@ function drawCardWide(ctx, r, p, T, env, o = {}) {
   wf.lines.forEach((ln, i) => text(ctx, ln, tx, top + wf.size * 0.82 + i * wf.size * 0.92, { font: FB(900, wf.size), fill: nm ? T.ink : 'rgba(60,25,10,.35)', tracking: 0.4 }));
   if (desc) { const df = wrapFit(ctx, desc, s => FM(600, s), dSize, 13 * k, tw, 1, 0); text(ctx, df.lines[0], tx, top + wf.size * 0.92 * wf.lines.length + 3 * k + df.size * 0.95, { font: FM(600, df.size), fill: T.soft }); }
   if (!movido) {
-    const nota = String(p.nota || '').trim(), mpV = chipProducto(p, S_DIBUJO), mpH = mpV != null ? 26 * k : 0;
+    const nota = notaDe(p), mpV = chipCard(p), mpH = mpV != null ? 26 * k : 0;
     const [plateH, pOp] = altoPlaca((mpH ? 64 : 74) * k), plateBottom = h - (mpH ? 12 : 16) * k - (mpH ? mpH + 5 * k : nota ? 18 * k : 0);
     const price = info.F || { int: '0', dec: '' };
     const pw = drawPlateMeasure(ctx, priceW, plateH, price, pOp);
@@ -534,7 +581,7 @@ function drawCardWide(ctx, r, p, T, env, o = {}) {
 }
 /** Precio de la tarjeta de renglón (historias) ubicado donde se eligió, en la zona [zx, zx + zw]. Devuelve su borde izquierdo. */
 function precioMovidoWide(ctx, p, info, T, k, w, h, zx, zw, limL) {
-  const a = alinPrecio('derecha'), nota = String(p.nota || '').trim(), mpV = chipProducto(p, S_DIBUJO), mpH = mpV != null ? 26 * k : 0, filas = [];
+  const a = alinPrecio('derecha'), nota = notaDe(p), mpV = chipCard(p), mpH = mpV != null ? 26 * k : 0, filas = [];
   if (mpH) filas.push({ h: mpH, items: [piezaPromo(ctx, mpH, mpV)] });
   else if (nota) filas.push({ h: 18 * k, items: [piezaTexto(ctx, nota, FM(800, notaTam(k)), notaTam(k), T.ink, zw + 40 * k)] });
   const [plateH, pOp] = altoPlaca((mpH ? 64 : 74) * k), pp = piezaPlaca(ctx, zw - plateH * 0.08, plateH, info.F || { int: '0', dec: '' }, T, pOp, {});
@@ -592,7 +639,7 @@ function stickerEstrella(ctx, x, y, k, T, rot = -0.05, big = 1) {
 }
 /** Precio del producto estrella apaisado ubicado donde se eligió. Devuelve el techo para el nombre. */
 function precioMovidoHeroH(ctx, p, info, T, k, w, h, tx, tw) {
-  const a = alinPrecio('izquierda'), nota = String(p.nota || '').trim(), mpV = chipProducto(p, S_DIBUJO), filas = [];
+  const a = alinPrecio('izquierda'), nota = notaDe(p), mpV = chipCard(p), filas = [];
   if (nota) { const fs = 21 * k * Math.min(1.4, PRECIO_CFG.insignia || 1); filas.push({ h: 24 * k, items: [piezaTexto(ctx, nota, FM(800, fs), fs, T.heroInk, tw)] }); }
   const pz = mpV != null ? piezaPromo(ctx, 42 * k, mpV) : null;
   const ps = PRECIO_CFG.ahorro && info.ahorro > 0 && !p.noAhorro ? piezaAhorro(ctx, 42 * k * tamAhorro(), info.ahorro, tw - (pz ? pz.w + 18 * k : 0)) : null;
@@ -616,14 +663,14 @@ function drawHeroH(ctx, r, p, T, env, o = {}) {
   ctx.fillStyle = rg; raysPath(ctx, icx, icy, w * 1.2, 32, 0.2); ctx.fill();
   ctx.restore();
   rrPath(ctx, 6 * k, 6 * k, w - 12 * k, h - 12 * k, 33 * k); ctx.lineWidth = 5 * k; ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.stroke();
-  const z = { x: 20 * k, y: -(o.pop ?? 40) * k, w: w * 0.40, h: h + (o.pop ?? 40) * k - 14 * k };
+  const pop = Math.min((o.pop ?? 40) * k, o.techo ?? Infinity), z = { x: 20 * k, y: -pop, w: w * 0.40, h: h + pop - 14 * k };
   drawProductArt(ctx, p, z, T, env, { k, glowColor: 'rgba(255,255,255,.85)', glowR: 0.62, lim: [10 * k, w - 10 * k] });
   stickerEstrella(ctx, w * 0.43 - 6 * k, 22 * k, k, T);
   const tx = w * 0.43, tw = w - tx - 34 * k;
   let anteTop;
   if (precioMovido()) anteTop = precioMovidoHeroH(ctx, p, info, T, k, w, h, tx, tw);
   else {
-    const nota = String(p.nota || '').trim(), mpV = chipProducto(p, S_DIBUJO), hasA = PRECIO_CFG.ahorro && info.ahorro > 0 && !p.noAhorro;
+    const nota = notaDe(p), mpV = chipCard(p), hasA = PRECIO_CFG.ahorro && info.ahorro > 0 && !p.noAhorro;
     const fila = mpV != null || hasA;                              // fila bajo la placa: "CON MP $…" a la izquierda, "AHORRÁS" a la derecha
     const at = tamAhorro(), hA = hasA ? 42 * k * at : 0, filaH = fila ? Math.max(mpV != null ? 42 * k : 0, hA) + 8 * k : 0;
     const [plateH, pOp] = altoPlaca((fila ? 128 : 140) * k), plateBottom = h - (fila ? 30 : 38) * k - filaH - (nota ? 24 * k : 0);
@@ -655,7 +702,7 @@ function drawHeroH(ctx, r, p, T, env, o = {}) {
 // ───────── producto estrella (vertical, para historias y cartel) ─────────
 /** Precio del producto estrella vertical ubicado donde se eligió. Devuelve el techo para el nombre. */
 function precioMovidoHeroV(ctx, p, info, T, k, w, h, big, a, limT) {
-  const tw = w - 80 * k, nota = String(p.nota || '').trim(), mpV = chipProducto(p, S_DIBUJO), filas = [];
+  const tw = w - 80 * k, nota = notaDe(p), mpV = chipCard(p), filas = [];
   if (nota) { const fs = 22 * k * Math.min(1.3, PRECIO_CFG.insignia || 1); filas.push({ h: 26 * k, items: [piezaTexto(ctx, nota, FM(800, fs), fs, T.heroInk, tw)] }); }
   const pz = mpV != null ? piezaPromo(ctx, 44 * k, mpV) : null, unidad = p.unidad ? String(p.unidad).toUpperCase() : '';
   const pu = unidad ? piezaChip(ctx, unidad, 40 * k, { font: FB(900, 28 * k), padX: 16 * k, tracking: 1, fill: T.price, ink: T.priceInk || '#fff' }) : null;
@@ -684,7 +731,7 @@ function drawHeroV(ctx, r, p, T, env, o = {}) {
   let anteTop, a = 'centro';
   if (precioMovido()) { a = alinPrecio('centro'); anteTop = precioMovidoHeroV(ctx, p, info, T, k, w, h, big, a, nameTop + 40 * k); }
   else {
-    const nota = String(p.nota || '').trim(), mpV = chipProducto(p, S_DIBUJO);
+    const nota = notaDe(p), mpV = chipCard(p);
     const [plateH, pOp] = altoPlaca(140 * k * big), hasAhorro = PRECIO_CFG.ahorro && info.ahorro > 0 && !p.noAhorro, unidadV = p.unidad ? String(p.unidad).toUpperCase() : '';
     const at = tamAhorro(), hA = hasAhorro ? 44 * k * at : 0;
     const padB = 26 * k, gapS = 10 * k, notaH = nota ? 26 * k : 0, chipH = Math.max(hA, (unidadV || mpV != null) ? 44 * k : 0);
@@ -717,7 +764,7 @@ function drawHeroV(ctx, r, p, T, env, o = {}) {
   const avail = anteTop - 4 * k - nameTop - descH;
   const wf = fitBlock(ctx, nm || 'NOMBRE DEL PRODUCTO', s => FB(900, s), 92 * k * big, 34 * k, tw, 2, avail, 0.92, 0.5);
   const imgBottom = nameTop - 4 * k;
-  const pop = (o.pop ?? 46) * k, z = { x: w * 0.12, y: -pop, w: w * 0.76, h: imgBottom + pop };
+  const pop = Math.min((o.pop ?? 46) * k, o.techo ?? Infinity), z = { x: w * 0.12, y: -pop, w: w * 0.76, h: imgBottom + pop };   // techo: lo libre hasta la barra de arriba
   drawProductArt(ctx, p, z, T, env, { k, glowColor: 'rgba(255,255,255,.85)', glowR: 0.5, lim: [10 * k, w - 10 * k] });
   if (o.sticker !== false) stickerEstrella(ctx, 26 * k, 24 * k, k, T, -0.05, 1.1);
   wf.lines.forEach((ln, i) => text(ctx, ln, nx, nameTop + wf.size * 0.82 + i * wf.size * 0.92, { font: FB(900, wf.size), fill: nm ? T.heroInk : 'rgba(60,25,10,.35)', align: nAl, tracking: 0.5 }));
@@ -770,13 +817,13 @@ function footerPlan(ctx, S, W, H, kind = 'print', o = {}) {
   const L = S.legal || {};
   const infoH = o.infoH || (kind === 'print' ? 172 : kind === 'post' ? 150 : 156);
   const pagosH = pagosVisibles(S).length ? (kind === 'print' ? 62 : kind === 'post' ? 58 : 64) : 0;
-  if (!L.banda) return { infoH, pagosH, legalH: 0, total: infoH + pagosH, lines: [], fs: 0, lh: 0 };
+  if (!L.banda) return { infoH, pagosH, legalH: 0, total: infoH + pagosH, lines: [], fs: 0, lh: 0, kind };
   const mm = W / 210, tam = clamp(+L.bandaTam || 1, 0.6, 1.8);
   const fs = (kind === 'print' ? Math.round(6.1 * mm) : kind === 'post' ? 25 : 27) * tam, pad = Math.round(W * 0.025), lh = fs * 1.14;
   const lines = [];
   legalParrafos(S).forEach(par => { const wf = wrapFit(ctx, par, s => FB(800, fs, false), fs, fs, W - pad * 2, 3, 0.4); lines.push(...wf.lines); });
   const legalH = Math.max(H * 0.05, lines.length * lh + fs * 0.85);
-  return { infoH, pagosH, legalH, total: pagosH + infoH + legalH, lines, fs, lh };
+  return { infoH, pagosH, legalH, total: pagosH + infoH + legalH, lines, fs, lh, kind };
 }
 function drawFooter(ctx, S, T, env, r, plan, o = {}) {
   const { x, w } = r, hI = plan.infoH, k = o.k || hI / 190, C = S.comercio || {};
@@ -791,8 +838,20 @@ function drawFooter(ctx, S, T, env, r, plan, o = {}) {
   const qrs = [];
   if (o.qr !== false && C.waCanal && qrMatrix(C.waCanal)) qrs.push({ url: C.waCanal, l1: 'SUMATE A NUESTRO', l2: 'CANAL DE WHATSAPP', c2: '#4BE07F' });
   if (o.qr !== false && C.qrUrl && qrMatrix(C.qrUrl)) qrs.push({ url: C.qrUrl, l1: 'SEGUINOS EN', l2: 'FACEBOOK', c2: '#8DB8FF' });
-  const qrS = Math.min(hI - 66 * k, 134 * k), gapQ = 16 * k, grpW = qrs.length * qrS + Math.max(0, qrs.length - 1) * gapQ, gx = w - M - grpW, qy = hI - qrS - 13 * k;
-  qrs.forEach((q, n) => {
+  // en redes el QR no se puede escanear desde el mismo celular: con el nombre del canal, al lado dice cómo buscarlo
+  const canal = String(C.canalNombre || '').trim(), buscar = canal && qrs.length === 1 && qrs[0].url === C.waCanal && (plan.kind === 'post' || plan.kind === 'story');
+  let qrS = Math.min(hI - 66 * k, 134 * k), gapQ = 16 * k, grpW = qrs.length * qrS + Math.max(0, qrs.length - 1) * gapQ, gx = w - M - grpW, qy = hI - qrS - 13 * k;
+  if (buscar) {
+    qrS = Math.min(hI - 34 * k, 150 * k); qy = (hI - qrS) / 2 + 4 * k;
+    const f1 = FM(800, 14.5 * k), f2 = FB(900, 30 * k), nom = canal.toUpperCase();
+    ctx.font = f1; const w1 = measure(ctx, 'BUSCÁ EN WHATSAPP EL CANAL', 1 * k); ctx.font = f2; const w2 = Math.min(measure(ctx, nom, 0.4), 300 * k), lw2 = Math.max(w1, w2);
+    gx = w - M - qrS; const tx = gx - 16 * k;
+    drawQR(ctx, gx, qy, qrS, C.waCanal);
+    iconWhatsApp(ctx, tx - lw2 / 2, qy + qrS * 0.2, 15 * k);
+    text(ctx, 'BUSCÁ EN WHATSAPP EL CANAL', tx, qy + qrS * 0.2 + 30 * k, { font: f1, fill: T.footerInk, align: 'right', tracking: 1 * k });
+    text(ctx, nom, tx, qy + qrS * 0.2 + 66 * k, { font: f2, fill: '#4BE07F', align: 'right', tracking: 0.4, maxW: 300 * k });
+    gx = tx - lw2;
+  } else qrs.forEach((q, n) => {
     const qx = gx + n * (qrS + gapQ);
     drawQR(ctx, qx, qy, qrS, q.url);
     text(ctx, q.l1, qx + qrS / 2, qy - 21 * k, { font: FM(800, 12 * k), fill: T.footerInk, align: 'center', tracking: 1 * k, maxW: qrS + 14 * k });
@@ -840,8 +899,37 @@ function drawFooter(ctx, S, T, env, r, plan, o = {}) {
   HITS.push({ tipo: 'pie', i: 0, x, y: r.y + plan.pagosH, w, h: plan.infoH + plan.legalH });   // clic en el pie: lleva a «Pie del folleto»
 }
 
+/** Franja de abajo de las historias. Ahí la app pone su barra para responder: va una invitación a responder
+ *  (antes quedaba una franja oscura vacía y, mandada por chat, la imagen parecía sin terminar). */
+const CTA_HISTORIA = 'RESPONDÉ Y TE LO SEPARAMOS';
+function franjaHistoria(ctx, S, T, W, H, SAFE) {
+  const y = H - SAFE - 2, Hs = S.historia || {};
+  ctx.save(); ctx.fillStyle = T.footer; ctx.fillRect(0, y, W, SAFE + 2);
+  const txt = String(Hs.cta || '').trim().toUpperCase() || CTA_HISTORIA;
+  if (Hs.ver !== false) {
+    const bh = 86, by = y + 18, bx = 34, bw = W - 68, ic = 30;
+    shadow(ctx, 'rgba(0,0,0,.35)', 14, 0, 5); rrPath(ctx, bx, by, bw, bh, bh / 2); ctx.fillStyle = vGrad(ctx, by, by + bh, T.price); ctx.fill(); noShadow(ctx);
+    rrPath(ctx, bx + 4, by + 4, bw - 8, bh - 8, bh / 2 - 4); ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 2.5; ctx.stroke();
+    const fs = fitSize(ctx, txt, s => FB(900, s), 48, 24, bw - 150 - ic * 2, 0.5);
+    ctx.font = FB(900, fs); const tw = measure(ctx, txt, 0.5), gx = W / 2 - (tw + ic * 2 + 18) / 2, cy = by + bh / 2;
+    globoChat(ctx, gx + ic, cy, ic, T.priceInk || '#fff');
+    text(ctx, txt, gx + ic * 2 + 18, cy + fs * 0.36, { font: FB(900, fs), fill: T.priceInk || '#fff', tracking: 0.5, shadow: [T.priceShadow || 'rgba(0,0,0,.3)', 2, 0, 2] });
+    ctx.fillStyle = T.accent[0]; const fy = by + bh + 16;                      // flechita hacia la barra para responder
+    ctx.beginPath(); ctx.moveTo(W / 2 - 22, fy); ctx.lineTo(W / 2 + 22, fy); ctx.lineTo(W / 2, fy + 18); ctx.closePath(); ctx.fill();
+  }
+  ctx.restore();
+}
+/** Globito de chat (para «respondé…»). */
+function globoChat(ctx, cx, cy, r, fill) {
+  ctx.save(); ctx.fillStyle = fill; ctx.beginPath(); ctx.ellipse(cx, cy - r * 0.08, r, r * 0.8, 0, 0, TAU); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(cx - r * 0.55, cy + r * 0.45); ctx.lineTo(cx - r * 0.85, cy + r * 1.0); ctx.lineTo(cx - r * 0.05, cy + r * 0.62); ctx.closePath(); ctx.fill();
+  ctx.restore();
+  ctx.save(); ctx.fillStyle = 'rgba(0,0,0,.28)'; [-0.42, 0, 0.42].forEach(d => { ctx.beginPath(); ctx.arc(cx + d * r, cy - r * 0.08, r * 0.13, 0, TAU); ctx.fill(); }); ctx.restore();
+}
+
 // ───────── encabezado ─────────
 function drawHeaderWide(ctx, W, S, T, g) {
+  adornos(ctx, [zonaLogo(g.M + 6, g.logoY, g.logoW)]);
   const L = RES.logoH;
   if (L) { const lw = g.logoW, lh = lw * (L.naturalHeight || L.height) / (L.naturalWidth || L.width); shadow(ctx, 'rgba(90,25,0,.40)', 18, 0, 8); ctx.drawImage(L, g.M + 6, g.logoY, lw, lh); noShadow(ctx); }
   const sub = String(S.subtitulo || '').trim().toUpperCase();
@@ -853,6 +941,7 @@ function drawHeaderWide(ctx, W, S, T, g) {
   return drawInfoRow(ctx, W, S, T, { M: g.M, y: g.pillY, h: g.pillH });
 }
 function drawHeaderStack(ctx, W, S, T, g) {
+  adornos(ctx, [zonaLogo((W - g.logoW) / 2, g.logoY, g.logoW)]);
   const L = RES.logoH;
   if (L) { const lw = g.logoW, lh = lw * (L.naturalHeight || L.height) / (L.naturalWidth || L.width); shadow(ctx, 'rgba(90,25,0,.40)', 18, 0, 8); ctx.drawImage(L, (W - lw) / 2, g.logoY, lw, lh); noShadow(ctx); }
   const sub = String(S.subtitulo || '').trim().toUpperCase();
@@ -901,7 +990,7 @@ const LAYOUTS = {
       const fp = footerPlan(ctx, S, W, H, 'print'), fh = fp.total, bottom = H - fh - 26;
       const sep = CUADROS_CFG.sep ?? 1, heroY = hb + 46, heroH = altoEstrella(Math.min(540, Math.max(380, (bottom - heroY) * 0.5)), bottom - heroY, 30 * sep + 2 * 130);
       const caja = conMargen({ x: M, y: heroY, w: W - 2 * M, h: heroH });
-      drawHeroH(ctx, caja, prodAt(S, 0), T, env); casillero(ctx, env, 'producto', 0, caja);
+      drawHeroH(ctx, caja, prodAt(S, 0), T, env, { techo: heroY - hb - 6 }); casillero(ctx, env, 'producto', 0, caja);
       const top = heroY + heroH + 30 * sep;
       gridCards(ctx, S, T, env, [1, 2, 3, 4], { x: M, y: top, w: W - 2 * M, h: bottom - top }, 2, 2, 22, 18);
       if (T.decorTop) T.decorTop(ctx, W, H, 470, { footerY: H - fh });
@@ -917,7 +1006,7 @@ const LAYOUTS = {
       const fp = footerPlan(ctx, S, W, H, 'post'), fh = fp.total, bottom = H - fh - 18;
       const sep = CUADROS_CFG.sep ?? 1, heroY = hb + 40, heroH = altoEstrella(Math.min(372, Math.max(280, (bottom - heroY) * 0.46)), bottom - heroY, 22 * sep + 2 * 110);
       const caja = conMargen({ x: M, y: heroY, w: W - 2 * M, h: heroH });
-      drawHeroH(ctx, caja, prodAt(S, 0), T, env); casillero(ctx, env, 'producto', 0, caja);
+      drawHeroH(ctx, caja, prodAt(S, 0), T, env, { techo: heroY - hb - 6 }); casillero(ctx, env, 'producto', 0, caja);
       const top = heroY + heroH + 22 * sep;
       gridCards(ctx, S, T, env, [1, 2, 3, 4], { x: M, y: top, w: W - 2 * M, h: bottom - top }, 2, 2, 18, 14);
       if (T.decorTop) T.decorTop(ctx, W, H, 360, { footerY: H - fh });
@@ -931,11 +1020,11 @@ const LAYOUTS = {
       drawBackground(ctx, W, H, T, 0.5, 0.05, 540);
       const hb = drawHeaderStack(ctx, W, S, T, { M, logoW: 600, logoY: 112, subY: 322, subSize: 22, ribbonY: 350, ribbonH: 104, titleMax: 98, pillY: 486, pillH: 48 });
       const fp = footerPlan(ctx, S, W, H, 'story'), fh = fp.total, fy = H - SAFE - fh;
-      ctx.fillStyle = T.footer; ctx.fillRect(0, H - SAFE - 2, W, SAFE + 2);
+      franjaHistoria(ctx, S, T, W, H, SAFE);
       const heroY = hb + 28, bottom = fy - 22;
       const sep = CUADROS_CFG.sep ?? 1, heroH = altoEstrella(Math.min(640, Math.max(430, (bottom - heroY) * 0.6)), bottom - heroY, 22 * sep + 2 * 100);
       const caja = conMargen({ x: M, y: heroY, w: W - 2 * M, h: heroH });
-      drawHeroV(ctx, caja, prodAt(S, 0), T, env); casillero(ctx, env, 'producto', 0, caja);
+      drawHeroV(ctx, caja, prodAt(S, 0), T, env, { techo: heroY - hb - 6 }); casillero(ctx, env, 'producto', 0, caja);
       const top = heroY + heroH + 22 * sep;
       gridCards(ctx, S, T, env, [1, 2], { x: M, y: top, w: W - 2 * M, h: bottom - top }, 1, 2, 22, 16);
       drawFooter(ctx, S, T, env, { x: 0, y: fy, w: W }, fp, { m: 40 });
@@ -969,14 +1058,15 @@ function renderFlyer(canvas, S, opts = {}) {
   ctx.clearRect(0, 0, L.w, L.h); HITS = [];
   const T = THEMES[S.tema] || THEMES.naranja;
   const PR = S.precio || {};
-  PRECIO_CFG = { antes: PR.antes || 'antes', ahorro: PR.ahorro !== false, grande: PR.grande !== false, insignia: clamp(+PR.insignia || 1.3, 0.8, 2), placa: clamp(+PR.placa || 1, 0.7, 1.6), ahorroTam: clamp(+PR.ahorroTam || 1, 0.6, 2) };
+  PRECIO_CFG = { antes: PR.antes || 'antes', ahorro: PR.ahorro !== false, grande: PR.grande !== false, insignia: clamp(+PR.insignia || 1.3, 0.8, 2), placa: clamp(+PR.placa || 1, 0.7, 1.6), ahorroTam: clamp(+PR.ahorroTam || 1, 0.6, 2),
+    porUnidad: PR.porUnidad !== false, fraccion: PR.fraccion !== false };
   const CU = S.cuadros || {};
   CUADROS_CFG = { sep: clamp(Number.isFinite(+CU.sep) && CU.sep !== '' && CU.sep != null ? +CU.sep : 1, 0, 3), margen: clamp(+CU.margen || 1, 0.3, 2.5), foto: clamp(+CU.foto || 1, 0.6, 1.5), estrella: clamp(+CU.estrella || 1, 0.6, 1.5),
     alinear: ['izquierda', 'centro', 'derecha'].includes(CU.alinear) ? CU.alinear : 'auto', dx: clamp(+CU.dx || 0, -40, 40), dy: clamp(+CU.dy || 0, -20, 50) };
   const PI = typeof promoInfo === 'function' ? promoInfo(S) : null;
   ETQ_PRECIO = PR.etiqueta != null ? PR.etiqueta : 'FINAL';        // la placa dice FINAL (o lo que se elija): es el precio que paga el cliente
   PROMO_ACT = PI && PI.verPrecio ? PI : null;                      // debajo de cada precio: la condición de pago (o la cuota)
-  S_DIBUJO = S;
+  S_DIBUJO = S; LIMPIO = modoLimpio(S); ADORNO_PEND = null;
   L.draw(ctx, S, T, { getImg: opts.getImg || (() => null), preview: !!opts.preview, activo: opts.activo || null, W: L.w, H: L.h });
   if (!opts.exportar) LAST_HITS = HITS;                          // las imágenes que se exportan no pisan los casilleros de la vista previa
 }

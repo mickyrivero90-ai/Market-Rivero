@@ -177,7 +177,7 @@ def main():
         d.get(URL)
         esperar(d, "return !!document.querySelector('.fmt') && !!document.querySelector('.stage canvas') && !!window.__estado", 40)
         time.sleep(1.0)
-        ok("modo online", "folletos online" in d.find_element(By.CSS_SELECTOR, ".brand").text)
+        ok("modo online", "folletos online" in d.execute_script("return document.querySelector('.brand').textContent"))   # en pantallas bajas el subtítulo se oculta
         ok("botón ☁ Conectar (sin llave)", d.find_element(By.CSS_SELECTOR, ".nube-chip").text.strip() == "☁ Conectar")
         acc = d.find_element(By.CSS_SELECTOR, ".actions").text
         ok("botones de la nube y marketing", all(t in acc for t in ("Nuevo folleto", "Mis folletos", "Marketing", "Finalizar")), acc.replace("\n", " | "))
@@ -203,7 +203,9 @@ def main():
         time.sleep(0.6)
         esperar(d, "const p = window.__estado.productos[0]; return !!p.final")
         url_img = js(d, "return window.__api.nube().urlImagen(window.__estado.productos[0].archivo)")
-        ok("la foto viene de raw de GitHub", url_img.startswith(GH + "/raw/prueba/tienda/"), url_img[:70])
+        ok("la foto viene de la misma página (copia del catálogo)", url_img.startswith("fotos/"), url_img[:70])          # desde la 3.7: sin el límite de raw
+        url_nueva = js(d, "return window.__api.nube().urlImagen('Nueva/todavía no publicada.png')")
+        ok("una foto que todavía no está en la página viene de GitHub", url_nueva.startswith(GH + "/raw/prueba/tienda/"), url_nueva[:70])
         time.sleep(1.5)
         r = js(d, "try { return window.__api.lienzo(0.25).toDataURL('image/png').length } catch (e) { return 'ERROR ' + e.message }")
         ok("el folleto se puede exportar (foto de otro sitio con CORS)", isinstance(r, int) and r > 5000, r)
@@ -214,7 +216,7 @@ def main():
         foto(d, "n03_conectar.png")
         d.find_element(By.CSS_SELECTOR, ".pasos-llave input[type=text]").send_keys("Casa")
         enlace = js(d, "return document.querySelector('.pasos-llave a').href")
-        ok("link a GitHub con la llave ya armada", "personal-access-tokens/new" in enlace and "contents=write" in enlace and "target_name=prueba" in enlace and "expires_in=none" in enlace, enlace[:120])
+        ok("link a GitHub con la llave ya armada", "personal-access-tokens/new" in enlace and "contents=write" in enlace and "target_name=prueba" in enlace and "expires_in=365" in enlace, enlace[:120])
         llave = d.find_element(By.CSS_SELECTOR, ".pasos-llave input[type=password]")
         llave.send_keys("github_pat_lectura_" + "a" * 30)
         clic_texto(d, ".modal-pie .btn.primary", "Conectar")
@@ -422,7 +424,11 @@ def main():
 
         # ── 12) versión nueva publicada: aviso arriba ──
         v = json.loads((SITIO / "version.json").read_text())
-        v["armado"], v["v"] = "2099-01-01T00:00:00Z", "9.9"
+        v["armado"] = "2099-01-01T00:00:00Z"                            # se rearmó la página (por ejemplo, por fotos nuevas) con la misma herramienta
+        (SITIO / "version.json").write_text(json.dumps(v))
+        js(d, "window.__nube.revisarVersionNueva()"); time.sleep(2)
+        ok("fotos nuevas no hacen saltar el aviso de versión", not d.find_elements(By.CSS_SELECTOR, ".banner-version"))
+        v["codigo"], v["v"] = "otro-codigo", "9.9"
         (SITIO / "version.json").write_text(json.dumps(v))
         js(d, "window.__nube.revisarVersionNueva()")
         esperar(d, "return !!document.querySelector('.banner-version')", 10)

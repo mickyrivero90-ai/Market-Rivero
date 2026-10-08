@@ -39,12 +39,13 @@ function estadoDemo() {
     sello: { modo: 'auto', l1: '', l2: '', l3: '' },
     vigencia: { desde: '', hasta: '2026-10-18', agotar: true },
     promo: { tipo: 'mp', pct: '10', cuotas: '', texto: '', textoBarra: '', verBarra: true, etiqueta: '', logo: '', modo: 'incluido', verPrecio: true, barra: { tam: 1, letra: 'mont', alinear: 'centro', dy: 0 } },
-    precio: { antes: 'antes', etiqueta: 'FINAL', ahorro: true, grande: true, insignia: 1.3, placa: 1, ahorroTam: 1 },
+    precio: { antes: 'antes', etiqueta: 'FINAL', ahorro: true, grande: true, insignia: 1.3, placa: 1, ahorroTam: 1, limpio: true, porUnidad: true, fraccion: true },
     pagos: { ver: false, lista: ['efectivo', 'debito', 'credito', 'mp', 'transferencia'], textos: {} },
     mensaje: { kicker: '¡Aprovechá!', titulo: 'Descuento en todos los productos', grande: '', grande2: '', condicion: '', texto: 'Válido para todas tus compras en el local.' },
     destacado: { mensaje: 'OFERTA IMPERDIBLE', mensaje2: '' },
     legal: { banda: true, bandaTam: 1, letraChica: true, alcohol: 'no', stock: '' },
     cuadros: { sep: 1, margen: 1, foto: 1, estrella: 1, alinear: 'auto', dx: 0, dy: 0 },
+    historia: { ver: true, cta: '' },
     opciones: { pdf: true, destinos: ['a4', 'post', 'story'] },
     coleccion: {
       mensaje: 'Aquí tenemos todos los productos para tus recetas', kicker: 'Para reposteras y reposteros', ocasion: 'Especial Día de la Madre',
@@ -53,6 +54,7 @@ function estadoDemo() {
         nuevaFoto({ img: C.reposteria_2 || null, demo: 'reposteria_2', alfa: true, titulo: 'Lácteos, harinas y grasas' }), nuevaFoto()],
     },
     avisoEjemplo: true,
+    archivoFolleto: '',                                           // su entrada en «Mis folletos» (cada folleto es una sola entrada que se actualiza)
     comercio: {
       nombre: 'Rivero Market',
       direccion: 'Barrio San José, Avenida Solís Pizarro 1430',
@@ -79,6 +81,7 @@ function estadoNuevo(S) {
     productos: Array.from({ length: MAX_SLOTS }, () => nuevoProducto()),
     coleccion: { ...S.coleccion, fotos: [nuevaFoto(), nuevaFoto(), nuevaFoto()] },
     avisoEjemplo: false,
+    archivoFolleto: '',
   });
 }
 
@@ -91,7 +94,7 @@ function estadoParaGuardar(S) {
 /** Los datos del local son de todos los folletos: al abrir uno guardado se quedan los que se cambiaron último,
  *  así un folleto viejo no vuelve a poner la dirección o el teléfono de antes. Si en esta computadora nunca se
  *  tocaron (y no hay fechas para comparar), valen los del folleto que se abre. */
-const CAMPOS_LOCAL = ['nombre', 'direccion', 'facebook', 'telefono', 'waCanal', 'qrUrl', 'mapa', 'razon', 'cuit', 'legales', 'consulta'];
+const CAMPOS_LOCAL = ['nombre', 'direccion', 'facebook', 'telefono', 'waCanal', 'canalNombre', 'qrUrl', 'mapa', 'razon', 'cuit', 'legales', 'consulta'];
 function comercioAlAbrir(abierto, actual) {
   if (!abierto) return actual; if (!actual) return abierto;
   const ta = +abierto.ts || 0, tc = +actual.ts || 0;
@@ -116,6 +119,7 @@ function normalizarEstado(S, op = {}) {
   if (!(S.v >= 5)) { out.legal.alcohol = 'no'; if (S.coleccion) S.coleccion.alcohol = false; }   // v2.0: la leyenda de alcohol viene apagada (se puede volver a activar en Legales)
   out.opciones = { ...base.opciones, ...(S.opciones || {}) };
   out.precio = { ...base.precio, ...(S.precio || {}) };
+  out.historia = { ...base.historia, ...(S.historia || {}) };
   out.pagos = { ...base.pagos, ...(S.pagos || {}), textos: { ...((S.pagos || {}).textos || {}) } };
   out.mensaje = { ...base.mensaje, ...(S.mensaje || {}) };
   out.coleccion = { ...base.coleccion, ...(S.coleccion || {}) };

@@ -178,7 +178,7 @@ function miniTema(id) {
   c.width = Math.round(W * esc); c.height = Math.round(H * esc);
   const ctx = c.getContext('2d'), scBak = SC; setSC(esc); ctx.setTransform(esc, 0, 0, esc, 0, 0);
   try {
-    drawBackground(ctx, W, H, T, 0.3, 0.06, 392);
+    drawBackground(ctx, W, H, T, 0.3, 0.06, 392); adornos(ctx);
     drawRibbon(ctx, 44, 226, W - 88, 104, T.titulo || 'Ofertas', T, { max: 100 });
     for (let r = 0; r < 4; r++) for (let k = 0; k < 2; k++) {
       rrPath(ctx, 44 + k * 588, 400 + r * 250, 564, 226, 26); ctx.fillStyle = T.card; ctx.fill();
@@ -353,15 +353,31 @@ function cuerpoMas(p, i) {
   inNota.addEventListener('input', () => { p.notaAuto = false; });
   const campos = h('div', { class: 'stack' },
     campo('Descripción', texto(p, 'desc', { ph: 'Ej.: Feteado fino · pieza entera', max: 90 }), 'opcional'),
-    h('div', { class: 'grid2' },
-      campo('Unidad', texto(p, 'unidad', { ph: 'x kg, c/u, x fardo…', list: 'lista-unidades', max: 14 }), 'opcional'),
-      campo('Insignia', inEtq, 'opcional')),
+    campo('Insignia', inEtq, 'opcional'),
     h('div', { class: 'insignias' }, h('span', { class: 'lab' }, 'Promos por cantidad y etiquetas (tocá una):'),
       h('div', { class: 'insig-lista' }, ...INSIGNIAS.map(t => h('button', { type: 'button', class: 'insig', 'aria-pressed': String(String(p.etiqueta || '').toUpperCase() === t.toUpperCase()), onclick: e => { usarInsignia(t); $$('.insig', e.currentTarget.parentNode).forEach(b => b.setAttribute('aria-pressed', String(String(p.etiqueta || '').toUpperCase() === b.textContent.toUpperCase()))); } }, t)))),
     campo('Nota bajo el precio', inNota, 'opcional'),
     check('No mostrar “Ahorrás $…” en este producto', null, !!p.noAhorro, v => { p.noAhorro = v; cambio(); }),
     check('Es un combo', 'El precio tachado dice «POR SEPARADO» (la suma de los productos) en vez de «ANTES».', !!p.combo, v => { p.combo = v; cambio(); }));
   return h('div', { class: 'stack' }, campos, controlesFoto(p, i, 'producto'), accionesFila(i));
+}
+/** El folleto en toda la pantalla, como va a salir (para revisarlo en una pantalla chica). Se cierra con un clic o Esc. */
+function verGrande() {
+  const L = L_ACTUAL(), c = document.createElement('canvas'), esc = clamp((innerHeight * (devicePixelRatio || 1)) / L.h, 0.5, 1.6);
+  renderFlyer(c, S, { scale: esc, getImg, preview: false, exportar: true });
+  const capa = h('div', { class: 'ver-grande', role: 'dialog', 'aria-label': 'Folleto en grande', tabindex: '-1' }, h('img', { src: c.toDataURL('image/jpeg', 0.92), alt: 'El folleto en grande' }),
+    h('button', { class: 'btn', type: 'button' }, '✕ Cerrar'));
+  const cerrar = () => { capa.remove(); document.removeEventListener('keydown', tecla, true); }, tecla = e => { if (e.key === 'Escape') { e.stopPropagation(); cerrar(); } };
+  capa.addEventListener('click', cerrar); document.addEventListener('keydown', tecla, true); document.body.append(capa); capa.focus();
+}
+/** Tamaño de la foto, a la vista en cada producto: − 100 % + (antes estaba adentro de dos desplegables). */
+function tamFoto(p) {
+  const val = h('b', { class: 'tam-val', 'aria-live': 'polite' }), pintar = () => { val.textContent = Math.round((p.zoom || 1) * 100) + ' %'; };
+  const paso = d => { p.zoom = clamp(Math.round(((p.zoom || 1) + d) * 10) / 10, 0.5, 1.7); pintar(); cambio(); };
+  pintar();
+  return h('div', { class: 'mini' }, h('span', null, 'Tamaño de la foto'), h('div', { class: 'stepper' },
+    h('button', { class: 'btn small', type: 'button', 'aria-label': 'Foto más chica', onclick: () => paso(-0.1) }, '−'), val,
+    h('button', { class: 'btn small', type: 'button', 'aria-label': 'Foto más grande', onclick: () => paso(0.1) }, '+')));
 }
 /** Fondo, tamaño y posición de la foto (sirve para productos y para fotos de colección). */
 function controlesFoto(p, i, tipo) {
@@ -372,12 +388,11 @@ function controlesFoto(p, i, tipo) {
     : (CARPETA.hayIA && CARPETA.puedeSubir && p.archivo && !p.alfa && !/\(sin fondo\)/i.test(p.archivo))
       ? h('button', { class: 'btn small', type: 'button', onclick: ev => recortarConIA(p, i, tipo, ev.currentTarget) }, 'Quitar fondo con IA')
       : null;
-  const zoom = h('input', { type: 'range', min: '0.5', max: '1.7', step: '0.02', value: String(p.zoom || 1), 'aria-label': 'Tamaño de la foto', oninput: e => { p.zoom = +e.target.value; cambio(); } });
   const dx = h('input', { type: 'range', min: '-0.4', max: '0.4', step: '0.01', value: String(p.dx || 0), 'aria-label': 'Mover foto a los costados', oninput: e => { p.dx = +e.target.value; cambio(); } });
   const dy = h('input', { type: 'range', min: '-0.3', max: '0.3', step: '0.01', value: String(p.dy || 0), 'aria-label': 'Subir o bajar la foto', oninput: e => { p.dy = +e.target.value; cambio(); } });
   const reset = h('button', { class: 'btn small ghost', type: 'button', onclick: () => { p.zoom = 1; p.dx = 0; p.dy = 0; construirListaCasilleros(tipo, i); cambio(); } }, 'Centrar');
-  const ajustes = tipo === 'producto' ? h('details', { class: 'more' }, h('summary', null, 'Ajustar tamaño y posición de la foto'),
-    h('div', { class: 'stack', style: 'margin-top:8px' }, campo('Tamaño', zoom), h('div', { class: 'grid2' }, campo('Izquierda ↔ derecha', dx), campo('Arriba ↕ abajo', dy)), reset)) : null;
+  const ajustes = tipo === 'producto' ? h('details', { class: 'more' }, h('summary', null, 'Mover la foto adentro del cuadro'),
+    h('div', { class: 'stack', style: 'margin-top:8px' }, h('div', { class: 'grid2' }, campo('Izquierda ↔ derecha', dx), campo('Arriba ↕ abajo', dy)), reset)) : null;
   return h('div', { class: 'stack' }, chkFondo, fondoBox, botIA ? h('div', { class: 'row-actions' }, botIA, h('small', { class: 'hint' }, CARPETA.nube ? 'GitHub crea una copia sin fondo y la foto se cambia sola en el folleto.' : 'Crea una copia sin fondo en la carpeta de productos.')) : null, ajustes);
 }
 async function recortarConIA(p, i, tipo, btn) {
@@ -436,8 +451,9 @@ function filaProducto(p, i) {
     h('div', { class: 'pcampos' }, nombre,
       h('div', { class: 'pprecios' }, campoMini('Precio normal', antes), h('label', { class: 'mini' }, h('span', null, '% desc.'), h('span', { class: 'pct' }, pct)), campoMini('Precio final', oferta)),
       selectorCondicion(p),
+      h('div', { class: 'pextra' }, h('label', { class: 'mini' }, h('span', null, 'Unidad'), texto(p, 'unidad', { ph: 'x kg, c/u, x fardo…', list: 'lista-unidades', max: 14 })), tamFoto(p)),
       h('div', { class: 'calc', 'data-calc': String(i) })),
-    h('details', { class: 'pmas' }, h('summary', null, 'Más opciones: 2x1, 3x2, 2.ª al 50 %, unidad, nota, foto'), cuerpoMas(p, i)));
+    h('details', { class: 'pmas' }, h('summary', null, 'Más opciones: 2x1, 3x2, 2.ª al 50 %, nota, mover la foto'), cuerpoMas(p, i)));
   fila.addEventListener('focusin', () => setActivo('producto', i));
   return fila;
 }
@@ -516,7 +532,7 @@ function refrescarLecturas() {
 }
 function calcularRevision() {
   const L = L_ACTUAL(), g = L.grupo, V = S.vigencia, out = [];
-  const ok = (t, d) => out.push({ k: 'ok', t, d }), warn = (t, d) => out.push({ k: 'warn', t, d }), info = (t, d) => out.push({ k: 'info', t, d });
+  const ok = (t, d) => out.push({ k: 'ok', t, d }), warn = (t, d, accion) => out.push({ k: 'warn', t, d, accion }), info = (t, d) => out.push({ k: 'info', t, d });
   if (g === 'coleccion') {
     const hay = S.coleccion.fotos.filter(f => srcDe(f)).length;
     if (!hay) warn('Todavía no hay fotos', 'Elegí al menos una foto de la carpeta de productos.');
@@ -538,6 +554,9 @@ function calcularRevision() {
     if (alcoholActivo(S)) ok('Leyenda de alcohol incluida', 'Ley 24.788: “Beber con moderación” y “Prohibida su venta a menores de 18 años”.');
     else if (hayAlcohol) info('Leyenda de alcohol apagada', 'Si alguna vez la querés, se activa en «Legales» (Ley 24.788: “Beber con moderación. Prohibida su venta a menores de 18 años”).');
     const sinPrecio = usados.filter(p => !parsePrecio(p.final)).length, sinFoto = usados.filter(p => !srcDe(p)).length, vacios = prods.length - usados.length;
+    const viejos = usados.filter(p => p.recordado && parsePrecio(p.final));
+    if (viejos.length) warn((viejos.length === 1 ? 'Un precio es' : viejos.length + ' precios son') + ' de la última vez y no los revisaste', 'Se cargaron solos de un folleto anterior: ' + viejos.slice(0, 4).map(p => String(p.nombre || 'sin nombre').trim()).join(', ') + (viejos.length > 4 ? '…' : '') + '. Están marcados en el paso 2. Si siguen iguales, tocá «Ya los revisé».',
+      { texto: 'Ya los revisé', fn: () => { viejos.forEach(p => { p.recordado = false; }); construirListaCasilleros('producto'); cambio(); } });
     const rotas = usados.filter(faltaArchivo);
     if (rotas.length) warn((rotas.length === 1 ? 'Una foto no cargó: ' : rotas.length + ' fotos no cargaron: ') + rotas.slice(0, 4).map(p => String(p.nombre || 'sin nombre').trim()).join(', ') + (rotas.length > 4 ? '…' : ''),
       'Saldrían sin foto. Puede ser internet lento, o que la foto se haya borrado o cambiado de nombre en la otra computadora. Esperá un momento y volvé a tocar Finalizar, o elegí la foto de nuevo.');
@@ -566,9 +585,12 @@ function calcularRevision() {
   else warn('Falta el link del canal de WhatsApp', 'Cargalo en «Datos del local» para que salga el QR.');
   return out;
 }
+/** Revisión: arriba solo lo que hay que corregir; lo que ya está bien y los recordatorios, en un desplegable. */
 function pintarRevision() {
   if (!DOM.checks) return;
-  DOM.checks.replaceChildren(...calcularRevision().map(r => h('li', { class: r.k }, h('span', { class: 'ic', 'aria-hidden': 'true' }, r.k === 'ok' ? '✓' : r.k === 'warn' ? '!' : 'i'), h('span', null, r.t, r.d ? h('small', null, r.d) : null))));
+  const r = calcularRevision(), mal = r.filter(x => x.k === 'warn'), resto = [...r.filter(x => x.k === 'ok'), ...r.filter(x => x.k === 'info')];
+  DOM.checks.replaceChildren(...(mal.length ? mal.map(filaAviso) : [filaAviso({ k: 'ok', t: 'No hay nada para corregir', d: 'Revisá igual la vista previa: fotos, nombres y precios.' })]),
+    resto.length ? h('li', { class: 'resto' }, h('details', null, h('summary', null, `Lo que ya está bien y recordatorios (${resto.length})`), h('ul', { class: 'checks' }, ...resto.map(filaAviso)))) : null);
 }
 
 // ── secciones del panel ──
@@ -707,6 +729,9 @@ function cajaLeyendaPrecio() {
         campo('Palabra en la placa', sel('ley-etq', [['FINAL', 'FINAL'], ['AHORA', 'AHORA'], ['OFERTA', 'OFERTA'], ['', '(ninguna)']], PR.etiqueta, v => { PR.etiqueta = v; upd(); }))),
       check('Mostrar “AHORRÁS $…”', 'Hace la cuenta por el cliente: atrae más que el porcentaje solo.', PR.ahorro, v => { PR.ahorro = v; upd(); }),
       check('Precio anterior grande', 'Más fácil de leer en el celular.', PR.grande, v => { PR.grande = v; upd(); }),
+      check('Precio por kilo o litro, en letra chica', 'Lo pide la Res. 4/2025. Lo calculo con el contenido del nombre: «Aceite 850 ml» → «$2.964,71 x litro». Si el nombre no dice el contenido, no sale.', PR.porUnidad !== false, v => { PR.porUnidad = v; upd(); }),
+      check('Lo que se vende por kilo: cuánto salen 100 g', '«$7.830 x kg» y abajo «$783 los 100 g», para fiambres y quesos. Así se ve accesible.', PR.fraccion !== false, v => { PR.fraccion = v; upd(); }),
+      check('Modo limpio: el descuento de la promo una sola vez', 'Si todos los productos tienen el % de la barra, no se repite en cada cuadro el «-10 %» ni «pagando con…» (ya están arriba) y las fotos quedan más grandes.', PR.limpio !== false, v => { PR.limpio = v; upd(); }),
       h('p', { class: 'lab', style: 'margin:6px 0 0' }, 'Tamaños'),
       sliderTam('Precio final (la placa con el número)', PR, 'placa', 0.7, 1.6, 1, { alCambiar: pintarEjemplo, ayuda: 'si no entra a lo ancho, crece hasta donde puede' }),
       sliderTam('«Ahorrás $…»', PR, 'ahorroTam', 0.6, 2, 1, { alCambiar: pintarEjemplo }),
@@ -954,7 +979,16 @@ function seccionPie() {
     h('div', { class: 'stack' },
       check('Letra chica (fechas y condiciones)', 'Va arriba de la banda. Se arma sola con la vigencia y la promo, sin repetir datos.', L.letraChica !== false, v => { L.letraChica = v; cajaChica.hidden = !v; cambio(); }), cajaChica,
       check('Banda «Para más información o limitaciones aplicables consulte en…»', 'La pide la Res. 446/2025 en los folletos. Si la sacás, te lo recuerdo antes de terminar.', !!L.banda, v => { L.banda = v; cajaBanda.hidden = !v; cambio(); }), cajaBanda,
+      cajaHistoria(),
       h('p', { class: 'hint', style: 'margin:0' }, 'Tip: tocando el pie en la vista previa venís directo acá.')));
+}
+/** Historias y estados: la invitación de la franja de abajo (donde la app pone «Responder»). */
+function cajaHistoria() {
+  const Hs = S.historia || (S.historia = { ver: true, cta: '' });
+  const inCta = texto(Hs, 'cta', { ph: CTA_HISTORIA, max: 40 });
+  const caja = h('div', { class: 'stack', hidden: Hs.ver === false || null }, campo('Texto', inCta, 'vacío = «' + CTA_HISTORIA.toLowerCase() + '»'),
+    chipsRapidos(['RESPONDÉ Y TE LO SEPARAMOS', 'RESPONDÉ «QUIERO» Y TE LO GUARDAMOS', 'CONSULTÁ POR ACÁ', 'TE ESPERAMOS EN EL LOCAL'], inCta, Hs, 'cta'));
+  return h('div', { class: 'stack' }, check('Historias y estados: invitación a responder', 'Va en la franja de abajo, donde la app pone «Responder». Así la imagen no queda con una franja vacía.', Hs.ver !== false, v => { Hs.ver = v; caja.hidden = !v; cambio(); }), caja);
 }
 function pintarPieVista() {
   const v = DOM.pieVista; if (!v || !document.contains(v)) return;
@@ -981,6 +1015,7 @@ function seccionLocalYLegales() {
       campo('Facebook', textoLocal(C, 'facebook', { ph: 'Nombre de tu página', max: 40 })),
       campo('WhatsApp o teléfono', textoLocal(C, 'telefono', { ph: 'Ej.: 11 5555-5555', mode: 'tel', max: 30 }), 'opcional'),
       campo('Link del canal de WhatsApp', textoLocal(C, 'waCanal', { ph: 'https://whatsapp.com/channel/…', mode: 'url', max: 200 }), 'sale como QR'),
+      campo('Nombre del canal, como se busca en WhatsApp', textoLocal(C, 'canalNombre', { ph: 'Ej.: Rivero Market', max: 40 }), 'en redes, abajo del QR dice «Buscá: …»'),
       campo('Link de Facebook', textoLocal(C, 'qrUrl', { ph: 'https://www.facebook.com/tu-pagina', mode: 'url', max: 200 }), 'opcional · 2.º QR'),
       campo('Link de Google Maps', textoLocal(C, 'mapa', { ph: 'https://maps.app.goo.gl/…', mode: 'url', max: 200 }), 'opcional · para «cómo llegar» en los textos')),
       h('p', { class: 'note' }, 'Estos datos se guardan solos y salen en todos los folletos. El QR del canal de WhatsApp se leyó de la foto del cartel del local.')),
@@ -1009,6 +1044,8 @@ function seccionProyecto() {
     const i = API.info, fila = (etq, valor, accion) => h('div', { class: 'info-fila' }, h('span', { class: 'lab' }, etq), h('code', null, valor), accion);
     return detalles('Programa: carpetas y cierre', h('div', { class: 'stack' },
       fila('Fotos de productos', i.productos, h('button', { class: 'btn small', type: 'button', onclick: () => API.abrirCarpeta('productos').catch(e => aviso(e.message)) }, 'Abrir carpeta')),
+      i.sitio ? h('div', { class: 'row-actions' }, h('button', { class: 'btn small', type: 'button', onclick: e => traerFotosDeLaNube(e.currentTarget) }, '☁ Traer las fotos de la nube'),
+        h('small', { class: 'hint' }, 'Baja las fotos que subiste a la herramienta online y que faltan acá. No borra ninguna.')) : null,
       fila('Folletos terminados', i.escritorio, h('button', { class: 'btn small', type: 'button', onclick: () => API.abrirCarpeta('escritorio').catch(e => aviso(e.message)) }, 'Abrir carpeta')),
       h('p', { class: 'note' }, 'Recorte automático con IA: ' + (i.ia ? 'disponible.' : 'no instalado (el recorte de fondo blanco funciona igual).')),
       h('div', { class: 'row-actions' }, h('button', { class: 'btn small danger', type: 'button', onclick: () => cerrarPrograma() }, 'Cerrar programa'))));
@@ -1100,7 +1137,8 @@ function menuAcciones() {
     item('Imagen PNG de alta calidad', dim(2) + (L.pdf ? ' · A4 a 300 dpi' : ''), () => exportar('png2')),
     item('PDF', L.pdf ? 'A4 listo para imprimir' : 'mismo tamaño que la imagen', () => exportar('pdf')),
     h('hr'), item('📣 Marketing: textos, plan, calculadora…', 'para publicar el folleto y vender más', () => { cerrarMenu(); abrirMarketing(); }),
-    h('hr'), item('Guardar copia del folleto', API.activo ? 'archivo .json que podés volver a abrir' : 'archivo .json para seguir editando después', guardarProyecto)];
+    h('hr'), item('Duplicar para la semana que viene', 'copia con las fechas corridas una semana y los precios marcados para revisar', () => { cerrarMenu(); duplicarFolleto(null); }),
+    item('Guardar copia del folleto', API.activo ? 'archivo .json que podés volver a abrir' : 'archivo .json para seguir editando después', guardarProyecto)];
   if (CARPETA.nube) items.push(
     item('Abrir una copia (.json)', 'un folleto que guardaste como archivo', () => { cerrarMenu(); DOM.abrir.click(); }),
     h('hr'), h('p', { class: 'menu-lab' }, 'Nube (GitHub)'),
@@ -1165,10 +1203,15 @@ function armarEstructura() {
   DOM.version = h('button', { class: 'version', type: 'button', title: 'Ver qué tiene esta versión', onclick: () => verNovedades() }, 'Versión ' + APP_VERSION.v, h('small', null, ' · ' + APP_VERSION.fecha));
   app.replaceChildren(
     h('header', { class: 'top' },
-      h('div', { class: 'brand' }, h('img', { src: ASSETS.logos.insignia, alt: '' }), h('div', { style: 'min-width:0' }, h('b', null, 'Ofertas'), h('span', null, API.activo ? 'Rivero Market · programa de folletos' : CARPETA.nube ? 'Rivero Market · folletos online' : 'Rivero Market · armá tu folleto'), h('div', { class: 'brand-fila' }, DOM.version, CARPETA.nube ? chipNube() : null))), acciones),
+      h('div', { class: 'brand' }, h('img', { src: ASSETS.logos.insignia, alt: '' }), h('div', { class: 'brand-txt' },
+        h('div', { class: 'brand-fila' }, h('b', null, 'Ofertas'), DOM.version, CARPETA.nube ? chipNube() : null),
+        h('span', { class: 'brand-sub' }, API.activo ? 'Rivero Market · programa de folletos' : CARPETA.nube ? 'Rivero Market · folletos online' : 'Rivero Market · armá tu folleto'))), acciones),
     h('main', { class: 'work' }, DOM.panel, DOM.stage = h('section', { class: 'stage' }, DOM.stageBox, h('div', { class: 'stage-bar' }, zoomBar, DOM.info, guias,
+      h('button', { class: 'btn small', type: 'button', title: 'Ver el folleto grande, en toda la pantalla', onclick: () => verGrande() }, '⛶ Ver grande'),
       h('button', { class: 'btn small primary', type: 'button', onclick: () => finalizarFolleto() }, CARPETA.activa ? '✔ Finalizar' : '⬇ Descargar')))),
     DOM.abrir, DOM.selArchivo);
+  const cab = $('header.top', app);                                // el alto real del encabezado (en el celular puede ocupar dos renglones)
+  if (cab && 'ResizeObserver' in window) new ResizeObserver(() => document.documentElement.style.setProperty('--top-h', cab.offsetHeight + 'px')).observe(cab);
   document.addEventListener('click', e => { if (!DOM.menu.hidden && !DOM.menu.contains(e.target)) cerrarMenu(); });
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') cerrarMenu();
@@ -1204,6 +1247,7 @@ async function iniciar() {
     ACTIVO = { tipo: esColeccion() ? 'foto' : 'producto', i: 0 };
     armarEstructura(); construirPanel(); await dibujar(); reiniciarHistorial();
     if (API.activo && API.info.version && API.info.version !== APP_VERSION.v) avisoVersionDistinta(API.info.version);
+    if (API.activo) ofrecerFotosDeLaNube().catch(e => console.error(e));
     if (CARPETA.nube) despuesDeIniciarNube();
     if (new URLSearchParams(location.search).get('autotest')) await autotest();
   } catch (e) { console.error(e); const a = $('#app'); a.textContent = 'No se pudo iniciar: ' + (e && e.message || e); }
@@ -1392,6 +1436,60 @@ async function autotest() {
       // 14) una palabra que no entra no se dibuja dos veces
       { const cx = document.createElement('canvas').getContext('2d'), r = wrapFit(cx, 'Superextraordinariamente rico', s => FB(900, s), 40, 30, 120, 2), r1 = wrapFit(cx, 'Supercalifragilístico', s => FB(900, s), 40, 30, 80, 2);
         t('palabra larga: una sola vez', r.lines.length === 2 && !r.lines[1].startsWith('Superextra') && r1.lines.length === 1 && r1.lines[0].endsWith('…'), JSON.stringify(r.lines) + ' ' + JSON.stringify(r1.lines)); }
+    }
+    { // v3.5: diseño (15 a 20 del relevamiento)
+      const c = document.createElement('canvas');
+      // 15) modo limpio: con todos los productos al % de la barra no se repite «-10 %» ni «pagando con…»
+      { const todos = { ...S, formato: 'post_4', promo: { ...S.promo, tipo: 'mp', pct: '10', modo: 'incluido', verPrecio: true }, precio: { ...S.precio, limpio: true },
+          productos: [0, 1, 2, 3].map(i => nuevoProducto({ nombre: 'P' + i, regular: '1.000', final: '900' })) };
+        const uno = { ...todos, productos: todos.productos.map((p, i) => (i ? p : { ...p, final: '800' })) }, apagado = { ...todos, precio: { ...todos.precio, limpio: false } };
+        renderFlyer(c, todos, { scale: 0.2, getImg, exportar: true }); const chipL = chipCard(todos.productos[0]);
+        renderFlyer(c, uno, { scale: 0.2, getImg, exportar: true }); const chipU = chipCard(uno.productos[1]);
+        t('modo limpio: el % de la promo una sola vez', modoLimpio(todos) && !chipL && !modoLimpio(uno) && !!chipU && !modoLimpio(apagado), [modoLimpio(todos), !!chipL, modoLimpio(uno), !!chipU].join(' ')); }
+      // 17) los adornos se dibujan en todos los formatos (después de saber dónde va el logo) y no pasan por detrás del logo
+      { const faltan = [];
+        for (const f of Object.keys(LAYOUTS)) for (const tema of ['madre', 'mercadopago', 'halloween']) { renderFlyer(c, { ...S, formato: f, tema }, { scale: 0.1, getImg, exportar: true }); if (ADORNO_PEND) faltan.push(f + '/' + tema); }
+        ZONAS_LIBRES = [{ x: 0, y: 0, w: 100, h: 100 }]; const tapado = !libre(50, 50, 10) && libre(300, 300, 10); ZONAS_LIBRES = [];
+        t('adornos: en todos los formatos y sin tapar el logo', !faltan.length && tapado && libre(50, 50, 10), faltan.slice(0, 3).join(' · ')); }
+      // 18) historias: la franja de abajo lleva la invitación a responder (se puede cambiar o sacar)
+      t('historias: invitación a responder', normalizarEstado({ v: 1 }).historia.ver === true && normalizarEstado({ v: 1, historia: { cta: 'X' } }).historia.cta === 'X');
+      // 19 y 35) precio por kilo o litro con el contenido del nombre; lo que se vende por kilo, cuánto salen 100 g
+      { const pu = (nombre, final, unidad = '') => porUnidad(nuevoProducto({ nombre, final, unidad })), casos = [
+          [pu('Aceite girasol 850 ml', '2.520'), '$2.964,71 x litro'], [pu('Sal fina 500 gr x 3u', '1.080'), '$720 x kg'], [pu('Arroz Primor 1 kg', '1.170'), ''],
+          [pu('Queso cremoso', '7.830', 'x kg'), '$783 los 100 g'], [pu('Coca-Cola 2,25 L', '3.510'), '$1.560 x litro'], [pu('Cerveza lata 473 ml', '9.000', 'x fardo'), ''],
+          [pu('Galletitas 3x100 g', '600'), '$2.000 x kg'], [pu('Vino Colón Frutos Rojos', '6.930'), ''], [pu('Gaseosa 1 lata', '900'), '']];
+        const malos = casos.filter(([a, b]) => a !== b).map(([a, b]) => a + '≠' + b);
+        t('precio por kilo o litro (Res. 4/2025) y por 100 g', !malos.length, malos.join(' · ')); }
+      // 20) datos del local: el nombre del canal viaja con los demás
+      t('nombre del canal en los datos del local', CAMPOS_LOCAL.includes('canalNombre'));
+    }
+    { // v3.6: uso (21 a 26 del relevamiento)
+      // 23) precios de la última vez: aviso con «Ya los revisé»
+      { const p = S.productos.find(q => !productoVacio(q) && parsePrecio(q.final)), bak = p.recordado; p.recordado = true;
+        const w = calcularRevision().find(x => x.k === 'warn' && /última vez/.test(x.t)); if (w && w.accion) w.accion.fn(); const ok23 = !!w && !!w.accion && p.recordado === false; p.recordado = bak;
+        t('precios de la última vez: aviso y «Ya los revisé»', ok23); }
+      // 24) tamaño de la foto a la vista: − 100 % +
+      { const p = nuevoProducto(), el = tamFoto(p); el.querySelectorAll('.stepper button')[1].click(); el.querySelectorAll('.stepper button')[1].click(); el.querySelectorAll('.stepper button')[0].click();
+        t('tamaño de la foto: − 100 % +', p.zoom === 1.1 && el.querySelector('.tam-val').textContent === '110 %', p.zoom); }
+      // 25) duplicar para la semana que viene: fechas corridas de a 7 días hasta hoy, precios a revisar, entrada nueva
+      { const N = paraLaSemanaQueViene(normalizarEstado({ ...estadoParaGuardar(S), archivoFolleto: 'x.json', vigencia: { desde: '2026-01-05', hasta: '2026-01-11', agotar: false } }));
+        const a = parseISO(N.vigencia.desde), b = parseISO(N.vigencia.hasta);
+        t('duplicar para la semana que viene', !N.archivoFolleto && a >= hoy0() && (a - hoy0()) < 7 * 86400000 && a.getDay() === 1 && b.getDay() === 0 && N.productos.filter(p => !productoVacio(p) && parsePrecio(p.final)).every(p => p.recordado), N.vigencia.desde + ' → ' + N.vigencia.hasta); }
+      // 26) revisión: arriba lo que hay que corregir; lo demás, en un desplegable
+      { pintarRevision(); const lis = [...DOM.checks.children], resto = lis.findIndex(li => li.classList.contains('resto'));
+        t('revisión: primero lo que hay que corregir', resto === lis.length - 1 && lis.slice(0, resto).every(li => li.classList.contains('warn') || /nada para corregir/.test(li.textContent)), lis.map(li => li.className).join(',')); }
+      // 22) ver grande: se abre y se cierra con Esc
+      { verGrande(); const abierto = !!document.querySelector('.ver-grande img'); document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })); t('ver grande', abierto && !document.querySelector('.ver-grande')); }
+    }
+    { // v3.7: versión online (27 a 32 del relevamiento)
+      // 27) las fotos al día se bajan de la misma página (sin el límite de raw.githubusercontent.com); las recién subidas, de GitHub
+      { const base = { cfg: { raw: 'https://raw.githubusercontent.com', owner: 'o', repo: 'r', rama: 'main' }, commit: 'c1', rutaReal: NUBE.rutaReal, manif: { porRuta: new Map([['A/b.png', { sha: 'x1', foto: 'fotos/x1.png' }]]) } };
+        const igual = NUBE.urlImagen.call({ ...base, arbol: new Map([['productos/A/b.png', { sha: 'x1' }]]) }, 'A/b.png'), cambio = NUBE.urlImagen.call({ ...base, arbol: new Map([['productos/A/b.png', { sha: 'x2' }]]) }, 'A/b.png');
+        t('fotos desde la misma página', igual === 'fotos/x1.png' && /^https:\/\/raw\.githubusercontent\.com\/o\/r\/c1\/productos\/A\/b\.png$/.test(cambio), igual + ' · ' + cambio); }
+      // 29) la llave nueva vence en un año
+      { const bak = NUBE.cfg; NUBE.cfg = { ...(bak || {}), owner: 'o', repo: 'r' }; const u = urlNuevaLlave('Casa'); NUBE.cfg = bak; t('llave con vencimiento', LLAVE_DIAS === 365 && /expires_in=365/.test(u)); }
+      // 30) Brave se detecta (una sola descarga automática; el PDF con botón)
+      t('detecta Brave', typeof (await esBrave()) === 'boolean');
     }
   } catch (e) { t('excepción', false, e.message + ' ' + (e.stack || '').split('\n')[1]); }
   const pre = document.createElement('pre'); pre.id = 'autotest'; pre.textContent = out.join('\n'); pre.style.cssText = 'position:fixed;left:0;top:0;z-index:99;background:#111;color:#9f9;padding:10px;margin:0;font:13px monospace;max-width:100vw;overflow:auto;max-height:100vh'; document.body.append(pre);

@@ -16,7 +16,7 @@ Folletos listos para imprimir y para redes. Vos cambiás **producto + descripci�
 
 **La carpeta de fotos.** `productos/`: el nombre del archivo es el nombre del producto y cada subcarpeta es una categoría. Ya tiene 42 productos de repostería recortados y dos fotos grandes con varios productos.
 
-**Llevarlo a otra computadora.** Armé un ZIP (`_entregas/Rivero-Market-Folletos.zip`) que funciona en Windows y Linux; necesita Python 3 instalado. Se regenera con `python3 editor/empaquetar.py`.
+**Llevarlo a otra computadora.** Armé un ZIP (`_entregas/Rivero-Market-Folletos.zip`) que funciona en Windows y Linux; necesita Python 3 instalado. Se regenera con `python3 editor/empaquetar.py`. El que se baja de la herramienta online (⋯ Más → Programa para usar sin internet) viene sin fotos: el programa las trae con «☁ Traer las fotos de la nube».
 
 ## Qué hay en la carpeta
 

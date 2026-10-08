@@ -33,7 +33,24 @@ const API = {
   abrirCarpeta(cual) { return this.pedir('POST', '/api/abrir-carpeta?cual=' + cual).then(r => r.json()); },
   abrirArchivo(ruta) { return this.pedir('POST', '/api/abrir-archivo?ruta=' + encodeURIComponent(ruta)).then(r => r.json()); },
   cerrar() { return this.pedir('POST', '/api/cerrar').then(r => r.json()); },
+  traerFotos() { return this.pedir('POST', '/api/traer-fotos').then(r => r.json()); },
 };
+/** Programa de la PC: trae de la herramienta online las fotos de productos que faltan o cambiaron (el ZIP de la página viene sin fotos). */
+async function traerFotosDeLaNube(boton) {
+  const txt = boton ? boton.textContent : ''; if (boton) { boton.disabled = true; boton.textContent = 'Trayendo las fotos…'; }
+  try {
+    const r = await API.traerFotos(), n = r.nuevas + r.cambiadas;
+    aviso(n ? `Listo: ${r.nuevas} ${r.nuevas === 1 ? 'foto nueva' : 'fotos nuevas'}${r.cambiadas ? ` y ${r.cambiadas} ${r.cambiadas === 1 ? 'cambiada' : 'cambiadas'}` : ''} en tu carpeta de productos.` : 'Tus fotos ya estaban al día.' + (r.fallidas.length ? ` ${r.fallidas.length} no se pudieron bajar.` : ''), 6500);
+    if (n) { CAT = (await CARPETA.leerCatalogo().catch(() => null)) || CAT; pintarProductos(); }
+  } catch (e) { aviso(e.message, 7000); }
+  finally { if (boton) { boton.disabled = false; boton.textContent = txt; } }
+}
+/** Si el programa recién se instaló (carpeta de productos vacía), ofrece traer las fotos de la nube. */
+async function ofrecerFotosDeLaNube() {
+  if (!API.activo || !API.info || !API.info.sitio) return;
+  const lista = await API.productos().catch(() => null); if (!lista || lista.productos.length) return;
+  if (await confirmar('¿Traer las fotos de productos?', 'Tu carpeta de productos está vacía. Puedo traer las fotos que ya subiste a la herramienta online (hace falta internet solo para esto).', 'Traer las fotos', 'Ahora no')) await traerFotosDeLaNube();
+}
 
 // ── ventanitas ──
 const MODALES = [];
@@ -224,7 +241,36 @@ function nombreCopia() {
   const d = new Date(), p = n => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())} ${nombreBase().replace(/^Rivero Market - /, '')}`;   // con segundos: dos copias seguidas no se pisan
 }
-async function guardarCopiaFolleto() { if (!CARPETA.guardaFolletos) throw new ErrorNube('sin-llave', 'Sin conexión a la nube: no se guardó la copia.'); await CARPETA.guardarProyecto(nombreCopia(), estadoParaGuardar(S)); }
+/** Guarda el folleto en «Mis folletos». Cada folleto es una sola entrada: la primera vez se crea y después se actualiza
+ *  (antes quedaba una copia nueva cada vez que se finalizaba, se abría otro o se empezaba uno nuevo). */
+async function guardarCopiaFolleto() {
+  if (!CARPETA.guardaFolletos) throw new ErrorNube('sin-llave', 'Sin conexión a la nube: no se guardó la copia.');
+  const nombre = S.archivoFolleto || nombreCopia() + '.json';
+  const r = await CARPETA.guardarProyecto(nombre, estadoParaGuardar({ ...S, archivoFolleto: nombre }));
+  S.archivoFolleto = (r && r.archivo) || (typeof r === 'string' ? r : '') || nombre; guardarAuto();
+}
+/** Copia de un folleto para la semana que viene: las fechas se corren de a 7 días hasta que el «desde» sea hoy o después
+ *  (mismos días de la semana), y los precios quedan marcados para revisar. */
+function paraLaSemanaQueViene(N) {
+  N.archivoFolleto = ''; N.avisoEjemplo = false;
+  const a = parseISO(N.vigencia.desde), b = parseISO(N.vigencia.hasta), h0 = hoy0(), mas = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + 7 * n); return x; };
+  const ref = a || b; if (ref) { let n = 1; while (mas(ref, n) < h0) n++; if (a) N.vigencia.desde = isoDe(mas(a, n)); if (b) N.vigencia.hasta = isoDe(mas(b, n)); }
+  N.productos.forEach(p => { if (!productoVacio(p) && parsePrecio(p.final)) p.recordado = true; });
+  return N;
+}
+async function duplicarFolleto(archivo, modal) {
+  const ok = await confirmar('¿Duplicar para la semana que viene?', 'Hago una copia ' + (archivo ? 'de ese folleto' : 'del que estás armando') + ' con todo (productos, precios, fondo y promo) y las fechas corridas a la semana que viene. Los precios quedan marcados para que los revises. ' + (archivo ? 'El original no se toca.' : 'El actual queda guardado como está.'), 'Duplicar', 'Cancelar');
+  if (!ok) return;
+  try {
+    if (hayContenido() && CARPETA.guardaFolletos) await guardarCopiaFolleto();
+    const j = archivo ? await CARPETA.leerProyecto(archivo) : estadoParaGuardar(S);
+    if (!j) throw new Error('No encuentro ese folleto: puede que lo hayan borrado desde la otra computadora.');
+    const local = S.comercio; S = paraLaSemanaQueViene(normalizarEstado(JSON.parse(JSON.stringify(j)))); S.comercio = comercioAlAbrir(S.comercio, local); ACTIVO = { tipo: esColeccion() ? 'foto' : 'producto', i: 0 };
+    await prepararImagenes(S); construirPanel(); cambio(); reiniciarHistorial(); if (modal) modal.cerrar();
+    const fechas = rangoLargo(S.vigencia.desde, S.vigencia.hasta);
+    aviso('Listo: copia ' + (fechas ? fechas : 'para la semana que viene') + '. Revisá los precios marcados.', 6500);
+  } catch (e) { aviso(e.message); }
+}
 async function recordarPrecios() {
   const ahora = Date.now(); let n = 0;
   for (const p of S.productos.slice(0, L_ACTUAL().slots)) {
@@ -259,7 +305,11 @@ async function archivosDestino(dest) {
   }
   return out;
 }
-function filaAviso(r) { return h('li', { class: r.k }, h('span', { class: 'ic', 'aria-hidden': 'true' }, r.k === 'ok' ? '✓' : r.k === 'warn' ? '!' : 'i'), h('span', null, r.t, r.d ? h('small', null, r.d) : null)); }
+function filaAviso(r) {
+  const li = h('li', { class: r.k }, h('span', { class: 'ic', 'aria-hidden': 'true' }, r.k === 'ok' ? '✓' : r.k === 'warn' ? '!' : 'i'), h('span', null, r.t, r.d ? h('small', null, r.d) : null,
+    r.accion ? h('button', { class: 'btn small', type: 'button', style: 'margin-top:6px', onclick: () => { r.accion.fn(); li.replaceWith(filaAviso({ k: 'ok', t: 'Listo: ' + r.accion.texto.toLowerCase() })); pintarRevision(); } }, r.accion.texto) : null));
+  return li;
+}
 /** Elegir para dónde es el folleto (y, sin programa local, dónde se guarda). Devuelve {destinos, modo} o null. */
 function elegirDestinos() {
   return new Promise(res => {
@@ -351,6 +401,7 @@ async function finalizarFolleto() {
     m.cuerpo.replaceChildren(h('div', { class: 'stack' },
       h('p', { class: 'confirm-texto', style: 'margin:0' }, h('b', null, 'Listo. '), API.activo ? (carpeta ? `Guardé ${archivos.length} archivos en la carpeta «${carpeta}» del Escritorio.` : 'Guardé tu folleto en el Escritorio.') : entrega.texto),
       h('div', { class: 'fin-galeria' }, ...pngs.map(figura)),
+      API.activo ? null : h('div', { class: 'row-actions' }, ...archivos.filter(a => a.tipo === 'pdf').map(a => h('button', { class: 'btn small', type: 'button', onclick: () => guardarArchivo(a.blob, a.nombre) }, '⬇ PDF para imprimir'))),
       API.activo ? h('p', { class: 'hint', style: 'margin:0' }, 'También quedó una copia en «Mis folletos» para que la puedas retocar la semana que viene.') : notaNube ? h('p', { class: 'hint', style: 'margin:0' }, notaNube) : null));
     m.pie && m.pie.remove();
     const pie = h('footer', { class: 'modal-pie' },
@@ -389,8 +440,8 @@ async function abrirFolleto(archivo, modal) {
     if (hayContenido() && CARPETA.guardaFolletos) await guardarCopiaFolleto();
     const j = await CARPETA.leerProyecto(archivo);
     if (!j) throw new Error('No encuentro ese folleto: puede que lo hayan borrado desde la otra computadora.');
-    const local = S.comercio; S = normalizarEstado(j); S.comercio = comercioAlAbrir(S.comercio, local); S.avisoEjemplo = false; ACTIVO = { tipo: esColeccion() ? 'foto' : 'producto', i: 0 };
-    await prepararImagenes(S); construirPanel(); cambio(); reiniciarHistorial(); modal.cerrar(); aviso('Folleto abierto. Revisá fechas y precios.');
+    const local = S.comercio; S = normalizarEstado(j); S.comercio = comercioAlAbrir(S.comercio, local); S.avisoEjemplo = false; S.archivoFolleto = archivo; ACTIVO = { tipo: esColeccion() ? 'foto' : 'producto', i: 0 };
+    await prepararImagenes(S); construirPanel(); cambio(); reiniciarHistorial(); modal.cerrar(); aviso('Folleto abierto: los cambios se guardan en esta misma entrada de «Mis folletos». Revisá fechas y precios.', 6000);
   } catch (e) { aviso(e.message); }
 }
 async function abrirMisFolletos() {
@@ -403,7 +454,8 @@ async function abrirMisFolletos() {
     const nombreFormato = (LAYOUTS[p.formato] || {}).corto || p.formato || '', fecha = p.mtime ? new Date(p.mtime * 1000).toLocaleString('es-AR', { dateStyle: 'medium', timeStyle: 'short' }) : '';
     const borrar = puedeBorrar ? h('button', { class: 'btn small danger ghost', type: 'button', onclick: async () => { if (await confirmar('¿Borrar este folleto?', nube ? 'Se borra de «Mis folletos» en la nube (para todas las computadoras). Las imágenes que ya descargaste no se tocan.' : 'Se borra de «Mis folletos». Las imágenes que ya guardaste en el Escritorio no se tocan.', 'Borrar', 'Cancelar')) { try { await CARPETA.borrarProyecto(p.archivo); lista = lista.filter(x => x !== p); pintar(); } catch (e) { aviso(e.message); } } } }, 'Borrar') : null;
     return h('div', { class: 'proy' }, h('div', { class: 'proy-datos' }, h('b', null, p.titulo || p.archivo.replace(/\.json$/, '')), h('small', null, [nombreFormato, fecha].filter(Boolean).join(' · '))),
-      h('div', { class: 'row-actions' }, h('button', { class: 'btn small primary', type: 'button', onclick: () => abrirFolleto(p.archivo, m) }, 'Abrir'), borrar));
+      h('div', { class: 'row-actions' }, h('button', { class: 'btn small primary', type: 'button', onclick: () => abrirFolleto(p.archivo, m) }, 'Abrir'),
+        h('button', { class: 'btn small', type: 'button', title: 'Copia con las fechas de la semana que viene (el original no se toca)', onclick: () => duplicarFolleto(p.archivo, m) }, 'Duplicar'), borrar));
   }) : [h('p', { class: 'hint' }, nube ? 'Todavía no hay folletos guardados en la nube. Cada vez que finalizás uno, queda una copia acá para retocarlo después, desde cualquier computadora.' : 'Todavía no hay folletos guardados. Cada vez que finalizás uno, queda una copia acá para retocarlo después.')]));
   pintar();
   if (nube) {                                                     // en la nube el formato no está en el nombre: se lee de a poco

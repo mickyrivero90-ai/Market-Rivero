@@ -5,6 +5,58 @@ Desde la 3.0, la herramienta online (https://mickyrivero90-ai.github.io/Market-R
 se actualiza sola. Si usás el programa de la PC y muestra un número menor, bajá el nuevo
 desde la herramienta online (⋯ Más → Programa para usar sin internet).
 
+Versión 3.7 · 8 de octubre de 2026 · VERSIÓN ONLINE MÁS FIRME
+- Las fotos de productos se bajan de la misma página (más rápido y sin el límite de GitHub que
+  podía cortar la carga). Las recién subidas, hasta que se publica la página, siguen viniendo de
+  GitHub.
+- El folleto en curso se sube a la nube cada 10 minutos o al salir de la pestaña (antes, cada
+  minuto). El historial no se llena y los precios no quedan a la vista en el repositorio público
+  antes de tiempo.
+- La llave de GitHub nueva vence al año (GitHub ya viene con eso marcado). Un mes antes, el botón
+  ☁ dice «Renová la llave». A las llaves de antes, que no vencen, se les avisa en 11 meses.
+- Brave: baja la imagen y el PDF sale con el botón «⬇ PDF para imprimir» (Brave bloquea la segunda
+  descarga seguida). El botón está también en los otros navegadores, por si hace falta otra vez.
+- El aviso «Hay una versión nueva» sale solo cuando cambia la herramienta (antes salía cada vez que
+  se subían fotos).
+- El programa para la PC que se baja de la página pesa unos 3 MB porque ya no trae las fotos. Las
+  baja de la nube con «☁ Traer las fotos de la nube» (en «Programa: carpetas y cierre») y, si la
+  carpeta de productos está vacía, lo ofrece solo al abrir. No borra ninguna foto.
+
+Versión 3.6 · 8 de octubre de 2026 · MÁS CÓMODA DE USAR
+- En el celular, los botones de arriba ya no tapan el título: la marca va en un renglón y los
+  botones en otro.
+- En pantallas como la tuya (1366 × 768), el encabezado ocupa un solo renglón y la vista previa
+  queda más grande. Botón nuevo «⛶ Ver grande», abajo de la vista previa: muestra el folleto en
+  toda la pantalla, como va a salir (se cierra con un clic o con Esc).
+- La unidad (x kg, c/u…) y el tamaño de la foto (− 100 % +) están a la vista en cada producto,
+  sin abrir «Más opciones».
+- Antes de terminar avisa si quedaron precios «de la última vez» sin revisar, con un botón
+  «Ya los revisé».
+- «Mis folletos» guarda una sola entrada por folleto: al finalizar otra vez, abrir otro o empezar
+  uno nuevo, se actualiza esa misma entrada en lugar de sumar copias. Botón nuevo «Duplicar» en
+  cada folleto (y «Duplicar para la semana que viene» en ⋯ Más): copia con todo, las fechas
+  corridas a la semana que viene y los precios marcados para revisar. El original no se toca.
+- La revisión muestra arriba solo lo que hay que corregir. Lo que ya está bien y los
+  recordatorios quedan en un desplegable.
+
+Versión 3.5 · 8 de octubre de 2026 · DISEÑO: MÁS FÁCIL DE LEER DE UN VISTAZO
+- Modo limpio: si todos los productos tienen el % de la promo, el «-10 % OFF» y el «pagando con
+  QR MP» ya no se repiten en cada producto (están en la barra y en el sello) y las fotos quedan
+  más grandes y sin nada encima. Se apaga en «Leyenda del precio».
+- Precio por kilo o litro en letra chica, debajo del precio (lo pide la Res. 4/2025). Se calcula
+  con el contenido del nombre: «Aceite 850 ml» a $2.520 → «$2.964,71 x litro»; «Sal 500 gr x 3u»
+  → «$720 x kg». Si el nombre no dice el contenido, no sale.
+- Lo que se vende por kilo (fiambres y quesos) dice además cuánto salen 100 g: «$783 los 100 g».
+- La unidad («X KG») va al lado del precio también en los posts y en los A4 de 12 y 16.
+- En las historias, la foto de la estrella ya no se monta sobre la barra de la promo.
+- Los adornos del fondo (corazones, monedas, flores…) ya no pasan por detrás del logo (se leía
+  «RIVÉRO»).
+- Historias y estados: la franja de abajo, donde la app pone «Responder», ahora dice «RESPONDÉ Y
+  TE LO SEPARAMOS» (se cambia o se saca en «Pie del folleto»). Antes quedaba una franja oscura
+  vacía y, mandada por chat, la imagen parecía sin terminar.
+- En redes, el QR del canal es más grande y, si cargás el nombre del canal en «Datos del local»,
+  al lado dice «Buscá en WhatsApp el canal …» (desde el mismo celular el QR no se puede escanear).
+
 Versión 3.4 · 8 de octubre de 2026 · MÁS ARREGLOS DEL RELEVAMIENTO (7 a 14)
 - Si editás el folleto de ejemplo, ahora se guarda en «Mis folletos» y en la nube aunque no hayas
   tocado «Entendido».

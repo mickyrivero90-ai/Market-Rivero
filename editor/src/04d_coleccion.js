@@ -65,6 +65,7 @@ function layoutColeccion(ctx, S, T, env, kind) {
     story: { M: 40, logoW: 480, logoY: 114, chipY: 246, chipH: 36, ribY: 296, ribH: 158, foot: 'story' } }[kind];
   const SAFE = kind === 'story' ? 176 : 0;
   drawBackground(ctx, W, H, T, 0.5, 0.08, P.ribY + P.ribH);
+  adornos(ctx, [zonaLogo((W - P.logoW) / 2, P.logoY, P.logoW)]);
   const L = RES.logoH;
   if (L) { const lw = P.logoW, lh = lw * (L.naturalHeight || L.height) / (L.naturalWidth || L.width); shadow(ctx, 'rgba(90,25,0,.40)', 18, 0, 8); ctx.drawImage(L, (W - lw) / 2, P.logoY, lw, lh); noShadow(ctx); }
   // etiquetas: ocasión + para quién
@@ -76,7 +77,7 @@ function layoutColeccion(ctx, S, T, env, kind) {
   if (kk) chip(ctx, cx, P.chipY, kk, { h: P.chipH, font: FM(800, fs), fill: 'rgba(50,15,3,.92)', ink: T.accent[0], padX: fs * 1.1, tracking: trk });
   const rb = drawRibbonMulti(ctx, P.M, P.ribY, W - 2 * P.M, P.ribH, C.mensaje || 'Aquí tenemos todos los productos para tus recetas', T);
   const fp = footerPlan(ctx, S, W, H, P.foot, { infoH: kind === 'a4' ? 150 : kind === 'post' ? 138 : 146 }), fy = H - SAFE - fp.total;
-  if (SAFE) { ctx.fillStyle = T.footer; ctx.fillRect(0, H - SAFE - 2, W, SAFE + 2); }
+  if (SAFE) franjaHistoria(ctx, S, T, W, H, SAFE);
   const top = rb.bottom + 18, bottom = fy - 10;
   drawFotosColeccion(ctx, S, T, env, { x: P.M, y: top, w: W - 2 * P.M, h: bottom - top });
   if (T.decorTop) T.decorTop(ctx, W, H, P.ribY + P.ribH, { footerY: fy });

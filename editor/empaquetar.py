@@ -4,9 +4,13 @@
 
     python3 empaquetar.py                    ->  _entregas/Rivero-Market-Folletos-vX.Y-AAAA-MM-DD.zip
     python3 empaquetar.py --salida X.zip     ->  ese archivo (lo usa herramientas/armar_sitio.py para la página online)
+    --sin-fotos      sin la carpeta productos (la página online: el programa las trae de la nube con un botón)
+    --sitio URL      la herramienta online de donde el programa trae las fotos (programa/nube.json)
 """
 import argparse
+import json
 import os
+import subprocess
 import re
 import sys
 import time
@@ -19,7 +23,17 @@ NOMBRE = "Rivero-Market-Folletos"                      # carpeta que aparece al 
 FECHA = time.strftime("%Y-%m-%d")
 
 
-def archivos():
+def sitio_por_defecto():
+    """https://dueño.github.io/repo/ según el origin de git (el programa trae de ahí las fotos de la nube)."""
+    try:
+        url = subprocess.run(["git", "remote", "get-url", "origin"], cwd=RAIZ, capture_output=True, text=True, timeout=10).stdout.strip()
+    except Exception:
+        return ""
+    m = re.search(r"github\.com[:/]+([^/]+)/([^/]+?)(?:\.git)?$", url)
+    return f"https://{m.group(1).lower()}.github.io/{m.group(2)}/" if m else ""
+
+
+def archivos(con_fotos=True):
     """(origen, ruta dentro del zip, permisos)"""
     out = []
     for n, modo in (("iniciar.bat", 0o644), ("iniciar.sh", 0o755), ("instalar-acceso-directo-linux.sh", 0o755), ("LEEME.txt", 0o644), ("LEEME.md", 0o644), ("CONTEXTO_DEL_PROYECTO.txt", 0o644), ("CAMBIOS.txt", 0o644)):
@@ -28,7 +42,7 @@ def archivos():
     for n, modo in (("servidor.py", 0o755), ("recortar.py", 0o644), ("icono.png", 0o644), ("VERSION.txt", 0o644)):
         out.append((RAIZ / "programa" / n, f"programa/{n}", modo))
     out.append((RAIZ / "programa" / "web" / "index.html", "programa/web/index.html", 0o644))
-    for p in sorted((RAIZ / "productos").rglob("*")):
+    for p in sorted((RAIZ / "productos").rglob("*")) if con_fotos else []:
         if p.is_file() and not any(part.startswith((".", "_")) for part in p.relative_to(RAIZ).parts):   # sin ocultas ni _entrada (fotos esperando la IA)
             out.append((p, p.relative_to(RAIZ).as_posix(), 0o644))
     for p in sorted((RAIZ / "logo").iterdir()):
@@ -40,6 +54,8 @@ def archivos():
 def main():
     ap = argparse.ArgumentParser(description="Arma el ZIP del programa de folletos")
     ap.add_argument("--salida", help="ruta del ZIP (por defecto, _entregas/ con la versión y la fecha)")
+    ap.add_argument("--sin-fotos", action="store_true", help="sin la carpeta productos (las trae de la nube)")
+    ap.add_argument("--sitio", default=None, help="herramienta online de donde el programa trae las fotos")
     args = ap.parse_args()
     VER = (RAIZ / "editor" / "VERSION").read_text(encoding="utf-8").strip()
     if args.salida:
@@ -50,11 +66,21 @@ def main():
         for viejo in SALIDA.glob(f"{NOMBRE}*.zip"):                # una sola entrega vigente: la de la fecha más nueva
             viejo.unlink()
         destino = SALIDA / f"{NOMBRE}-v{VER}-{FECHA}.zip"
-    faltan = [str(o) for o, _, _ in archivos() if not o.exists()]
+    lista = archivos(not args.sin_fotos)
+    sitio = args.sitio if args.sitio is not None else sitio_por_defecto()
+    faltan = [str(o) for o, _, _ in lista if not o.exists()]
     if faltan:
         sys.exit("Faltan archivos: " + ", ".join(faltan))
     with zipfile.ZipFile(destino, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
-        for origen, arc, modo in archivos():
+        if sitio:                                                       # para «Traer las fotos de la nube» en el programa
+            info = zipfile.ZipInfo(f"{NOMBRE}/programa/nube.json", time.localtime()[:6])
+            info.external_attr = (0o100000 | 0o644) << 16
+            z.writestr(info, json.dumps({"sitio": sitio}, ensure_ascii=False), compresslevel=9)
+        if args.sin_fotos:                                              # carpeta vacía para que el programa tenga dónde guardarlas
+            info = zipfile.ZipInfo(f"{NOMBRE}/productos/", time.localtime()[:6])
+            info.external_attr = (0o040000 | 0o755) << 16
+            z.writestr(info, b"")
+        for origen, arc, modo in lista:
             info = zipfile.ZipInfo.from_file(origen, f"{NOMBRE}/{arc}")
             info.external_attr = (0o100000 | modo) << 16
             info.compress_type = zipfile.ZIP_DEFLATED
@@ -66,7 +92,7 @@ def main():
                     datos = b"\xef\xbb\xbf" + datos
             z.writestr(info, datos, compresslevel=9)
     mb = destino.stat().st_size / 1024 / 1024
-    print(f"{destino}  ({mb:.1f} MB, {len(archivos())} archivos)")
+    print(f"{destino}  ({mb:.1f} MB, {len(lista)} archivos{', sin fotos' if args.sin_fotos else ''})")
 
 
 if __name__ == "__main__":
