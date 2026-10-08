@@ -5,6 +5,32 @@ Desde la 3.0, la herramienta online (https://mickyrivero90-ai.github.io/Market-R
 se actualiza sola. Si usás el programa de la PC y muestra un número menor, bajá el nuevo
 desde la herramienta online (⋯ Más → Programa para usar sin internet).
 
+Versión 3.9 · 8 de octubre de 2026 · CARTELES DE GÓNDOLA Y TARJETA DE SELLOS
+- Carteles de góndola: al terminar el folleto aparece el destino nuevo «Carteles de góndola · 4 por
+  hoja A4 para recortar». Sale un cartel por producto (tamaño A6, 105 × 148 mm) con el mismo precio
+  del folleto: «OFERTA», el nombre, el precio en grande (se lee a unos 2,5 m), el «antes», el
+  «Ahorrás», la unidad, el precio por kilo o litro, la condición de pago y la vigencia. Todas las
+  hojas van en un solo PDF, con líneas de corte.
+- Tarjeta de sellos (Marketing → 🎟 Tarjeta de sellos): «Juntá 10 sellos y llevate…». Elegís la
+  cantidad de sellos (6 a 12), el premio, la compra mínima y el vencimiento, y sale una hoja A4 con
+  10 tarjetas de 85 × 55 mm para imprimir en cartulina y recortar.
+
+Versión 3.8 · 8 de octubre de 2026 · PEDIDOS POR WHATSAPP, ¼ KG Y «¡ÚLTIMO DÍA!»
+- Pedidos por WhatsApp: en «Datos del local» hay un campo nuevo, «WhatsApp para pedidos». Con el
+  número cargado, el folleto impreso lleva un QR «PEDÍ POR WHATSAPP» que abre el chat con el
+  mensaje ya escrito. En redes va el número escrito (desde el mismo celular un QR no se escanea)
+  y los textos para publicar llevan el link wa.me para tocar y pedir.
+- Horario del local: campo nuevo en «Datos del local». Sale en el pie, al lado de «UBICACIÓN», y
+  en los textos para publicar.
+- Fiambres y quesos: además de «$783 los 100 g», se puede mostrar el cuarto kilo («¼ kg
+  $1.957,50») o los dos. Se elige en «Leyenda del precio».
+- Sticker de urgencia («¡Último día!», «¡Quedan pocas!», «Solo hoy»), en el paso 3. Va en el
+  lugar del sello (o al lado del logo en las historias). La revisión avisa si no es verdad (por
+  ejemplo, «¡Último día!» cuando la oferta sigue mañana) y, el último día, sugiere ponerlo. Al
+  terminar ese día hay un botón «＋ Versión «¡Último día!»» que arma las mismas imágenes con el
+  sticker.
+- En la revisión, las sugerencias que tienen botón (como la del último día) van arriba.
+
 Versión 3.7 · 8 de octubre de 2026 · VERSIÓN ONLINE MÁS FIRME
 - Las fotos de productos se bajan de la misma página (más rápido y sin el límite de GitHub que
   podía cortar la carga). Las recién subidas, hasta que se publica la página, siguen viniendo de

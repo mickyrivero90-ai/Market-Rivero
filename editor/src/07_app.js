@@ -532,7 +532,11 @@ function refrescarLecturas() {
 }
 function calcularRevision() {
   const L = L_ACTUAL(), g = L.grupo, V = S.vigencia, out = [];
-  const ok = (t, d) => out.push({ k: 'ok', t, d }), warn = (t, d, accion) => out.push({ k: 'warn', t, d, accion }), info = (t, d) => out.push({ k: 'info', t, d });
+  const ok = (t, d) => out.push({ k: 'ok', t, d }), warn = (t, d, accion) => out.push({ k: 'warn', t, d, accion }), info = (t, d, accion) => out.push({ k: 'info', t, d, accion });
+  { const hoy = isoDe(new Date()), fin = (S.vigencia || {}).hasta;          // sticker de urgencia: que sea verdad
+    if (S.urgencia === 'ultimo' && fin !== hoy) warn('El sticker dice «¡Último día!» y la oferta ' + (fin ? 'termina el ' + fechaLinda(parseISO(fin)) : 'no tiene fecha de fin'), 'Usalo solo el último día: si no, es publicidad engañosa (Dto. 274/2019).', { texto: 'Sacar el sticker', fn: () => { S.urgencia = ''; construirPanel(); cambio(); } });
+    else if (S.urgencia === 'hoy' && fin && fin !== hoy && (S.vigencia || {}).desde !== hoy) warn('El sticker dice «Solo hoy» y la oferta dura más de un día', 'Cambialo por otro o sacalo.', { texto: 'Sacar el sticker', fn: () => { S.urgencia = ''; construirPanel(); cambio(); } });
+    else if (fin === hoy && !S.urgencia && g !== 'coleccion') info('Hoy es el último día de la oferta', 'Un sticker «¡Último día!» en las historias y los posts de hoy empuja a los que todavía no vinieron.', { texto: 'Poner «¡Último día!»', fn: () => { S.urgencia = 'ultimo'; construirPanel(); cambio(); } }); }
   if (g === 'coleccion') {
     const hay = S.coleccion.fotos.filter(f => srcDe(f)).length;
     if (!hay) warn('Todavía no hay fotos', 'Elegí al menos una foto de la carpeta de productos.');
@@ -581,6 +585,10 @@ function calcularRevision() {
   if (S.legal.letraChica === false && g !== 'coleccion') info('Letra chica apagada', 'Las fechas y la condición de pago se siguen viendo en la barra de arriba. Las demás condiciones tienen que estar en: ' + (S.comercio.consulta || 'el lugar que indica la banda') + '.');
   if (S.legal.banda) ok('Banda legal al pie activada', 'Res. 446/2025: ancho completo, mínimo 5 % del alto y letras de 4 mm (en A4). Asegurate de que la info esté en: ' + (S.comercio.consulta || '—'));
   else warn('Banda legal desactivada', 'Para folletos, la Res. 446/2025 pide la leyenda “Para más información o limitaciones aplicables consulte en…” al pie.');
+  { const wv = String(S.comercio.whatsapp || '').trim();
+    if (wv && !waNumero(wv)) warn('El WhatsApp para pedidos no parece un celular', 'Escribilo con código de área, sin 0 ni 15 (ej.: 387 512-3456) en «Datos del local».');
+    else if (!wv) info('Pedidos por WhatsApp', 'Si cargás el WhatsApp del negocio en «Datos del local», el folleto impreso lleva un QR «Pedí por WhatsApp» que abre el chat con el mensaje ya escrito.');
+    else ok('QR «Pedí por WhatsApp» en el folleto impreso', 'En redes va el número escrito: desde el mismo celular el QR no se puede escanear.'); }
   if (S.comercio.waCanal && qrMatrix(S.comercio.waCanal)) ok('QR del canal de WhatsApp', 'Para redes: pegá también el link en el texto de la publicación, porque desde el mismo celular no se puede escanear.');
   else warn('Falta el link del canal de WhatsApp', 'Cargalo en «Datos del local» para que salga el QR.');
   return out;
@@ -588,7 +596,7 @@ function calcularRevision() {
 /** Revisión: arriba solo lo que hay que corregir; lo que ya está bien y los recordatorios, en un desplegable. */
 function pintarRevision() {
   if (!DOM.checks) return;
-  const r = calcularRevision(), mal = r.filter(x => x.k === 'warn'), resto = [...r.filter(x => x.k === 'ok'), ...r.filter(x => x.k === 'info')];
+  const r = calcularRevision(), arriba = x => x.k === 'warn' || (x.k === 'info' && x.accion), mal = r.filter(arriba), resto = [...r.filter(x => x.k === 'ok'), ...r.filter(x => x.k === 'info' && !arriba(x))];   // las sugerencias con botón también van arriba
   DOM.checks.replaceChildren(...(mal.length ? mal.map(filaAviso) : [filaAviso({ k: 'ok', t: 'No hay nada para corregir', d: 'Revisá igual la vista previa: fotos, nombres y precios.' })]),
     resto.length ? h('li', { class: 'resto' }, h('details', null, h('summary', null, `Lo que ya está bien y recordatorios (${resto.length})`), h('ul', { class: 'checks' }, ...resto.map(filaAviso)))) : null);
 }
@@ -730,7 +738,7 @@ function cajaLeyendaPrecio() {
       check('Mostrar “AHORRÁS $…”', 'Hace la cuenta por el cliente: atrae más que el porcentaje solo.', PR.ahorro, v => { PR.ahorro = v; upd(); }),
       check('Precio anterior grande', 'Más fácil de leer en el celular.', PR.grande, v => { PR.grande = v; upd(); }),
       check('Precio por kilo o litro, en letra chica', 'Lo pide la Res. 4/2025. Lo calculo con el contenido del nombre: «Aceite 850 ml» → «$2.964,71 x litro». Si el nombre no dice el contenido, no sale.', PR.porUnidad !== false, v => { PR.porUnidad = v; upd(); }),
-      check('Lo que se vende por kilo: cuánto salen 100 g', '«$7.830 x kg» y abajo «$783 los 100 g», para fiambres y quesos. Así se ve accesible.', PR.fraccion !== false, v => { PR.fraccion = v; upd(); }),
+      campo('Lo que se vende por kilo (fiambres y quesos)', sel('ley-fraccion', [['100g', '$783 los 100 g'], ['cuarto', '¼ kg $1.957,50'], ['ambos', '100 g $783 · ¼ kg $1.957,50'], ['no', 'Solo el precio por kilo']], fraccionDe(PR.fraccion), v => { PR.fraccion = v; upd(); }), 'con $7.830 x kg'),
       check('Modo limpio: el descuento de la promo una sola vez', 'Si todos los productos tienen el % de la barra, no se repite en cada cuadro el «-10 %» ni «pagando con…» (ya están arriba) y las fotos quedan más grandes.', PR.limpio !== false, v => { PR.limpio = v; upd(); }),
       h('p', { class: 'lab', style: 'margin:6px 0 0' }, 'Tamaños'),
       sliderTam('Precio final (la placa con el número)', PR, 'placa', 0.7, 1.6, 1, { alCambiar: pintarEjemplo, ayuda: 'si no entra a lo ancho, crece hasta donde puede' }),
@@ -831,10 +839,19 @@ function cajaBarra() {
       conCuotas ? campo('Cuotas sin interés', texto(S.promo, 'cuotas', { ph: '3, 6, 12', mode: 'numeric', max: 2 }), 'opcional') : h('span')) : null,
     h('div', { class: 'grid2' }, fecha('desde', 'Desde'), fecha('hasta', 'Hasta')), DOM.avisoFechas,
     check('Agregar “hasta agotar stock”', 'Crea urgencia. Indicá la cantidad en Legales.', S.vigencia.agotar, v => { S.vigencia.agotar = v; cambio(); }),
+    elegirUrgencia(),
     PT && g !== 'mensaje' ? check('Mostrar la barra de la promo', 'Si la apagás, debajo del título quedan solo las fechas.', S.promo.verBarra !== false, v => { S.promo.verBarra = v; cambio(); }) : null,
     g !== 'mensaje' ? disenoBarra() : null);
   setTimeout(pintarBarraPrev, 0);
   return caja;
+}
+/** Sticker de urgencia para las imágenes del último día (reemplaza al sello de arriba a la derecha). */
+function elegirUrgencia() {
+  const caja = h('div', { class: 'quick', role: 'group', 'aria-label': 'Sticker de urgencia' });
+  const pintar = () => caja.replaceChildren(...[['', 'Ninguno'], ['ultimo', '¡Último día!'], ['pocas', '¡Quedan pocas!'], ['hoy', 'Solo hoy']].map(([v, t]) =>
+    h('button', { type: 'button', class: 'q' + ((S.urgencia || '') === v ? ' on' : ''), 'aria-pressed': String((S.urgencia || '') === v), onclick: () => { S.urgencia = v; pintar(); cambio(); } }, t)));
+  pintar();
+  return h('div', { class: 'stack', style: 'gap:6px' }, h('span', { class: 'lab' }, 'Sticker de urgencia'), caja, h('small', { class: 'hint' }, 'Para las imágenes del último día. Va en el lugar del sello (o al lado del logo). Usalo solo si es verdad.'));
 }
 /** Tamaño, letra, alineación y altura de la barra de la promo (o de las fechas, si no hay promo). */
 function disenoBarra() {
@@ -1003,6 +1020,14 @@ function seccionRevision() {
         h('button', { class: 'btn', type: 'button', onclick: () => abrirMarketing('textos') }, '📣 Textos para publicar'))),
     h('p', { class: 'note' }, 'Armado con normas argentinas leídas en fuentes oficiales (Ley 24.240, Dto. 1798/94, Res. 4/2025 y 446/2025, Ley 24.788). Es una guía: no reemplaza el consejo de un contador o abogado.'));
 }
+/** WhatsApp para pedidos: con el número bien escrito sale un QR «Pedí por WhatsApp» en el folleto impreso. */
+function campoWhatsApp(C) {
+  const estado = h('small', { class: 'hint', 'aria-live': 'polite' });
+  const pintar = () => { const v = String(C.whatsapp || '').trim(), n = waNumero(v); estado.textContent = !v ? 'Con código de área, sin 0 ni 15. Ej.: 387 512-3456.' : n ? '✓ Así abre el chat: wa.me/' + n : 'No parece un celular: escribilo con código de área, sin 0 ni 15 (ej.: 387 512-3456).'; estado.style.color = v && !n ? 'var(--warn)' : ''; };
+  const inp = texto(C, 'whatsapp', { ph: 'Ej.: 387 512-3456', mode: 'tel', max: 30, after: () => { C.ts = Date.now(); pintar(); cambio(); } });
+  pintar();
+  return h('div', { class: 'stack', style: 'gap:4px' }, campo('WhatsApp para pedidos', inp, 'opcional · QR «Pedí por WhatsApp»'), estado);
+}
 /** Campo de los datos del local: anota cuándo se cambió (al abrir un folleto viejo se quedan los más nuevos). */
 const textoLocal = (C, key, o = {}) => texto(C, key, { ...o, after: () => { C.ts = Date.now(); cambio(); } });
 function seccionLocalYLegales() {
@@ -1012,8 +1037,10 @@ function seccionLocalYLegales() {
   selAlcohol.value = S.legal.alcohol === true ? 'si' : S.legal.alcohol === false ? 'no' : (S.legal.alcohol || 'auto');
   return [detalles('Datos del local (casi nunca cambian)', h('div', { class: 'stack' },
       campo('Dirección', textoLocal(C, 'direccion', { ph: 'Barrio, calle y número', max: 70 })),
+      campo('Horario', textoLocal(C, 'horario', { ph: 'Ej.: Lun a sáb 8 a 13 y 17 a 21:30', max: 60 }), 'opcional · sale al lado de la dirección'),
       campo('Facebook', textoLocal(C, 'facebook', { ph: 'Nombre de tu página', max: 40 })),
       campo('WhatsApp o teléfono', textoLocal(C, 'telefono', { ph: 'Ej.: 11 5555-5555', mode: 'tel', max: 30 }), 'opcional'),
+      campoWhatsApp(C),
       campo('Link del canal de WhatsApp', textoLocal(C, 'waCanal', { ph: 'https://whatsapp.com/channel/…', mode: 'url', max: 200 }), 'sale como QR'),
       campo('Nombre del canal, como se busca en WhatsApp', textoLocal(C, 'canalNombre', { ph: 'Ej.: Rivero Market', max: 40 }), 'en redes, abajo del QR dice «Buscá: …»'),
       campo('Link de Facebook', textoLocal(C, 'qrUrl', { ph: 'https://www.facebook.com/tu-pagina', mode: 'url', max: 200 }), 'opcional · 2.º QR'),
@@ -1098,19 +1125,25 @@ async function exportar(tipo) {
     aviso(r === 'ok' ? (API.activo && guardarArchivo.ultimo ? `Guardé «${guardarArchivo.ultimo.nombre}» en el Escritorio.` : 'Listo: ' + nombre) : r === 'cancelado' ? 'Descarga cancelada.' : r === 'no-disponible' ? 'Este visor no permite descargar. Abrí el archivo ofertas_rivero_market.html en tu computadora.' : 'No se pudo guardar (' + r + ').');
   } catch (e) { console.error(e); aviso('No pude generar el archivo: ' + (e && e.message || e)); }
 }
-function crearPDF(jpeg, wpx, hpx, wpt, hpt) {
+function crearPDF(jpeg, wpx, hpx, wpt, hpt) { return crearPDFPaginas([{ jpeg, w: wpx, h: hpx }], wpt, hpt); }
+/** PDF con una imagen JPEG por hoja (todas del mismo tamaño en puntos): [{jpeg, w, h}]. */
+function crearPDFPaginas(hojas, wpt, hpt) {
   const enc = new TextEncoder(), parts = [], off = []; let pos = 0;
   const put = x => { const b = typeof x === 'string' ? enc.encode(x) : x; parts.push(b); pos += b.length; };
+  const n = hojas.length, nObj = 2 + n * 3, pag = i => 3 + i * 3;   // por hoja: página, imagen y contenido
   put('%PDF-1.4\n');
   off[1] = pos; put('1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n');
-  off[2] = pos; put('2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n');
-  off[3] = pos; put(`3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${wpt.toFixed(2)} ${hpt.toFixed(2)}] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>\nendobj\n`);
-  off[4] = pos; put(`4 0 obj\n<< /Type /XObject /Subtype /Image /Width ${wpx} /Height ${hpx} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpeg.length} >>\nstream\n`); put(jpeg); put('\nendstream\nendobj\n');
+  off[2] = pos; put(`2 0 obj\n<< /Type /Pages /Kids [${hojas.map((_, i) => pag(i) + ' 0 R').join(' ')}] /Count ${n} >>\nendobj\n`);
   const cont = `q ${wpt.toFixed(2)} 0 0 ${hpt.toFixed(2)} 0 0 cm /Im0 Do Q`;
-  off[5] = pos; put(`5 0 obj\n<< /Length ${cont.length} >>\nstream\n${cont}\nendstream\nendobj\n`);
-  const xref = pos; let x = 'xref\n0 6\n0000000000 65535 f \n';
-  for (let i = 1; i <= 5; i++) x += String(off[i]).padStart(10, '0') + ' 00000 n \n';
-  put(x); put(`trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`);
+  hojas.forEach((hj, i) => {
+    const p = pag(i);
+    off[p] = pos; put(`${p} 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${wpt.toFixed(2)} ${hpt.toFixed(2)}] /Resources << /XObject << /Im0 ${p + 1} 0 R >> >> /Contents ${p + 2} 0 R >>\nendobj\n`);
+    off[p + 1] = pos; put(`${p + 1} 0 obj\n<< /Type /XObject /Subtype /Image /Width ${hj.w} /Height ${hj.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${hj.jpeg.length} >>\nstream\n`); put(hj.jpeg); put('\nendstream\nendobj\n');
+    off[p + 2] = pos; put(`${p + 2} 0 obj\n<< /Length ${cont.length} >>\nstream\n${cont}\nendstream\nendobj\n`);
+  });
+  const xref = pos; let x = `xref\n0 ${nObj + 1}\n0000000000 65535 f \n`;
+  for (let i = 1; i <= nObj; i++) x += String(off[i]).padStart(10, '0') + ' 00000 n \n';
+  put(x); put(`trailer\n<< /Size ${nObj + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`);
   return new Blob(parts, { type: 'application/pdf' });
 }
 async function guardarProyecto() {
@@ -1477,7 +1510,7 @@ async function autotest() {
         t('duplicar para la semana que viene', !N.archivoFolleto && a >= hoy0() && (a - hoy0()) < 7 * 86400000 && a.getDay() === 1 && b.getDay() === 0 && N.productos.filter(p => !productoVacio(p) && parsePrecio(p.final)).every(p => p.recordado), N.vigencia.desde + ' → ' + N.vigencia.hasta); }
       // 26) revisión: arriba lo que hay que corregir; lo demás, en un desplegable
       { pintarRevision(); const lis = [...DOM.checks.children], resto = lis.findIndex(li => li.classList.contains('resto'));
-        t('revisión: primero lo que hay que corregir', resto === lis.length - 1 && lis.slice(0, resto).every(li => li.classList.contains('warn') || /nada para corregir/.test(li.textContent)), lis.map(li => li.className).join(',')); }
+        t('revisión: primero lo que hay que corregir', resto === lis.length - 1 && lis.slice(0, resto).every(li => li.classList.contains('warn') || li.querySelector('button') || /nada para corregir/.test(li.textContent)), lis.map(li => li.className).join(',')); }
       // 22) ver grande: se abre y se cierra con Esc
       { verGrande(); const abierto = !!document.querySelector('.ver-grande img'); document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })); t('ver grande', abierto && !document.querySelector('.ver-grande')); }
     }
@@ -1490,6 +1523,33 @@ async function autotest() {
       { const bak = NUBE.cfg; NUBE.cfg = { ...(bak || {}), owner: 'o', repo: 'r' }; const u = urlNuevaLlave('Casa'); NUBE.cfg = bak; t('llave con vencimiento', LLAVE_DIAS === 365 && /expires_in=365/.test(u)); }
       // 30) Brave se detecta (una sola descarga automática; el PDF con botón)
       t('detecta Brave', typeof (await esBrave()) === 'boolean');
+    }
+    { // v3.8: agregados 33, 35 y 37 del relevamiento
+      // 33) WhatsApp para pedidos: el número se arma solo para wa.me, y los textos llevan el link
+      { const casos = [['387 512-3456', '5493875123456'], ['0387 15 512-3456', '5493875123456'], ['+54 9 387 512 3456', '5493875123456'], ['11 15 5555-5555', '5491155555555'], ['512-3456', ''], ['', '']];
+        const malos = casos.filter(([a, b]) => waNumero(a) !== b).map(([a, b]) => a + '→' + waNumero(a));
+        const txt = textoPublicacion({ ...S, comercio: { ...S.comercio, whatsapp: '387 512-3456', horario: 'Lun a sáb 8 a 21' } }, 'canal');
+        t('WhatsApp para pedidos y horario', !malos.length && txt.includes('wa.me/5493875123456') && txt.includes('Lun a sáb 8 a 21'), malos.join(' · ')); }
+      // 35) lo que se vende por kilo: 100 g, ¼ kg o los dos
+      { const bak = PRECIO_CFG.fraccion, q = nuevoProducto({ nombre: 'Queso cremoso', final: '7.830', unidad: 'x kg' }), r = {};
+        for (const m of ['100g', 'cuarto', 'ambos', 'no']) { PRECIO_CFG.fraccion = m; r[m] = porUnidad(q); } PRECIO_CFG.fraccion = bak;
+        t('fiambres: 100 g, ¼ kg o los dos', r['100g'] === '$783 los 100 g' && r.cuarto === '¼ kg $1.957,50' && r.ambos === '100 g $783 · ¼ kg $1.957,50' && r.no === '' && fraccionDe(true) === '100g' && fraccionDe(false) === 'no', JSON.stringify(r)); }
+      // 37) sticker de urgencia: en el lugar del sello, y la revisión cuida que sea verdad
+      { const st = selloTexto({ ...S, urgencia: 'ultimo' }), bakU = S.urgencia, bakV = S.vigencia;
+        S.urgencia = 'ultimo'; S.vigencia = { ...bakV, hasta: '2026-01-10' }; const avisa = calcularRevision().some(x => x.k === 'warn' && /Último día/.test(x.t));
+        S.urgencia = ''; S.vigencia = { ...bakV, hasta: isoDe(new Date()) }; const sugiere = calcularRevision().some(x => x.k === 'info' && x.accion && /último día/.test(x.t));
+        S.urgencia = bakU; S.vigencia = bakV;
+        t('sticker «¡Último día!»: en el sello y solo si es verdad', st && st.urgente && st.l2 === 'ÚLTIMO' && avisa && sugiere, [!!st, avisa, sugiere].join(' ')); }
+    }
+    { // v3.9: carteles de góndola y tarjeta de sellos (34)
+      const conProds = (formato, n) => ({ ...S, formato, productos: Array.from({ length: 16 }, (_, i) => i < n ? nuevoProducto({ nombre: 'P' + i, regular: '1.000', final: '900' }) : nuevoProducto()) });
+      const pl = planDestino(conProds('a4_10', 10), 'carteles');
+      t('carteles: de a 4 por hoja', pl.map(x => x.productos.length).join(',') === '4,4,2' && pl.every(x => x.formato === 'carteles_a4') && !planDestino({ ...S, formato: 'coleccion_a4' }, 'carteles').length, pl.map(x => x.productos.length).join(','));
+      { const c = document.createElement('canvas'); c.width = 20; c.height = 28; c.getContext('2d').fillRect(0, 0, 20, 28); const jpeg = new Uint8Array(await (await aBlob(c, 'image/jpeg', 0.8)).arrayBuffer());
+        const txt = new TextDecoder('latin1').decode(new Uint8Array(await crearPDFPaginas([{ jpeg, w: 20, h: 28 }, { jpeg, w: 20, h: 28 }, { jpeg, w: 20, h: 28 }], 595.28, 841.89).arrayBuffer()));
+        t('PDF de varias hojas', /\/Count 3/.test(txt) && (txt.match(/\/Type \/Page /g) || []).length === 3 && /trailer\n<< \/Size 12 /.test(txt)); }
+      { const c = document.createElement('canvas'); renderFlyer(c, estadoParaPagina(conProds('a4_10', 10), pl[2]), { scale: 0.2, getImg, exportar: true }); t('carteles: se dibujan', c.width === 248); }
+      { const h = hojaSellos({ cantidad: 8, premio: 'un regalo', minimo: '5.000', vence: '2026-12-31' }, S.comercio); t('tarjeta de sellos: hoja A4 a 300 dpi', h.width === 2480 && h.height === 3508); }
     }
   } catch (e) { t('excepción', false, e.message + ' ' + (e.stack || '').split('\n')[1]); }
   const pre = document.createElement('pre'); pre.id = 'autotest'; pre.textContent = out.join('\n'); pre.style.cssText = 'position:fixed;left:0;top:0;z-index:99;background:#111;color:#9f9;padding:10px;margin:0;font:13px monospace;max-width:100vw;overflow:auto;max-height:100vh'; document.body.append(pre);

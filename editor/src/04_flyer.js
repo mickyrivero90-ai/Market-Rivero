@@ -47,8 +47,17 @@ function infoProducto(p) {
 }
 const productoVacio = p => !p || (!String(p.nombre || '').trim() && !String(p.final || '').trim() && !p.img && !p.archivo);
 
+/** Sticker de urgencia («¡Último día!», «¡Quedan pocas!», «Solo hoy»): ocupa el lugar del sello o va al lado del logo. */
+const URGENCIAS = { ultimo: ['¡HOY ES EL', 'ÚLTIMO', 'DÍA!'], pocas: ['¡QUEDAN', 'POCAS', 'UNIDADES!'], hoy: ['SOLO', 'HOY', ''] };
+function urgenciaTexto(S) {
+  const u = URGENCIAS[S && S.urgencia]; if (!u) return null;
+  const d = new Date(), l3 = S.urgencia === 'hoy' ? DIAS[d.getDay()].slice(0, 3).toUpperCase() + ' ' + d.getDate() + '/' + (d.getMonth() + 1) : u[2];
+  return { l1: u[0], l2: u[1], l3, urgente: true };
+}
+function stickerUrgencia(ctx, S, T, cx, cy, R) { const u = urgenciaTexto(S); if (u) drawSello(ctx, cx, cy, R, u, T, 0.12); }
 /** Texto del sello del encabezado según el modo elegido. */
 function selloTexto(S) {
+  const U = urgenciaTexto(S); if (U) return U;
   const m = S.sello || { modo: 'auto' };
   if (m.modo === 'none') return null;
   if (m.modo === 'custom') return (m.l1 || m.l2 || m.l3) ? { l1: (m.l1 || '').toUpperCase(), l2: (m.l2 || '').toUpperCase(), l3: (m.l3 || '').toUpperCase() } : null;
@@ -118,7 +127,8 @@ function drawRibbon(ctx, x, y, w, h, str, T, o = {}) {
 function drawSello(ctx, cx, cy, R, st, T, rot = -0.13) {
   ctx.save(); ctx.translate(cx, cy); ctx.rotate(rot);
   shadow(ctx, 'rgba(70,15,0,.5)', 22, 0, 12);
-  burstPath(ctx, 0, 0, R, R * 0.87, 22); ctx.fillStyle = vGrad(ctx, -R, R, T.accent); ctx.fill(); noShadow(ctx);
+  const urg = !!st.urgente, tinta = urg ? '#FFFFFF' : T.accentInk, tinta3 = urg ? '#FFE066' : T.accentDeep;   // urgente: rojo con letras blancas y amarillas
+  burstPath(ctx, 0, 0, R, R * 0.87, 22); ctx.fillStyle = vGrad(ctx, -R, R, urg ? ['#FF3B4E', '#C8102E'] : T.accent); ctx.fill(); noShadow(ctx);
   burstPath(ctx, 0, 0, R * 0.935, R * 0.81, 22); ctx.lineWidth = R * 0.022; ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.stroke();
   // tres renglones que nunca se pisan: arriba (chico), el grande en el medio, abajo (mediano)
   const l1 = String(st.l1 || ''), l2 = String(st.l2 || ''), l3 = String(st.l3 || ''), mk = s => FB(900, s);
@@ -126,12 +136,12 @@ function drawSello(ctx, cx, cy, R, st, T, rot = -0.13) {
   const f3 = l3 ? fitSize(ctx, l3, mk, R * 0.3, 8, R * 1.25, R * 0.02) : 0;
   const top = l1 ? -R * 0.62 + f1 * 0.72 + R * 0.09 : -R * 0.6;          // debajo del renglón de arriba, con aire
   const bot = l3 ? R * 0.7 - f3 * 0.72 - R * 0.08 : R * 0.6;              // arriba del renglón de abajo, con aire
-  if (l1) text(ctx, l1, 0, -R * 0.62 + f1 * 0.72, { font: FM(900, f1), fill: T.accentInk, align: 'center', tracking: R * 0.012 });
+  if (l1) text(ctx, l1, 0, -R * 0.62 + f1 * 0.72, { font: FM(900, f1), fill: tinta, align: 'center', tracking: R * 0.012 });
   if (l2) {
     const alto = bot - top, sz = Math.min(fitSize(ctx, l2, mk, R, 12, R * 1.36, 0), alto / 0.76);
-    text(ctx, l2, 0, top + (alto + sz * 0.72) / 2, { font: FB(900, sz), gradient: T.sello, gh: sz * 0.75, align: 'center', stroke: '#FFFFFF', strokeW: sz * 0.05, shadow: ['rgba(120,0,10,.35)', 3, 0, 3], maxW: R * 1.4 });
+    text(ctx, l2, 0, top + (alto + sz * 0.72) / 2, { font: FB(900, sz), gradient: urg ? ['#FFF6A8', '#FFD400'] : T.sello, gh: sz * 0.75, align: 'center', stroke: urg ? '#7A0010' : '#FFFFFF', strokeW: sz * 0.05, shadow: ['rgba(120,0,10,.35)', 3, 0, 3], maxW: R * 1.4 });
   }
-  if (l3) text(ctx, l3, 0, R * 0.7, { font: FB(900, f3), fill: T.accentDeep, align: 'center', tracking: R * 0.02, maxW: R * 1.3 });
+  if (l3) text(ctx, l3, 0, R * 0.7, { font: FB(900, f3), fill: tinta3, align: 'center', tracking: R * 0.02, maxW: R * 1.3 });
   ctx.restore();
 }
 
@@ -268,7 +278,7 @@ function drawPlate(ctx, x, yBottom, maxW, H0, price, T, o = {}) {
   return { x, y, w, h: H, right: x + w, ds };
 }
 /** Cómo se muestra el precio anterior y la palabra de la placa (se elige en "Leyenda del precio"). */
-let PRECIO_CFG = { antes: 'antes', ahorro: true, grande: true, insignia: 1.3, placa: 1, ahorroTam: 1, porUnidad: true, fraccion: true };
+let PRECIO_CFG = { antes: 'antes', ahorro: true, grande: true, insignia: 1.3, placa: 1, ahorroTam: 1, porUnidad: true, fraccion: '100g' };
 /** Modo limpio: si todos los productos tienen el % de la promo, el «-10 %» y «pagando con…» no se repiten en cada cuadro
  *  (ya están en la barra y en el sello) y la foto usa ese lugar. Se apaga en «Leyenda del precio». */
 let LIMPIO = false;
@@ -283,7 +293,10 @@ function modoLimpio(S) {
 function porUnidad(p) {
   const F = parsePrecio(p.final); if (!F || !(F.num > 0)) return '';
   const u = String(p.unidad || '').toLowerCase().trim();
-  if (/kg|kilo/.test(u)) return PRECIO_CFG.fraccion === false ? '' : '$' + precioATexto(aCentavos(F.num / 10)) + ' los 100 g';
+  if (/kg|kilo/.test(u)) {                                        // fiambres y quesos: 100 g, ¼ kg o los dos
+    const fr = PRECIO_CFG.fraccion, cien = '$' + precioATexto(aCentavos(F.num / 10)), cuarto = '$' + precioATexto(aCentavos(F.num / 4));
+    return fr === 'no' ? '' : fr === 'cuarto' ? '¼ kg ' + cuarto : fr === 'ambos' ? '100 g ' + cien + ' · ¼ kg ' + cuarto : cien + ' los 100 g';
+  }
   if (PRECIO_CFG.porUnidad === false || (u && !/^(c\/u|x u|x unidad|unidad|c\/u\.)$/.test(u))) return '';   // x fardo, x docena…: no se calcula
   const nm = String(p.nombre || '') + ' ' + String(p.desc || '');
   const m = /(\d+(?:[.,]\d+)?)\s*(ml|cc|cm3|lts|lt|l|litros?|grs|gr|g|gramos|kgs|kg|kilos?)(?![a-záéíóúñ])/i.exec(nm); if (!m) return '';
@@ -293,6 +306,8 @@ function porUnidad(p) {
   if (!(total > 0) || Math.abs(total - 1) < 1e-9) return '';     // 1 kg o 1 litro: el precio ya es por kilo o litro
   return '$' + precioATexto(aCentavos(F.num / total)) + (liq ? ' x litro' : ' x kg');
 }
+/** Cómo se muestra lo que se vende por kilo: '100g', 'cuarto', 'ambos' o 'no' (en la 3.5 era true / false). */
+const fraccionDe = v => (v === false || v === 'no' ? 'no' : ['cuarto', 'ambos'].includes(v) ? v : '100g');
 /** Nota debajo del precio: la que escribió la persona y el precio por kilo o litro. */
 const notaDe = p => [String(p.nota || '').trim(), porUnidad(p)].filter(Boolean).join(' · ');
 /** Condición de pago debajo del precio de un cuadro (en modo limpio no se repite la de la barra). */
@@ -836,8 +851,11 @@ function drawFooter(ctx, S, T, env, r, plan, o = {}) {
   ctx.fillStyle = vGrad(ctx, 0, 9 * k, T.accent); ctx.fillRect(0, 0, w, 9 * k);
   const M = o.m || 44;
   const qrs = [];
+  const numWA = waNumero(C.whatsapp), impreso = plan.kind !== 'post' && plan.kind !== 'story', pedir = numWA ? waLink(numWA, `Hola ${C.nombre || ''}! Quiero hacer un pedido: `) : '';
+  if (o.qr !== false && pedir && impreso && qrMatrix(pedir)) qrs.push({ url: pedir, l1: 'PEDÍ POR', l2: 'WHATSAPP', c2: '#4BE07F' });   // en el folleto impreso: escanear y pedir (en redes va el número)
   if (o.qr !== false && C.waCanal && qrMatrix(C.waCanal)) qrs.push({ url: C.waCanal, l1: 'SUMATE A NUESTRO', l2: 'CANAL DE WHATSAPP', c2: '#4BE07F' });
   if (o.qr !== false && C.qrUrl && qrMatrix(C.qrUrl)) qrs.push({ url: C.qrUrl, l1: 'SEGUINOS EN', l2: 'FACEBOOK', c2: '#8DB8FF' });
+  qrs.splice(2);                                                   // como mucho dos QR: el texto de al lado tiene que seguir leyéndose
   // en redes el QR no se puede escanear desde el mismo celular: con el nombre del canal, al lado dice cómo buscarlo
   const canal = String(C.canalNombre || '').trim(), buscar = canal && qrs.length === 1 && qrs[0].url === C.waCanal && (plan.kind === 'post' || plan.kind === 'story');
   let qrS = Math.min(hI - 66 * k, 134 * k), gapQ = 16 * k, grpW = qrs.length * qrS + Math.max(0, qrs.length - 1) * gapQ, gx = w - M - grpW, qy = hI - qrS - 13 * k;
@@ -863,12 +881,14 @@ function drawFooter(ctx, S, T, env, r, plan, o = {}) {
   const addr = String(C.direccion || '').trim();
   if (addr) {
     iconPin(ctx, lx + 14 * k, cy - 3 * k, 10.5 * k, T.accent[1], T.footer);
-    text(ctx, 'UBICACIÓN', lx + 38 * k, cy + 3 * k, { font: FM(800, 13.5 * k), fill: T.accent[1], tracking: 2.2 * k });
+    const wLab = text(ctx, 'UBICACIÓN', lx + 38 * k, cy + 3 * k, { font: FM(800, 13.5 * k), fill: T.accent[1], tracking: 2.2 * k });
+    const hor = String(C.horario || '').trim();                     // el horario, en el mismo renglón
+    if (hor) text(ctx, '·  ' + hor, lx + 38 * k + wLab + 10 * k, cy + 3 * k, { font: FM(700, 13.5 * k), fill: T.footerInk, maxW: lw - 48 * k - wLab });
     const fs = fitSize(ctx, addr, s => FM(800, s), 29 * k, 15 * k, lw - 38 * k, 0);
     text(ctx, addr, lx + 38 * k, cy + 3 * k + fs * 1.18, { font: FM(800, fs), fill: T.footerInk });
     cy += 3 * k + fs * 1.18;
   }
-  const fb = String(C.facebook || '').trim(), tel = String(C.telefono || '').trim();
+  const fb = String(C.facebook || '').trim(), tel = String(C.telefono || '').trim() || (waNumero(C.whatsapp) ? String(C.whatsapp).trim() : '');
   const ry = cy + 40 * k; let rx = lx;
   if (fb) {
     iconFacebook(ctx, rx + 16 * k, ry - 9.5 * k, 16 * k);
@@ -947,6 +967,7 @@ function drawHeaderStack(ctx, W, S, T, g) {
   const sub = String(S.subtitulo || '').trim().toUpperCase();
   if (sub) chip(ctx, W / 2, g.subY - g.subSize * 0.35 - g.subSize * 0.86, sub, { h: g.subSize * 1.72, font: FM(800, g.subSize), fill: 'rgba(50,15,3,.92)', ink: T.accent[0], padX: g.subSize * 0.8, tracking: g.subSize * 0.1, align: 'center' });
   drawRibbon(ctx, g.M, g.ribbonY, W - 2 * g.M, g.ribbonH, S.titulo, T, { max: g.titleMax });
+  const rU = Math.min(W * 0.1, 130); stickerUrgencia(ctx, S, T, W - g.M - rU * 0.9, g.logoY + rU * 0.85, rU);
   return drawInfoRow(ctx, W, S, T, { M: g.M, y: g.pillY, h: g.pillH });
 }
 
@@ -1059,7 +1080,7 @@ function renderFlyer(canvas, S, opts = {}) {
   const T = THEMES[S.tema] || THEMES.naranja;
   const PR = S.precio || {};
   PRECIO_CFG = { antes: PR.antes || 'antes', ahorro: PR.ahorro !== false, grande: PR.grande !== false, insignia: clamp(+PR.insignia || 1.3, 0.8, 2), placa: clamp(+PR.placa || 1, 0.7, 1.6), ahorroTam: clamp(+PR.ahorroTam || 1, 0.6, 2),
-    porUnidad: PR.porUnidad !== false, fraccion: PR.fraccion !== false };
+    porUnidad: PR.porUnidad !== false, fraccion: fraccionDe(PR.fraccion) };
   const CU = S.cuadros || {};
   CUADROS_CFG = { sep: clamp(Number.isFinite(+CU.sep) && CU.sep !== '' && CU.sep != null ? +CU.sep : 1, 0, 3), margen: clamp(+CU.margen || 1, 0.3, 2.5), foto: clamp(+CU.foto || 1, 0.6, 1.5), estrella: clamp(+CU.estrella || 1, 0.6, 1.5),
     alinear: ['izquierda', 'centro', 'derecha'].includes(CU.alinear) ? CU.alinear : 'auto', dx: clamp(+CU.dx || 0, -40, 40), dy: clamp(+CU.dy || 0, -20, 50) };

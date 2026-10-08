@@ -55,6 +55,7 @@ function layoutMensaje(ctx, S, T, env, kind) {
   const kk = String(Mj.kicker || '').trim().toUpperCase();
   if (kk) chip(ctx, W / 2, P.kY, kk, { h: P.kH, font: FM(900, P.kH * 0.5), fill: 'rgba(50,15,3,.92)', ink: T.accent[0], padX: P.kH * 0.6, tracking: P.kH * 0.06, align: 'center' });
   const rb = drawRibbonMulti(ctx, P.M, P.ribY, W - 2 * P.M, P.ribH, Mj.titulo || 'Aprovechá nuestras promos', T);
+  { const rU = Math.min(W * 0.1, 130); stickerUrgencia(ctx, S, T, W - P.M - rU * 0.9, P.logoY + rU * 0.85, rU); }
   const fp = footerPlan(ctx, S, W, H, P.foot), fy = H - SAFE - fp.total;
   if (SAFE) franjaHistoria(ctx, S, T, W, H, SAFE);
   // tarjeta central
@@ -128,6 +129,7 @@ function layoutDestacado(ctx, S, T, env, kind) {
   casillero(ctx, env, 'producto', 0, caja);
   drawHeroV(ctx, caja, prodAt(S, 0), T, env, { big: kind === 'post' ? 0.9 : 1.02, imgFrac: kind === 'post' ? 0.45 : 0.46, pop: 26, sticker: false, techo: P.heroGap - 6 });
   if (D.mensaje2) drawBadge(ctx, P.M + P.bR * 0.98 + 10, heroY + P.bR * 1.02 + 8, P.bR, { etiqueta: D.mensaje2 }, T, 0, -0.16, 1);
+  { const rU = Math.min(W * 0.12, 140); stickerUrgencia(ctx, S, T, W - P.M - rU * 0.8, heroY + rU * 0.85, rU); }   // en la esquina del cuadro: arriba está el cartel grande
   if (T.decorTop) T.decorTop(ctx, W, H, P.bY + P.bH, { footerY: fy });
   drawFooter(ctx, S, T, env, { x: 0, y: fy, w: W }, fp, { m: P.M });
   if (SAFE && env.preview) {
@@ -138,6 +140,60 @@ function layoutDestacado(ctx, S, T, env, kind) {
 
 /** Historia sin producto estrella: 2 a 4 productos en renglones. Al repartir un folleto en varias historias, usa
  *  tantos renglones como productos le tocan (sin tarjetas de relleno); en pantalla muestra los 4 casilleros. */
+/** Carteles de góndola: 4 por hoja A4 (A6, 105 × 148 mm) para recortar, con el mismo precio del folleto. */
+function layoutCarteles(ctx, S, T, env) {
+  const W = 1240, H = 1754, cw = W / 2, ch = H / 2, bak = LIMPIO;
+  LIMPIO = false;                                                 // cada cartel está solo en la góndola: lleva su % y su condición de pago
+  ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, W, H);
+  ctx.save(); ctx.setLineDash([16, 12]); ctx.strokeStyle = 'rgba(0,0,0,.4)'; ctx.lineWidth = 2;   // guías para recortar
+  ctx.beginPath(); ctx.moveTo(cw, 0); ctx.lineTo(cw, H); ctx.moveTo(0, ch); ctx.lineTo(W, ch); ctx.stroke(); ctx.restore();
+  for (let i = 0; i < 4; i++) {
+    const p = prodAt(S, i), r = { x: (i % 2) * cw, y: Math.floor(i / 2) * ch, w: cw, h: ch };
+    if (productoVacio(p)) { if (env.preview) drawEmptyCard(ctx, { x: r.x + 30, y: r.y + 30, w: r.w - 60, h: r.h - 60 }, T, env, 1); continue; }
+    cartelGondola(ctx, r, p, S, T);
+    casillero(ctx, env, 'producto', i, r);
+  }
+  LIMPIO = bak;
+}
+function cartelGondola(ctx, r, p, S, T) {
+  const pad = 28, x = r.x + pad, y = r.y + pad, w = r.w - pad * 2, h = r.h - pad * 2, cx = x + w / 2, info = infoProducto(p), V = S.vigencia || {};
+  const borde = (T.price && T.price[1]) || '#C8102E', bh = 108;
+  ctx.save();
+  rrPath(ctx, x, y, w, h, 24); ctx.fillStyle = '#FFFFFF'; ctx.fill();
+  ctx.save(); rrPath(ctx, x, y, w, h, 24); ctx.clip(); ctx.fillStyle = vGrad(ctx, y, y + bh, T.price); ctx.fillRect(x, y, w, bh); ctx.restore();
+  rrPath(ctx, x, y, w, h, 24); ctx.lineWidth = 5; ctx.strokeStyle = borde; ctx.stroke();
+  const U = urgenciaTexto(S), arriba = U ? (U.l1.replace(/^¡/, '') + ' ' + U.l2 + ' ' + U.l3).replace(/\s+/g, ' ').trim() : 'OFERTA';
+  const L = RES.logoH, lw = L ? 190 : 0;
+  if (L) { const lh = lw * (L.naturalHeight || L.height) / (L.naturalWidth || L.width); ctx.drawImage(L, x + w - lw - 18, y + (bh - lh) / 2, lw, lh); }
+  const fsO = fitSize(ctx, arriba, s => FB(900, s), 86, 30, w - lw - 60, 1);
+  text(ctx, arriba, x + 24, y + bh / 2 + fsO * 0.36, { font: FB(900, fsO), fill: T.priceInk || '#FFFFFF', tracking: 1, shadow: [T.priceShadow || 'rgba(0,0,0,.3)', 2, 0, 3] });
+  // de abajo hacia arriba: vigencia y leyendas, condición de pago, precio por kilo, placa, antes; arriba el nombre
+  let yb = y + h - 20;
+  const alc = ((S.legal || {}).alcohol === 'si' || (S.legal || {}).alcohol === true) || ((S.legal || {}).alcohol === 'auto' && RE_ALCOHOL.test((p.nombre || '') + ' ' + (p.desc || '')));
+  if (alc) { text(ctx, 'Beber con moderación. Prohibida su venta a menores de 18 años.', cx, yb, { font: FM(700, 17), fill: '#333', align: 'center', maxW: w - 30 }); yb -= 26; }
+  const vig = rangoLargo(V.desde, V.hasta), vt = (vig ? 'Válido ' + vig : '') + (V.agotar ? (vig ? ' o hasta agotar stock' : 'Hasta agotar stock') : '');
+  if (vt) { text(ctx, vt + '.', cx, yb, { font: FM(700, 19), fill: '#444', align: 'center', maxW: w - 30 }); yb -= 34; }
+  const cp = chipProducto(p, S);
+  if (cp) { const ph = 40; drawPromoChip(ctx, cx, yb - ph, ph, cp.label, cp.price, cp.P, 'center'); yb -= ph + 14; }
+  const nota = notaDe(p);
+  if (nota) { text(ctx, nota, cx, yb - 4, { font: FM(800, 24), fill: '#2A160C', align: 'center', maxW: w - 40 }); yb -= 38; }
+  const price = info.F || { int: '0', dec: '' }, unidad = p.unidad ? String(p.unidad).toUpperCase() : '', uF = FB(900, 30);
+  ctx.font = uF; const uw = unidad ? measure(ctx, unidad, 0.6) + 28 : 0;
+  const maxP = w - 40 - (uw ? uw + 12 : 0), pw = drawPlateMeasure(ctx, maxP, 196, price, {});
+  const plate = drawPlate(ctx, cx - (pw + (uw ? uw + 12 : 0)) / 2 + 8, yb, maxP, 196, price, T, {});
+  if (uw) chip(ctx, plate.right + 12, plate.y + (plate.h - 44) / 2, unidad, { h: 44, font: uF, padX: 14, tracking: 0.6 });
+  yb = plate.y - 14; const yIns = yb;                              // la insignia (% o 2x1) va al costado del «antes», donde sobra lugar
+  if (info.R) { const aS = 40, aw = Math.min(w - 40, measureAntes(ctx, info.R, aS)); drawAntes(ctx, cx - aw / 2, yb, info.R, aS, T, { maxW: w - 40, priceColor: '#2A160C', color: '#6B4A38' }); yb -= aS * 0.9 + 10; }
+  if (PRECIO_CFG.ahorro && info.ahorro > 0 && !p.noAhorro && yb - (y + bh) > 170) { const ch = 36; chipAhorro(ctx, cx, yb - ch, ch, info.ahorro, { align: 'center' }); yb -= ch + 12; }
+  const nm = String(p.nombre || '').trim().toUpperCase() || 'PRODUCTO', top = y + bh + 22, desc = String(p.desc || '').trim();
+  const espacio = yb - top - (desc ? 34 : 0);
+  const wf = fitBlock(ctx, nm, s => FB(900, s), 70, 28, w - 50, 3, Math.max(40, espacio), 0.94, 0.4);
+  const alto = wf.size * 0.94 * wf.lines.length + (desc ? 34 : 0), y0 = top + Math.max(0, (espacio + (desc ? 34 : 0) - alto) / 2);
+  wf.lines.forEach((ln, i) => text(ctx, ln, cx, y0 + wf.size * 0.82 + i * wf.size * 0.94, { font: FB(900, wf.size), fill: '#2A160C', align: 'center', tracking: 0.4 }));
+  if (desc) text(ctx, desc, cx, y0 + wf.size * 0.94 * wf.lines.length + 26, { font: FM(600, 24), fill: '#6B4A38', align: 'center', maxW: w - 50 });
+  drawBadge(ctx, x + 70, Math.min(yIns - 40, (yIns + yb) / 2), 56, p, T, info.pct);
+  ctx.restore();
+}
 function layoutStory4(ctx, S, T, env) {
   const W = 1080, H = 1920, M = 40, SAFE = 176;                   // abajo queda libre: ahí Instagram/WhatsApp ponen su barra
   drawBackground(ctx, W, H, T, 0.5, 0.05, 540);
@@ -157,6 +213,7 @@ Object.assign(LAYOUTS, {
   a4_10_tema: { nombre: 'Folleto A4 · 10 ofertas', corto: 'A4 · 10 ofertas', w: 1240, h: 1754, slots: 10, hero: false, pdf: 'A4', grupo: 'folleto', oculto: true, temas: TODOS_LOS_TEMAS, draw: (c, S, T, e) => layoutA4Grid(c, S, T, e, 2, 5) },
   a4_12: { nombre: 'Folleto A4 · 12 ofertas', corto: 'A4 · 12 ofertas', w: 1240, h: 1754, slots: 12, hero: false, pdf: 'A4', grupo: 'folleto', temas: TODOS_LOS_TEMAS, draw: (c, S, T, e) => layoutA4Grid(c, S, T, e, 3, 4) },
   a4_16: { nombre: 'Folleto A4 · 16 ofertas', corto: 'A4 · 16 ofertas', w: 1240, h: 1754, slots: 16, hero: false, pdf: 'A4', grupo: 'folleto', temas: TODOS_LOS_TEMAS, draw: (c, S, T, e) => layoutA4Grid(c, S, T, e, 4, 4) },
+  carteles_a4: { nombre: 'Carteles de góndola · 4 por hoja A4', corto: 'Carteles de góndola', w: 1240, h: 1754, slots: 4, hero: false, pdf: 'A4', grupo: 'carteles', temas: TODOS_LOS_TEMAS, draw: (c, S, T, e) => layoutCarteles(c, S, T, e) },
   story_4: { nombre: 'Historia / Estado WhatsApp · 4 ofertas', corto: 'Historia 9:16 · 4 ofertas', w: 1080, h: 1920, slots: 4, hero: false, grupo: 'redes', temas: TODOS_LOS_TEMAS, draw: (c, S, T, e) => layoutStory4(c, S, T, e) },
   post_4: { nombre: 'Post Facebook / Instagram · 4 ofertas', corto: 'Post 4:5 · 4 ofertas', w: 1080, h: 1350, slots: 4, hero: false, grupo: 'redes', temas: TODOS_LOS_TEMAS, draw: (c, S, T, e) => layoutPost4(c, S, T, e) },
   destacado_a4: { nombre: 'Un solo producto · A4 (liquidación, efectivo)', corto: 'A4 · 1 producto', w: 1240, h: 1754, slots: 1, hero: true, pdf: 'A4', grupo: 'unico', temas: ['impacto', 'marca', 'fecha'], draw: (c, S, T, e) => layoutDestacado(c, S, T, e, 'a4') },
@@ -177,6 +234,7 @@ const MAX_SLOTS = 16;
 /** Versiones de un mismo folleto según el destino: en redes van menos productos por imagen (se reparten en varias) para que se lean. */
 const DESTINOS = {
   a4: { nombre: 'Imprimir en hoja A4', detalle: 'PDF A4 + imagen a 300 dpi', icono: '🖨' },
+  carteles: { nombre: 'Carteles de góndola · 4 por hoja A4 para recortar', detalle: 'un cartel por producto, con el mismo precio del folleto', icono: '🏷' },
   post: { nombre: 'Publicación de Facebook / Instagram', detalle: '1080 × 1350 (4:5)', icono: '📰' },
   canal: { nombre: 'Canal de WhatsApp y chats', detalle: '1080 × 1350 en alta calidad', icono: '📢' },
   story: { nombre: 'Estado de WhatsApp / Historia de Facebook e Instagram', detalle: '1080 × 1920 (9:16)', icono: '📱' },
@@ -193,6 +251,12 @@ const FAMILIA = {
 /** Arma las imágenes para un destino: [{formato, productos (índices), pagina, total}]. */
 function planDestino(S, dest) {
   const L = LAYOUTS[S.formato] || LAYOUTS.a4_10, fam = FAMILIA[L.grupo] || FAMILIA.folleto;
+  if (dest === 'carteles') {                                       // un cartel por producto, de a 4 por hoja
+    if (!['folleto', 'redes', 'unico'].includes(L.grupo)) return [];
+    const idx = S.productos.slice(0, L.slots).map((p, i) => (productoVacio(p) ? -1 : i)).filter(i => i >= 0), pags = [];
+    for (let i = 0; i < idx.length; i += 4) pags.push(idx.slice(i, i + 4));
+    return pags.map((productos, n) => ({ formato: 'carteles_a4', productos, pagina: n + 1, total: pags.length }));
+  }
   let f = fam[dest]; if (f === null) f = L.pdf === 'A4' ? S.formato : 'a4_10';
   if (f === undefined) return [];                                   // este destino no corresponde a este tipo de folleto
   const LF = LAYOUTS[f], individual = !!(DESTINOS[dest] || {}).individual;

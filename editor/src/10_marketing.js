@@ -82,14 +82,16 @@ const elegirV = (arr, k) => arr[((k % arr.length) + arr.length) % arr.length];
 function textoPublicacion(S, destino = 'canal', tono = 'clasico', op = {}) {
   const D = datosDelFolleto(S), k = op.variante || 0, wa = destino !== 'facebook';
   const b = s => (wa ? `*${s}*` : s), out = [];
-  const lugar = D.dir ? `📍 ${D.dir}` + (op.mapa && D.C.mapa ? `\n🗺️ Cómo llegar: ${D.C.mapa}` : '') : '';
+  const hor = String(D.C.horario || '').trim(), numWA = waNumero(D.C.whatsapp), pedir = numWA ? waLink(numWA) : '';
+  const lugar = D.dir ? `📍 ${D.dir}` + (hor ? `\n🕘 ${hor}` : '') + (op.mapa && D.C.mapa ? `\n🗺️ Cómo llegar: ${D.C.mapa}` : '') : '';
   const cierre = () => {
     const c = [];
     if (destino === 'canal') c.push(elegirV(CTA_CANAL, k));
     if ((destino === 'grupos' || destino === 'facebook') && D.C.waCanal) c.push(`${elegirV(CTA_GRUPO, k)} ${D.C.waCanal}`);
-    if (D.C.telefono && destino !== 'facebook') c.push(`💬 Consultas y pedidos: ${D.C.telefono}`);
+    if (pedir) c.push(`💬 Pedí por WhatsApp: ${pedir}`);                              // el link abre el chat (desde el celular el QR no sirve)
+    else if (D.C.telefono && destino !== 'facebook') c.push(`💬 Consultas y pedidos: ${D.C.telefono}`);
     if (destino === 'facebook') {
-      if (D.C.telefono) c.push(`💬 Consultas y pedidos por WhatsApp: ${D.C.telefono}`);
+      if (D.C.telefono && !pedir) c.push(`💬 Consultas y pedidos por WhatsApp: ${D.C.telefono}`);
       if (op.hashtags !== false) c.push('\n' + ['#' + D.nombre.replace(/\s+/g, ''), D.barrio ? '#' + D.barrio.replace(/\s+/g, '') : '', '#Ofertas', HASHTAG_TEMA[S.tema] || ''].filter(Boolean).join(' '));
     }
     if (op.alcohol) c.push((wa ? '_' : '') + LEYENDA_ALCOHOL_TXT + (wa ? '_' : ''));
@@ -319,14 +321,14 @@ const GUIA = [
 
 // ───────── la ventana de Marketing ─────────
 const MKT = { textoPublicacion, textosEstados, armarPlan, icsDelPlan, calcOferta, proximosEventos, eventosComerciales, datosDelFolleto };
-const PESTANAS = [['textos', '📣 Textos para publicar'], ['plan', '🗓 Plan de la semana'], ['calc', '🧮 ¿Me conviene?'], ['combo', '🎁 Armar un combo'], ['fechas', '📅 Fechas que vienen'], ['ideas', '💡 Ideas para vender más']];
+const PESTANAS = [['textos', '📣 Textos para publicar'], ['plan', '🗓 Plan de la semana'], ['calc', '🧮 ¿Me conviene?'], ['combo', '🎁 Armar un combo'], ['sellos', '🎟 Tarjeta de sellos'], ['fechas', '📅 Fechas que vienen'], ['ideas', '💡 Ideas para vender más']];
 function abrirMarketing(pest = 'textos') {
   let actual = PESTANAS.some(([k]) => k === pest) ? pest : 'textos';
   const barra = h('div', { class: 'mkt-tabs', role: 'tablist', 'aria-label': 'Herramientas de marketing' });
   const cont = h('div', { class: 'mkt-cuerpo' });
   const pintar = () => {
     barra.replaceChildren(...PESTANAS.map(([k, t]) => h('button', { type: 'button', role: 'tab', class: 'mkt-tab', 'aria-selected': String(k === actual), onclick: () => { actual = k; pintar(); } }, t)));
-    const f = { textos: mktTextos, plan: mktPlan, calc: mktCalc, combo: mktCombo, fechas: mktFechas, ideas: mktIdeas }[actual];
+    const f = { textos: mktTextos, plan: mktPlan, calc: mktCalc, combo: mktCombo, sellos: mktSellos, fechas: mktFechas, ideas: mktIdeas }[actual];
     cont.replaceChildren(f(m));
     cont.scrollTop = 0;
   };
@@ -556,6 +558,72 @@ function mktFechas() {
         h('div', { class: 'row-actions' },
           h('button', { class: 'btn small' + (S.tema === e.tema && S.vigencia.hasta === isoDe(e.fecha) ? ' on' : ''), type: 'button', onclick: () => usarEvento(e) }, e.tema && THEMES[e.tema] && L.temas.includes(THEMES[e.tema].grupo) ? `Usar esta fecha (fondo «${THEMES[e.tema].nombre}»)` : 'Usar esta fecha')));
     }));
+}
+
+/** Tarjeta de sellos (85 × 55 mm, 10 por hoja A4): «juntá N sellos y llevate…». Hace volver al cliente; no es un sorteo. */
+const SELLOS_NORMAL = { cantidad: 10, premio: 'un producto de regalo', minimo: '', vence: '' };
+function dibujarTarjetaSellos(ctx, x, y, w, h, cfg, C) {
+  const k = w / 1004, n = clamp(+cfg.cantidad || 10, 4, 12), premio = String(cfg.premio || SELLOS_NORMAL.premio).trim(), bh = 190 * k;
+  ctx.save(); ctx.translate(x, y);
+  rrPath(ctx, 0, 0, w, h, 34 * k); ctx.fillStyle = '#FFFFFF'; ctx.fill();
+  ctx.save(); rrPath(ctx, 0, 0, w, h, 34 * k); ctx.clip(); ctx.fillStyle = vGrad(ctx, 0, bh, ['#FF8A2A', '#E5501A']); ctx.fillRect(0, 0, w, bh); ctx.restore();
+  rrPath(ctx, 0, 0, w, h, 34 * k); ctx.lineWidth = 6 * k; ctx.strokeStyle = '#E5501A'; ctx.stroke();
+  const L = RES.logoH; let lw = 0;
+  if (L) { lw = 330 * k; const lh = lw * (L.naturalHeight || L.height) / (L.naturalWidth || L.width); ctx.drawImage(L, 34 * k, (bh - lh) / 2, lw, lh); }
+  const tit = 'TARJETA DE SELLOS', ft = fitSize(ctx, tit, s => FB(900, s), 76 * k, 30 * k, w - lw - 110 * k, 0.5);
+  text(ctx, tit, w - 34 * k, bh / 2 + ft * 0.36, { font: FB(900, ft), fill: '#FFFFFF', align: 'right', tracking: 1, shadow: ['rgba(90,25,0,.35)', 2, 0, 3] });
+  const frase = `Juntá ${n} sellos y llevate ${premio}`, ff = fitSize(ctx, frase, s => FB(900, s), 58 * k, 26 * k, w - 68 * k, 0.3);
+  text(ctx, frase, w / 2, bh + 76 * k, { font: FB(900, ff), fill: '#2A160C', align: 'center', tracking: 0.3 });
+  const cols = Math.ceil(n / 2), gap = 16 * k, top = bh + 104 * k, r = Math.min(((w - 68 * k) - gap * (cols - 1)) / cols / 2, 62 * k), fila = r * 2 + 18 * k;
+  const x0 = (w - (cols * r * 2 + gap * (cols - 1))) / 2;
+  for (let i = 0; i < n; i++) {
+    const c = i % cols, f = Math.floor(i / cols), cx = x0 + r + c * (r * 2 + gap), cy = top + r + f * fila, ultimo = i === n - 1;
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU); ctx.fillStyle = ultimo ? '#FFF1C7' : '#FFF7F0'; ctx.fill();
+    ctx.save(); ctx.setLineDash([9 * k, 7 * k]); ctx.lineWidth = 4 * k; ctx.strokeStyle = ultimo ? '#E5501A' : '#D9B8A3'; ctx.stroke(); ctx.restore();
+    text(ctx, ultimo ? 'PREMIO' : String(i + 1), cx, cy + (ultimo ? 10 : 18) * k, { font: FB(900, (ultimo ? 26 : 50) * k), fill: ultimo ? '#E5501A' : '#E3C9B8', align: 'center' });
+  }
+  const minimo = parsePrecio(cfg.minimo), vence = parseISO(cfg.vence);
+  const letra = [minimo ? `1 sello por compra de ${txtPrecio(minimo)} o más.` : '1 sello por compra.', vence ? `Válida hasta el ${vence.getDate()}/${vence.getMonth() + 1}/${vence.getFullYear()}.` : '', 'No canjeable por dinero.'].filter(Boolean).join(' ');
+  const pie = [String(C.direccion || '').trim(), waNumero(C.whatsapp) ? 'WhatsApp ' + String(C.whatsapp).trim() : String(C.telefono || '').trim()].filter(Boolean).join(' · ');
+  text(ctx, 'Nombre: ________________________', 34 * k, h - 74 * k, { font: FM(700, 24 * k), fill: '#6B4A38' });
+  text(ctx, letra, 34 * k, h - 42 * k, { font: FM(600, 19 * k), fill: '#6B4A38', maxW: w - 68 * k });
+  if (pie) text(ctx, pie, 34 * k, h - 16 * k, { font: FM(700, 19 * k), fill: '#2A160C', maxW: w - 68 * k });
+  ctx.restore();
+}
+/** Hoja A4 a 300 dpi con 10 tarjetas (2 × 5) y líneas de corte. */
+function hojaSellos(cfg, C) {
+  const W = 2480, H = 3508, cw = 1004, ch = 650, gx = 40, gy = 36, c = document.createElement('canvas'); c.width = W; c.height = H;
+  const ctx = c.getContext('2d'), scBak = SC; setSC(1);
+  try {
+    ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, W, H);
+    const x0 = (W - (cw * 2 + gx)) / 2, y0 = (H - (ch * 5 + gy * 4)) / 2;
+    for (let i = 0; i < 10; i++) dibujarTarjetaSellos(ctx, x0 + (i % 2) * (cw + gx), y0 + Math.floor(i / 2) * (ch + gy), cw, ch, cfg, C);
+  } finally { setSC(scBak); }
+  return c;
+}
+function mktSellos() {
+  const cfg = S.sellos = { ...SELLOS_NORMAL, ...(S.sellos || {}) };
+  const prev = h('canvas', { class: 'sellos-prev', 'aria-label': 'Vista previa de la tarjeta de sellos' });
+  const pintar = () => { const esc = 0.5, ctx = prev.getContext('2d'); prev.width = 1004 * esc; prev.height = 650 * esc; ctx.setTransform(esc, 0, 0, esc, 0, 0); const b = SC; setSC(esc); try { dibujarTarjetaSellos(ctx, 0, 0, 1004, 650, cfg, S.comercio || {}); } finally { setSC(b); } };
+  const upd = () => { pintar(); guardarAuto(); };
+  const selN = h('select', { id: 'sellos-n', onchange: e => { cfg.cantidad = +e.target.value; upd(); } }, ...[6, 8, 10, 12].map(n => h('option', { value: String(n) }, n + ' sellos')));
+  selN.value = String(cfg.cantidad);
+  const inPremio = texto(cfg, 'premio', { ph: SELLOS_NORMAL.premio, max: 40, after: upd });
+  const bajar = async tipo => {
+    const c = hojaSellos(cfg, S.comercio || {}), nombre = 'Rivero Market - Tarjetas de sellos';
+    const blob = tipo === 'pdf' ? crearPDFPaginas([{ jpeg: new Uint8Array(await (await aBlob(c, 'image/jpeg', 0.93)).arrayBuffer()), w: c.width, h: c.height }], 595.28, 841.89) : await aBlob(c, 'image/png');
+    const r = await guardarArchivo(blob, nombre + (tipo === 'pdf' ? '.pdf' : '.png'));
+    aviso(r === 'ok' ? 'Listo: hoja A4 con 10 tarjetas. Imprimila en papel grueso (o cartulina) y cortala por las líneas.' : 'No se pudo guardar (' + r + ').', 6500);
+  };
+  setTimeout(pintar, 0);
+  return h('div', { class: 'stack' },
+    h('p', { class: 'hint', style: 'margin:0' }, 'Una tarjeta que el cliente guarda en la billetera: con cada compra le ponés un sello y, al completarla, se lleva el premio. Hace volver a la gente (y no es un sorteo: no depende de la suerte).'),
+    h('div', { class: 'grid2' }, campo('Cantidad de sellos', selN), campo('Compra mínima por sello', texto(cfg, 'minimo', { ph: 'opcional · ej. 5.000', mode: 'decimal', max: 12, after: upd }), 'opcional')),
+    campo('Premio', inPremio, 'qué se lleva al completarla'), chipsRapidos(['un producto de regalo', '10% de descuento en tu compra', '¼ kg de queso de regalo', 'una gaseosa de 2,25 L'], inPremio, cfg, 'premio'),
+    campo('Vence', h('input', { type: 'date', value: cfg.vence || '', onchange: e => { cfg.vence = e.target.value; upd(); } }), 'opcional'),
+    h('div', { class: 'sellos-marco' }, prev),
+    h('div', { class: 'row-actions' }, h('button', { class: 'btn primary', type: 'button', onclick: () => bajar('pdf') }, '⬇ PDF para imprimir (A4, 10 tarjetas)'), h('button', { class: 'btn', type: 'button', onclick: () => bajar('png') }, '⬇ Imagen')),
+    h('p', { class: 'note' }, 'Tamaño de tarjeta personal (85 × 55 mm). Conviene imprimirla en cartulina y tener un sello de goma o una birome de color para marcarla.'));
 }
 
 function mktIdeas() {

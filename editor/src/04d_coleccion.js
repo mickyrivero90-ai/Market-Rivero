@@ -76,6 +76,7 @@ function layoutColeccion(ctx, S, T, env, kind) {
   if (oc) { chip(ctx, cx, P.chipY, oc, { h: P.chipH, font: FM(800, fs), fill: T.accent, ink: T.accentInk, padX: fs * 1.1, tracking: trk }); cx += w1 + gp; }
   if (kk) chip(ctx, cx, P.chipY, kk, { h: P.chipH, font: FM(800, fs), fill: 'rgba(50,15,3,.92)', ink: T.accent[0], padX: fs * 1.1, tracking: trk });
   const rb = drawRibbonMulti(ctx, P.M, P.ribY, W - 2 * P.M, P.ribH, C.mensaje || 'Aquí tenemos todos los productos para tus recetas', T);
+  { const rU = Math.min(W * 0.1, 120); stickerUrgencia(ctx, S, T, W - P.M - rU * 0.9, P.logoY + rU * 0.85, rU); }
   const fp = footerPlan(ctx, S, W, H, P.foot, { infoH: kind === 'a4' ? 150 : kind === 'post' ? 138 : 146 }), fy = H - SAFE - fp.total;
   if (SAFE) franjaHistoria(ctx, S, T, W, H, SAFE);
   const top = rb.bottom + 18, bottom = fy - 10;

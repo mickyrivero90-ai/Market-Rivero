@@ -282,8 +282,8 @@ async function recordarPrecios() {
   if (n) CAT = await CARPETA.guardarCatalogo(CAT);
 }
 // ── terminar: imágenes según el destino (A4, Facebook, canal de WhatsApp, Estados) ──
-const DEST_CORTO = { a4: 'A4 para imprimir', post: 'Post Facebook', canal: 'Canal WhatsApp', story: 'Estado e Historia', story1: 'Estado e Historia', post1: 'Facebook y canal' };
-const DEST_ESCALA = { a4: 2, post: 1, canal: 1.5, story: 1, story1: 1, post1: 1.5 };
+const DEST_CORTO = { a4: 'A4 para imprimir', carteles: 'Carteles de góndola', post: 'Post Facebook', canal: 'Canal WhatsApp', story: 'Estado e Historia', story1: 'Estado e Historia', post1: 'Facebook y canal' };
+const DEST_ESCALA = { a4: 2, carteles: 2, post: 1, canal: 1.5, story: 1, story1: 1, post1: 1.5 };
 const nombreCarpeta = () => nombreBase(true);
 /** Descripción corta de lo que sale para un destino: "2 imágenes (de a 4 productos)". */
 function resumenDestino(dest) {
@@ -291,18 +291,21 @@ function resumenDestino(dest) {
   const L = LAYOUTS[plan[0].formato], n = plan.length;
   const esc = DEST_ESCALA[dest], med = `${Math.round(L.w * esc)}×${Math.round(L.h * esc)}`;
   if (plan[0].individual) return `${n} ${n === 1 ? 'imagen' : 'imágenes'} (una por producto) · ${med} px`;
+  if (dest === 'carteles') { const k = plan.reduce((t, pg) => t + pg.productos.length, 0); return `${k} ${k === 1 ? 'cartel' : 'carteles'} en ${n} ${n === 1 ? 'hoja' : 'hojas'} A4 · un solo PDF para imprimir`; }
   return (n > 1 ? `${n} imágenes (de a ${L.slots} productos para que se lean bien)` : '1 imagen') + ` · ${med} px` + (dest === 'a4' && S.opciones.pdf !== false && L.pdf ? ' + PDF' : '');
 }
 /** Genera los archivos de un destino: [{blob, nombre, tipo, w, h}]. */
 async function archivosDestino(dest) {
-  const plan = planDestino(S, dest), out = [], base = nombreBase(true), esc = DEST_ESCALA[dest];
+  const plan = planDestino(S, dest), out = [], base = nombreBase(true), esc = DEST_ESCALA[dest], hojas = [];
   for (const pg of plan) {
     const SP = estadoParaPagina(S, pg), c = document.createElement('canvas');
     renderFlyer(c, SP, { scale: esc, getImg, preview: false, exportar: true });
     const suf = ' - ' + DEST_CORTO[dest] + (pg.individual ? ` - ${String(pg.pagina).padStart(2, '0')} ${pg.nombre || 'producto'}`.slice(0, 70) : pg.total > 1 ? ` (${pg.pagina} de ${pg.total})` : '');
     out.push({ blob: await aBlob(c, 'image/png'), nombre: base + suf + '.png', tipo: 'png', w: c.width, h: c.height });
     if (dest === 'a4' && LAYOUTS[pg.formato].pdf && S.opciones.pdf !== false) out.push({ blob: await generarPDF(esc, c, pg.formato), nombre: base + suf + '.pdf', tipo: 'pdf' });
+    if (dest === 'carteles') hojas.push({ jpeg: new Uint8Array(await (await aBlob(c, 'image/jpeg', 0.92)).arrayBuffer()), w: c.width, h: c.height });
   }
+  if (hojas.length) out.push({ blob: crearPDFPaginas(hojas, 595.28, 841.89), nombre: base + ' - ' + DEST_CORTO[dest] + '.pdf', tipo: 'pdf' });   // todas las hojas en un PDF
   return out;
 }
 function filaAviso(r) {
@@ -408,6 +411,7 @@ async function finalizarFolleto() {
       API.activo ? h('button', { class: 'btn primary', type: 'button', onclick: () => API.abrirArchivo(carpeta ? rutaCarpeta : guardados[0].ruta).catch(e => aviso(e.message)) }, carpeta ? 'Abrir la carpeta' : 'Abrir la imagen') : null,
       API.activo ? h('button', { class: 'btn', type: 'button', onclick: () => API.abrirCarpeta('escritorio').catch(e => aviso(e.message)) }, 'Abrir el Escritorio') : null,
       h('button', { class: 'btn' + (API.activo ? '' : ' primary'), type: 'button', onclick: () => abrirMarketing('textos') }, '📣 Textos para publicar'),
+      S.vigencia.hasta === isoDe(new Date()) && S.urgencia !== 'ultimo' ? h('button', { class: 'btn', type: 'button', title: 'Las mismas imágenes con el sticker «¡Último día!»', onclick: () => { m.cerrar(); S.urgencia = 'ultimo'; construirPanel(); cambio(); finalizarFolleto(); } }, '＋ Versión «¡Último día!»') : null,
       h('span', { class: 'sp' }),
       h('button', { class: 'btn ghost', type: 'button', onclick: () => m.cerrar() }, 'Seguir editando'),
       CARPETA.activa ? h('button', { class: 'btn', type: 'button', onclick: () => { m.cerrar(); nuevoFolleto(true); } }, 'Folleto nuevo') : null);

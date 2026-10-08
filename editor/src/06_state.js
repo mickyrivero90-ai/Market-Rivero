@@ -39,13 +39,15 @@ function estadoDemo() {
     sello: { modo: 'auto', l1: '', l2: '', l3: '' },
     vigencia: { desde: '', hasta: '2026-10-18', agotar: true },
     promo: { tipo: 'mp', pct: '10', cuotas: '', texto: '', textoBarra: '', verBarra: true, etiqueta: '', logo: '', modo: 'incluido', verPrecio: true, barra: { tam: 1, letra: 'mont', alinear: 'centro', dy: 0 } },
-    precio: { antes: 'antes', etiqueta: 'FINAL', ahorro: true, grande: true, insignia: 1.3, placa: 1, ahorroTam: 1, limpio: true, porUnidad: true, fraccion: true },
+    precio: { antes: 'antes', etiqueta: 'FINAL', ahorro: true, grande: true, insignia: 1.3, placa: 1, ahorroTam: 1, limpio: true, porUnidad: true, fraccion: '100g' },
     pagos: { ver: false, lista: ['efectivo', 'debito', 'credito', 'mp', 'transferencia'], textos: {} },
     mensaje: { kicker: '¡Aprovechá!', titulo: 'Descuento en todos los productos', grande: '', grande2: '', condicion: '', texto: 'Válido para todas tus compras en el local.' },
     destacado: { mensaje: 'OFERTA IMPERDIBLE', mensaje2: '' },
     legal: { banda: true, bandaTam: 1, letraChica: true, alcohol: 'no', stock: '' },
     cuadros: { sep: 1, margen: 1, foto: 1, estrella: 1, alinear: 'auto', dx: 0, dy: 0 },
     historia: { ver: true, cta: '' },
+    urgencia: '',
+    sellos: { cantidad: 10, premio: 'un producto de regalo', minimo: '', vence: '' },                                                 // sticker «¡Último día!» / «¡Quedan pocas!» / «Solo hoy»
     opciones: { pdf: true, destinos: ['a4', 'post', 'story'] },
     coleccion: {
       mensaje: 'Aquí tenemos todos los productos para tus recetas', kicker: 'Para reposteras y reposteros', ocasion: 'Especial Día de la Madre',
@@ -60,6 +62,8 @@ function estadoDemo() {
       direccion: 'Barrio San José, Avenida Solís Pizarro 1430',
       facebook: 'Fiambrería Rivero',
       telefono: '',
+      whatsapp: '',                                               // para pedidos: sale como QR «Pedí por WhatsApp» en el impreso
+      horario: '',
       waCanal: WA_CANAL,
       qrUrl: '',
       consulta: 'Facebook: Fiambrería Rivero',
@@ -94,7 +98,7 @@ function estadoParaGuardar(S) {
 /** Los datos del local son de todos los folletos: al abrir uno guardado se quedan los que se cambiaron último,
  *  así un folleto viejo no vuelve a poner la dirección o el teléfono de antes. Si en esta computadora nunca se
  *  tocaron (y no hay fechas para comparar), valen los del folleto que se abre. */
-const CAMPOS_LOCAL = ['nombre', 'direccion', 'facebook', 'telefono', 'waCanal', 'canalNombre', 'qrUrl', 'mapa', 'razon', 'cuit', 'legales', 'consulta'];
+const CAMPOS_LOCAL = ['nombre', 'direccion', 'horario', 'facebook', 'telefono', 'whatsapp', 'waCanal', 'canalNombre', 'qrUrl', 'mapa', 'razon', 'cuit', 'legales', 'consulta'];
 function comercioAlAbrir(abierto, actual) {
   if (!abierto) return actual; if (!actual) return abierto;
   const ta = +abierto.ts || 0, tc = +actual.ts || 0;

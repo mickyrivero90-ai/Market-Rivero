@@ -94,6 +94,18 @@ function ofertaDesde(regular, pct) {
   return conDescuento(R.num, p);
 }
 
+// ── WhatsApp ──
+/** «387 512-3456» (o con 0, 15, +54 9…) → «5493875123456» para wa.me; '' si no parece un celular argentino. */
+function waNumero(v) {
+  let d = String(v || '').replace(/\D/g, '');
+  if (d.startsWith('54')) d = d.slice(2);
+  if (d.startsWith('9')) d = d.slice(1);
+  if (d.startsWith('0')) d = d.slice(1);
+  if (d.length === 12) for (const n of [2, 3, 4]) if (d.slice(n, n + 2) === '15') { d = d.slice(0, n) + d.slice(n + 2); break; }   // el 15 después del código de área
+  return /^[1-9]\d{9}$/.test(d) ? '549' + d : '';
+}
+const waLink = (num, texto) => 'https://wa.me/' + num + (texto ? '?text=' + encodeURIComponent(texto) : '');
+
 // ── calendario de fechas comerciales de Argentina ──
 function pascua(y) {                                  // domingo de Pascua (algoritmo de Meeus)
   const a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3);

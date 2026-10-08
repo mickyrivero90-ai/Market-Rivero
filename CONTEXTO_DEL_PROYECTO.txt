@@ -1,6 +1,6 @@
 CONTEXTO DEL PROYECTO · RIVERO MARKET · FOLLETOS DE OFERTAS
 ==========================================================
-Actualizado: 8 de octubre de 2026 · versión 3.7 (herramienta online en GitHub)
+Actualizado: 8 de octubre de 2026 · versión 3.9 (herramienta online en GitHub)
 
 Este archivo cuenta qué pediste, qué decidimos, qué se hizo, cómo está armado y qué
 falta. Sirve para retomar el trabajo en otra conversación con Claude, en otra
@@ -29,7 +29,9 @@ computadora o con otra persona, sin tener que explicar todo de nuevo.
  19. Versión 3.4: arreglos 7 a 14 del relevamiento
  20. Versión 3.5: diseño (15 a 20, 19 y 35 del relevamiento)
  21. Versión 3.6: uso (21 a 26 del relevamiento)
- 22. Versión 3.7: versión online (27 a 32 del relevamiento) (LO ÚLTIMO)
+ 22. Versión 3.7: versión online (27 a 32 del relevamiento)
+ 23. Versión 3.8: agregados 33, 35 y 37 (pedidos por WhatsApp, ¼ kg, «¡Último día!»)
+ 24. Versión 3.9: carteles de góndola y tarjeta de sellos (34) (LO ÚLTIMO)
 
 
 0. CÓMO RETOMAR
@@ -981,3 +983,28 @@ Probado: autoprueba 131 OK.
      El ZIP de _entregas sigue con fotos (y también lleva nube.json).
 Probado: autoprueba 134 OK; descarga de fotos del programa contra una copia local de la página (44 nuevas, 44 iguales,
 1 cambiada).
+
+23. VERSIÓN 3.8: AGREGADOS 33, 35 Y 37 DEL RELEVAMIENTO (8/10/2026)
+-------------------------------------------------------------------
+ 33. 01_util.js: waNumero(v) → «549…» para wa.me (saca +54, 9, 0 y el 15 después del código de área) y waLink().
+     comercio.whatsapp y comercio.horario (CAMPOS_LOCAL). drawFooter: QR «PEDÍ POR WHATSAPP» solo en los impresos
+     (como mucho 2 QR: pedidos, canal, Facebook); el número va en el renglón de Facebook; el horario al lado de
+     «UBICACIÓN». 10_marketing.js: el horario va con la dirección y «Pedí por WhatsApp: wa.me/…» en el cierre.
+     07_app.js: campoWhatsApp() con la vista del link; la revisión avisa si el número no parece un celular.
+ 35. PRECIO_CFG.fraccion: '100g' | 'cuarto' | 'ambos' | 'no' (fraccionDe() lee el true/false de la 3.5).
+ 37. S.urgencia ('ultimo' | 'pocas' | 'hoy'): selloTexto() devuelve el sticker (urgente → sello rojo). Sin sello:
+     stickerUrgencia() al lado del logo (drawHeaderStack, layoutMensaje, layoutColeccion) o en la esquina del cuadro
+     (layoutDestacado). calcularRevision(): avisa si no es verdad y el último día sugiere ponerlo (info con acción);
+     pintarRevision() sube las sugerencias con botón. Modal final: «＋ Versión «¡Último día!»».
+Probado: autoprueba 137 OK.
+
+24. VERSIÓN 3.9: CARTELES DE GÓNDOLA Y TARJETA DE SELLOS, PUNTO 34 (8/10/2026)
+----------------------------------------------------------------------------
+ - 04c_formatos.js: LAYOUTS.carteles_a4 (grupo 'carteles', no aparece entre los formatos) con layoutCarteles() y
+   cartelGondola(); DESTINOS.carteles; planDestino(S, 'carteles') reparte de a 4 (folleto, redes y un solo producto).
+   Dentro de los carteles LIMPIO = false (cada cartel lleva su % y su condición de pago).
+ - 07_app.js: crearPDFPaginas(hojas, wpt, hpt) (crearPDF usa esa); 08_programa.js: archivosDestino('carteles') da un
+   PNG por hoja y un solo PDF con todas.
+ - 10_marketing.js: pestaña «sellos»: dibujarTarjetaSellos() (85 × 55 mm a 300 dpi) y hojaSellos() (A4, 2 × 5);
+   la configuración queda en S.sellos.
+Probado: autoprueba 142 OK.
