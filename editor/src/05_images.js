@@ -1,5 +1,6 @@
 // ───────────────────────── imágenes de productos y fotos ─────────────────────────
-const IMG = { ready: new Map(), error: new Set() };          // clave → imagen lista para dibujar / claves que no se pudieron cargar
+const IMG = { ready: new Map(), error: new Map() };          // clave → imagen lista para dibujar / clave → cuándo falló (se vuelve a probar)
+const REINTENTO_MS = 60000;                                     // una foto que no cargó se vuelve a pedir al minuto (o al finalizar)
 
 const enLaNube = () => typeof NUBE !== 'undefined' && NUBE.activo && !(typeof API !== 'undefined' && API.activo);
 /** Dirección de una foto de la carpeta de productos: la del programa local o la de la nube (GitHub). */
@@ -97,19 +98,19 @@ async function analizarFoto(src) {
 }
 
 /** Prepara (decodifica, reduce y, si hace falta, recorta el fondo) las imágenes que usa el estado. */
-async function prepararImagenes(S) {
+async function prepararImagenes(S, op = {}) {
   const vivos = new Set(), tareas = [];
   const items = [...(S.productos || []).map(p => [p, 1400]), ...((((S.coleccion || {}).fotos) || []).map(p => [p, 2000]))];
   for (const [p, maxLado] of items) {
     const src = srcDe(p);
     if (!src) continue;
     const k = claveImg(p); vivos.add(k);
-    if (IMG.ready.has(k) || IMG.error.has(k)) continue;
-    tareas.push(cargarImagen(src).then(im => { const c = aCanvas(im, maxLado); IMG.ready.set(k, p.quitarFondo ? quitarFondo(c, p.tol || 40) : c); }).catch(() => { IMG.error.add(k); }));
+    if (IMG.ready.has(k) || (IMG.error.has(k) && !op.reintentar && Date.now() - IMG.error.get(k) < REINTENTO_MS)) continue;
+    tareas.push(cargarImagen(src).then(im => { const c = aCanvas(im, maxLado); IMG.ready.set(k, p.quitarFondo ? quitarFondo(c, p.tol || 40) : c); IMG.error.delete(k); }).catch(() => { IMG.error.set(k, Date.now()); }));
   }
   await Promise.all(tareas);
   for (const k of [...IMG.ready.keys()]) if (!vivos.has(k)) IMG.ready.delete(k);
-  for (const k of [...IMG.error]) if (!vivos.has(k)) IMG.error.delete(k);
+  for (const k of [...IMG.error.keys()]) if (!vivos.has(k)) IMG.error.delete(k);
   const lg = (S.promo && S.promo.logo) || '';                      // logo propio de la promo (p. ej. el oficial de Mercado Pago)
   if (!lg) { RES.promoLogo = null; RES._promoSrc = ''; }
   else if (RES._promoSrc !== lg) { try { RES.promoLogo = await cargarImagen(lg); RES._promoSrc = lg; } catch (e) { RES.promoLogo = null; } }

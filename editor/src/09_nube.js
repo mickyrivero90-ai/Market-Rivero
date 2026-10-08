@@ -166,12 +166,21 @@ const NUBE = {
     lista.sort((a, b) => sinTildes(a.nombre).localeCompare(sinTildes(b.nombre), 'es') || (a.ruta < b.ruta ? -1 : 1));
     return { carpeta: `GitHub · ${this.cfg.repo}/productos`, productos: lista.filter(x => !x.pendiente), pendientes: lista.filter(x => x.pendiente) };
   },
+  /** Si una foto cambió de extensión (la IA la pasa de .jpg a .png), la encuentra con su nombre nuevo. */
+  rutaReal(ruta) {
+    const hay = r => (this.arbol ? this.arbol.has('productos/' + r) : this.manif ? this.manif.porRuta.has(r) : true);
+    if (!ruta || hay(ruta)) return ruta;
+    const base = ruta.replace(/\.[^./]+$/, '');
+    for (const ext of ['.png', '.webp', '.jpg', '.jpeg']) if (hay(base + ext)) return base + ext;
+    return ruta;
+  },
   urlImagen(ruta) {
     const ref = this.commit || (this.manif && this.manif.commit) || this.cfg.rama;
-    return `${this.cfg.raw}/${rutaURL(this.cfg.owner)}/${rutaURL(this.cfg.repo)}/${ref}/productos/${rutaURL(ruta)}`;
+    return `${this.cfg.raw}/${rutaURL(this.cfg.owner)}/${rutaURL(this.cfg.repo)}/${ref}/productos/${rutaURL(this.rutaReal(ruta))}`;
   },
   urlMiniatura(ruta, v) {
     const loc = this.miniLocal.get(ruta); if (loc) return loc;
+    ruta = this.rutaReal(ruta);
     const m = this.manif && this.manif.porRuta.get(ruta), actual = this.arbol ? (this.arbol.get('productos/' + ruta) || {}).sha : null;
     if (m && m.mini && (!actual || actual === m.sha)) return 'catalogo/' + m.mini;
     return this.urlImagen(ruta, v);
@@ -648,7 +657,7 @@ async function ofrecerBorradorDeOtraPC() {
   LS.set(CLAVE.borradorVisto, String(b.ts));
   if (!ok) return;
   try { if (hayContenido()) await guardarCopiaFolleto(); } catch (e) { console.error(e); }
-  S = normalizarEstado(b.estado); S.avisoEjemplo = false; ACTIVO = { tipo: esColeccion() ? 'foto' : 'producto', i: 0 };
+  const datosLocal = S.comercio; S = normalizarEstado(b.estado); S.comercio = comercioAlAbrir(S.comercio, datosLocal); S.avisoEjemplo = false; ACTIVO = { tipo: esColeccion() ? 'foto' : 'producto', i: 0 };
   await prepararImagenes(S); construirPanel(); cambio(); reiniciarHistorial();
   aviso(`Listo: seguís con el folleto de «${b.nombre || 'la otra computadora'}».`);
 }

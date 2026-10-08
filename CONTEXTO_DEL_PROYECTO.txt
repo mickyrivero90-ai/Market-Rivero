@@ -856,7 +856,7 @@ _trabajo/tmp/muestras32 (solo en la PC).
 17. RELEVAMIENTO DE MEJORAS (8/10/2026): LO QUE QUEDA PARA HACER
 -----------------------------------------------------------------
 El dueño pidió revisar todo. Se revisó el código y se armaron folletos de prueba. En orden:
-Errores que llegan al cliente o hacen perder datos (lo primero):
+Errores que llegan al cliente o hacen perder datos (lo primero; los 6 se arreglaron en la 3.3, ver 18):
   1. qrMotif (fondo Mercado Pago) y el ícono QR de la barra usan clearRect, y la llave inglesa
      usa destination-out: dejan píxeles transparentes, que salen negros en el PDF (JPG) y al
      pasar a JPG en redes. Además el «QR» de adorno parece uno de verdad.
@@ -882,3 +882,26 @@ público, llave sin vencimiento en un dominio compartido, Brave sin carpeta y co
 aviso falso de versión nueva al subir fotos, ZIP del programa con todas las fotos.
 Ideas: pedidos por WhatsApp y horario en el folleto, carteles de góndola y tarjeta de sellos,
 precio por 100 g, página pública de ofertas, sticker «¡Último día!», medir qué funciona.
+
+18. VERSIÓN 3.3: ARREGLOS 1 A 6 DEL RELEVAMIENTO (8/10/2026)
+------------------------------------------------------------
+  1. 04b_temas.js: se sacó qrMotif (decorMP ahora pone destellos); el ícono QR de la barra pinta los
+     huecos de blanco en vez de clearRect; wrench() deja la boca sin pintar con clip('evenodd') en
+     vez de destination-out. La autoprueba dibuja todos los formatos con todos los fondos y cuenta
+     píxeles con alfa < 255 (debe dar 0). En la 3.1: 5482 en A4 + Mercado Pago, 170 en el post (ícono).
+  2. 07_app.js: generarPDF(escala, canvas, formato): el tamaño de página sale del formato del dibujo.
+     08_programa.js lo llama con pg.formato.
+  3. 04c_formatos.js: planDestino usa solo los casilleros del formato elegido (L.slots). Si el destino
+     es del mismo tipo de imagen que el formato (tipoDe: a4/post/story), sale la misma imagen. Si no:
+     la estrella (L.hero y producto 0 cargado) va solo en la primera (post_star4 / story_3 / a4_star4)
+     y el resto se reparte parejo con repartir(idx, 4) en post_4 o story_4 (1 solo → destacado_story,
+     con el título del folleto y sin mensaje2). Formato nuevo story_4 (layoutStory4): 1 columna con
+     tantos renglones como productos al exportar (2 a 4) y 4 casilleros en pantalla.
+  4. 06_state.js: comercioAlAbrir(abierto, actual) con S.comercio.ts (lo pone textoLocal en 07_app.js
+     al editar un dato del local). Se usa al abrir de «Mis folletos», un .json y el borrador de la otra PC.
+  5. 05_images.js: IMG.error es un Map clave → hora; se reintenta al minuto y con
+     prepararImagenes(S, { reintentar: true }) al finalizar. calcularRevision avisa «N fotos no cargaron».
+  6. 09_nube.js: NUBE.rutaReal(ruta) busca la misma foto con otra extensión (.png/.webp/.jpg/.jpeg) en
+     el árbol o el manifiesto; 07_app.js: recordadoDe(ruta) busca el precio recordado sin la extensión.
+Probado: autoprueba 113 OK (13 nuevas; en Firefox tarda ~70 s), programa local 53 de 53, versión online 60 de 60
+(Firefox y Chrome). Con los valores de fábrica, frente a la 3.1 solo cambia el ícono QR de la barra (≈20×20 px).

@@ -111,12 +111,6 @@ function coin(ctx, x, y, r, alpha = 1) {
   ctx.strokeStyle = 'rgba(150,90,0,.55)'; ctx.lineWidth = r * 0.1; ctx.beginPath(); ctx.arc(x, y, r * 0.78, 0, TAU); ctx.stroke();
   text(ctx, '$', x, y + r * 0.34, { font: FB(900, r * 1.05), fill: 'rgba(150,90,0,.8)', align: 'center' }); ctx.restore();
 }
-function qrMotif(ctx, x, y, s, color, alpha = 0.18, seed = 3) {
-  ctx.save(); ctx.globalAlpha = alpha; ctx.fillStyle = color; const n = 21, c = s / n, r = rnd(seed);
-  const finder = (fx, fy) => { ctx.fillRect(x + fx * c, y + fy * c, 7 * c, 7 * c); ctx.clearRect(x + (fx + 1) * c, y + (fy + 1) * c, 5 * c, 5 * c); ctx.fillRect(x + (fx + 2) * c, y + (fy + 2) * c, 3 * c, 3 * c); };
-  for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) { const inF = (i < 8 && j < 8) || (i > n - 9 && j < 8) || (i < 8 && j > n - 9); if (!inF && r() > 0.52) ctx.fillRect(x + i * c, y + j * c, c * 0.92, c * 0.92); }
-  finder(0, 0); finder(n - 7, 0); finder(0, n - 7); ctx.restore();
-}
 function confetti(ctx, W, hh, colors, count, seed, zone) {
   const r = rnd(seed);
   for (let i = 0; i < count; i++) {
@@ -216,7 +210,8 @@ function decorPadre(ctx, W, H, hh) {
 }
 function decorMP(ctx, W, H, hh) {
   const u = W / 1240;
-  qrMotif(ctx, W * 0.58, hh * 0.06, 140 * u, '#fff', 0.22, 5); qrMotif(ctx, -30 * u, hh * 0.52, 120 * u, '#fff', 0.2, 9); qrMotif(ctx, W - 100 * u, hh * 0.62, 110 * u, '#fff', 0.2, 12);
+  // sin «códigos QR» de adorno: parecían de verdad (el cliente los quería escanear) y dejaban agujeros transparentes en la imagen
+  const r = rnd(5); for (let i = 0; i < 9; i++) { ctx.fillStyle = 'rgba(255,255,255,.28)'; starPath(ctx, r() * W, hh * (0.15 + r() * 0.8), (5 + r() * 9) * u, 2.5 * u, 4); ctx.fill(); }
   [[0.50, 0.30, 24], [0.62, 0.34, 18], [0.72, 0.05, 20], [0.45, 0.06, 16]].forEach(([fx, fy, rr]) => coin(ctx, W * fx, hh * fy * 1.6 + 14, rr * u, 0.95));
   ctx.strokeStyle = 'rgba(255,255,255,.18)'; ctx.lineWidth = 3 * u;
   for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.moveTo(0, hh * (0.85 + i * 0.07)); ctx.bezierCurveTo(W * 0.3, hh * (0.65 + i * 0.07), W * 0.7, hh * (1.05 + i * 0.07), W, hh * (0.8 + i * 0.07)); ctx.stroke(); }
@@ -286,9 +281,9 @@ function gear(ctx, x, y, R, teeth, fill, alpha = 1, rot = 0) {
 }
 function wrench(ctx, x, y, s, rot, fill, alpha = 1) {
   ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.globalAlpha = alpha; ctx.fillStyle = fill;
+  ctx.beginPath(); ctx.rect(-s, -s, s * 2, s * 2); ctx.rect(-s * 0.07, -s * 0.62, s * 0.14, s * 0.24); ctx.clip('evenodd');   // la boca de la llave queda sin pintar (sin borrar el fondo)
   rrPath(ctx, -s * 0.07, -s * 0.3, s * 0.14, s * 0.85, s * 0.06); ctx.fill();
-  ctx.beginPath(); ctx.arc(0, -s * 0.38, s * 0.2, 0, TAU); ctx.fill();
-  ctx.globalCompositeOperation = 'destination-out'; ctx.fillRect(-s * 0.07, -s * 0.62, s * 0.14, s * 0.24); ctx.restore();
+  ctx.beginPath(); ctx.arc(0, -s * 0.38, s * 0.2, 0, TAU); ctx.fill(); ctx.restore();
 }
 function decorTrabajador(ctx, W, H, hh) {
   const u = W / 1240;
@@ -579,7 +574,7 @@ function promoIcono(ctx, tipo, x, y, s, ink, generico = false) {
     const iw = RES.promoLogo.naturalWidth || RES.promoLogo.width, ih = RES.promoLogo.naturalHeight || RES.promoLogo.height, k = Math.min((s * 0.84) / iw, (s * 0.84) / ih);
     ctx.drawImage(RES.promoLogo, (s - iw * k) / 2, (s - ih * k) / 2, iw * k, ih * k);
   } else if (tipo === 'qr') { rrPath(ctx, 0, 0, s, s, s * 0.18); ctx.fillStyle = '#fff'; ctx.fill(); ctx.fillStyle = ink; const c = s / 9;
-    for (const [qx, qy] of [[1, 1], [5, 1], [1, 5]]) { ctx.fillRect(qx * c, qy * c, 3 * c, 3 * c); ctx.clearRect((qx + 0.6) * c, (qy + 0.6) * c, 1.8 * c, 1.8 * c); ctx.fillRect((qx + 1) * c, (qy + 1) * c, 1 * c, 1 * c); }
+    for (const [qx, qy] of [[1, 1], [5, 1], [1, 5]]) { ctx.fillRect(qx * c, qy * c, 3 * c, 3 * c); ctx.fillStyle = '#fff'; ctx.fillRect((qx + 0.6) * c, (qy + 0.6) * c, 1.8 * c, 1.8 * c); ctx.fillStyle = ink; ctx.fillRect((qx + 1) * c, (qy + 1) * c, 1 * c, 1 * c); }
     ctx.fillRect(5 * c, 5 * c, c * 1.1, c * 1.1); ctx.fillRect(7 * c, 6.4 * c, c * 1.1, c * 1.1); ctx.fillRect(5.6 * c, 7.2 * c, c * 1.1, c * 1.1); }
   else if (tipo === 'cash') { rrPath(ctx, 0, s * 0.18, s, s * 0.64, s * 0.1); ctx.fillStyle = '#fff'; ctx.fill(); ctx.fillStyle = ink; ctx.beginPath(); ctx.arc(s / 2, s / 2, s * 0.17, 0, TAU); ctx.fill(); ctx.fillRect(s * 0.1, s * 0.3, s * 0.1, s * 0.1); ctx.fillRect(s * 0.8, s * 0.6, s * 0.1, s * 0.1); }
   else { rrPath(ctx, s * 0.1, s * 0.1, s * 0.8, s * 0.8, s * 0.18); ctx.fillStyle = '#fff'; ctx.fill(); starPath(ctx, s / 2, s / 2, s * 0.28, s * 0.12, 5); ctx.fillStyle = ink; ctx.fill(); }

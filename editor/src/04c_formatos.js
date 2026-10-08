@@ -134,12 +134,28 @@ function layoutDestacado(ctx, S, T, env, kind) {
   }
 }
 
+/** Historia sin producto estrella: 2 a 4 productos en renglones. Al repartir un folleto en varias historias, usa
+ *  tantos renglones como productos le tocan (sin tarjetas de relleno); en pantalla muestra los 4 casilleros. */
+function layoutStory4(ctx, S, T, env) {
+  const W = 1080, H = 1920, M = 40, SAFE = 176;                   // abajo queda libre: ahí Instagram/WhatsApp ponen su barra
+  drawBackground(ctx, W, H, T, 0.5, 0.05, 540);
+  const hb = drawHeaderStack(ctx, W, S, T, { M, logoW: 600, logoY: 112, subY: 322, subSize: 22, ribbonY: 350, ribbonH: 104, titleMax: 98, pillY: 486, pillH: 48 });
+  const fp = footerPlan(ctx, S, W, H, 'story'), fh = fp.total, fy = H - SAFE - fh;
+  ctx.fillStyle = T.footer; ctx.fillRect(0, H - SAFE - 2, W, SAFE + 2);
+  const top = hb + 28, bottom = fy - 22, llenos = (S.productos || []).slice(0, 4).filter(p => !productoVacio(p)).length;
+  const n = env.preview ? 4 : clamp(llenos, 2, 4);
+  gridCards(ctx, S, T, env, Array.from({ length: n }, (_, i) => i), { x: M, y: top, w: W - 2 * M, h: bottom - top }, 1, n, 22, 16);
+  drawFooter(ctx, S, T, env, { x: 0, y: fy, w: W }, fp, { m: 40 });
+  if (env.preview) zonasApp(ctx, W, H, SAFE);
+}
+
 const TODOS_LOS_TEMAS = ['marca', 'fecha', 'impacto'];
 Object.assign(LAYOUTS, {
   a4_10: { nombre: 'Folleto A4 · 10 ofertas', corto: 'A4 · 10 ofertas', w: 1240, h: 1754, slots: 10, hero: false, pdf: 'A4', grupo: 'folleto', temas: TODOS_LOS_TEMAS, draw: (c, S, T, e) => layoutA4Grid(c, S, T, e, 2, 5) },
   a4_10_tema: { nombre: 'Folleto A4 · 10 ofertas', corto: 'A4 · 10 ofertas', w: 1240, h: 1754, slots: 10, hero: false, pdf: 'A4', grupo: 'folleto', oculto: true, temas: TODOS_LOS_TEMAS, draw: (c, S, T, e) => layoutA4Grid(c, S, T, e, 2, 5) },
   a4_12: { nombre: 'Folleto A4 · 12 ofertas', corto: 'A4 · 12 ofertas', w: 1240, h: 1754, slots: 12, hero: false, pdf: 'A4', grupo: 'folleto', temas: TODOS_LOS_TEMAS, draw: (c, S, T, e) => layoutA4Grid(c, S, T, e, 3, 4) },
   a4_16: { nombre: 'Folleto A4 · 16 ofertas', corto: 'A4 · 16 ofertas', w: 1240, h: 1754, slots: 16, hero: false, pdf: 'A4', grupo: 'folleto', temas: TODOS_LOS_TEMAS, draw: (c, S, T, e) => layoutA4Grid(c, S, T, e, 4, 4) },
+  story_4: { nombre: 'Historia / Estado WhatsApp · 4 ofertas', corto: 'Historia 9:16 · 4 ofertas', w: 1080, h: 1920, slots: 4, hero: false, grupo: 'redes', temas: TODOS_LOS_TEMAS, draw: (c, S, T, e) => layoutStory4(c, S, T, e) },
   post_4: { nombre: 'Post Facebook / Instagram · 4 ofertas', corto: 'Post 4:5 · 4 ofertas', w: 1080, h: 1350, slots: 4, hero: false, grupo: 'redes', temas: TODOS_LOS_TEMAS, draw: (c, S, T, e) => layoutPost4(c, S, T, e) },
   destacado_a4: { nombre: 'Un solo producto · A4 (liquidación, efectivo)', corto: 'A4 · 1 producto', w: 1240, h: 1754, slots: 1, hero: true, pdf: 'A4', grupo: 'unico', temas: ['impacto', 'marca', 'fecha'], draw: (c, S, T, e) => layoutDestacado(c, S, T, e, 'a4') },
   destacado_post: { nombre: 'Un solo producto · Post 4:5', corto: 'Post 4:5 · 1 producto', w: 1080, h: 1350, slots: 1, hero: true, grupo: 'unico', temas: ['impacto', 'marca', 'fecha'], draw: (c, S, T, e) => layoutDestacado(c, S, T, e, 'post') },
@@ -179,19 +195,34 @@ function planDestino(S, dest) {
   if (f === undefined) return [];                                   // este destino no corresponde a este tipo de folleto
   const LF = LAYOUTS[f], individual = !!(DESTINOS[dest] || {}).individual;
   if (!LF.slots || L.grupo === 'unico') return [{ formato: f, productos: null, pagina: 1, total: 1 }];
-  // productos con contenido, en el orden del folleto (los del formato de origen)
-  const fuente = L.grupo === 'redes' ? MAX_SLOTS : L.slots;
-  const idx = S.productos.slice(0, fuente).map((p, i) => (productoVacio(p) ? -1 : i)).filter(i => i >= 0);
+  // productos con contenido, en el orden del folleto: solo los que se ven en el formato elegido
+  const idx = S.productos.slice(0, L.slots).map((p, i) => (productoVacio(p) ? -1 : i)).filter(i => i >= 0);
   if (!idx.length) return [{ formato: f, productos: [], pagina: 1, total: 1 }];
   if (individual) return idx.map((i, n) => ({ formato: f, productos: [i], pagina: n + 1, total: idx.length, individual: true, nombre: String(S.productos[i].nombre || '').trim() }));
-  const out = []; for (let i = 0; i < idx.length; i += LF.slots) out.push(idx.slice(i, i + LF.slots));
-  return out.map((prods, n) => ({ formato: f, productos: prods, pagina: n + 1, total: out.length }));
+  const tipo = TIPO_DESTINO[dest];
+  if (tipoDe(L) === tipo) return [{ formato: S.formato, productos: idx, pagina: 1, total: 1 }];   // mismo tipo de imagen: la misma que se ve en pantalla
+  const estrella = !!L.hero && idx[0] === 0;                      // el producto estrella va solo en la primera imagen (sin estrellas inventadas)
+  let pags;
+  if (tipo === 'a4') pags = [[estrella && idx.length <= 5 ? 'a4_star4' : a4Para(idx.length), idx]];
+  else if (tipo === 'post') pags = [...(estrella ? [['post_star4', idx.slice(0, 5)]] : []), ...repartir(estrella ? idx.slice(5) : idx, 4).map(g => ['post_4', g])];
+  else pags = [...(estrella ? [['story_3', idx.slice(0, 3)]] : []), ...repartir(estrella ? idx.slice(3) : idx, 4).map(g => [g.length === 1 ? 'destacado_story' : 'story_4', g])];
+  return pags.map(([formato, productos], n) => ({ formato, productos, pagina: n + 1, total: pags.length }));
+}
+/** Tipo de imagen: hoja A4, post 4:5 o historia 9:16. */
+const tipoDe = L => (L.pdf === 'A4' ? 'a4' : L.h > L.w * 1.5 ? 'story' : 'post');
+const TIPO_DESTINO = { a4: 'a4', post: 'post', canal: 'post', story: 'story' };
+const a4Para = n => (n <= 8 ? 'a4_8' : n <= 10 ? 'a4_10' : n <= 12 ? 'a4_12' : 'a4_16');
+/** Reparte los productos en grupos parejos de hasta cap (10 de a 4 → 4, 3 y 3). */
+function repartir(idx, cap) {
+  const n = Math.ceil(idx.length / cap), out = [];
+  for (let k = 0, i = 0; k < n; k++) { const m = Math.ceil((idx.length - i) / (n - k)); out.push(idx.slice(i, i + m)); i += m; }
+  return out;
 }
 /** Estado para dibujar una página de un destino (sin tocar el original). */
 function estadoParaPagina(S, pg) {
   const T = { ...S, formato: pg.formato };
   if (pg.productos) T.productos = [...pg.productos.map(i => S.productos[i]), ...Array.from({ length: MAX_SLOTS }, () => ({}))];
   // un producto por imagen sacado de un folleto de varios: el cartel grande lleva el título del folleto (no "OFERTA IMPERDIBLE")
-  if (pg.individual && (LAYOUTS[S.formato] || {}).grupo !== 'unico') T.destacado = { mensaje: S.titulo || 'Ofertas de la semana', mensaje2: '' };
+  if ((pg.individual || (LAYOUTS[pg.formato] || {}).grupo === 'unico') && (LAYOUTS[S.formato] || {}).grupo !== 'unico') T.destacado = { mensaje: S.titulo || 'Ofertas de la semana', mensaje2: '' };
   return T;
 }

@@ -88,6 +88,18 @@ function estadoParaGuardar(S) {
   return { ...S, productos: S.productos.map(sinDemo), coleccion: { ...S.coleccion, fotos: S.coleccion.fotos.map(sinDemo) } };
 }
 
+/** Los datos del local son de todos los folletos: al abrir uno guardado se quedan los que se cambiaron último,
+ *  así un folleto viejo no vuelve a poner la dirección o el teléfono de antes. Si en esta computadora nunca se
+ *  tocaron (y no hay fechas para comparar), valen los del folleto que se abre. */
+const CAMPOS_LOCAL = ['nombre', 'direccion', 'facebook', 'telefono', 'waCanal', 'qrUrl', 'mapa', 'razon', 'cuit', 'legales', 'consulta'];
+function comercioAlAbrir(abierto, actual) {
+  if (!abierto) return actual; if (!actual) return abierto;
+  const ta = +abierto.ts || 0, tc = +actual.ts || 0;
+  if (ta || tc) return ta > tc ? abierto : actual;
+  const fabrica = estadoDemo().comercio;
+  return CAMPOS_LOCAL.every(k => String(actual[k] || '') === String(fabrica[k] || '')) ? abierto : actual;
+}
+
 /** Completa un estado viejo o parcial con los campos nuevos. */
 function normalizarEstado(S, op = {}) {
   const base = estadoDemo(), A = (typeof ASSETS !== 'undefined' && ASSETS) || {};

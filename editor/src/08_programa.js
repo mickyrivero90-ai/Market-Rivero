@@ -229,7 +229,7 @@ async function recordarPrecios() {
   const ahora = Date.now(); let n = 0;
   for (const p of S.productos.slice(0, L_ACTUAL().slots)) {
     if (p.archivo && !productoVacio(p) && parsePrecio(p.final)) {
-      const hist = ((CAT[p.archivo] || {}).hist || []).concat([{ ts: ahora, regular: p.regular, final: p.final }]).slice(-12);   // historial de precios del producto
+      const hist = ((recordadoDe(p.archivo) || {}).hist || []).concat([{ ts: ahora, regular: p.regular, final: p.final }]).slice(-12);   // historial de precios del producto
       CAT[p.archivo] = { nombre: p.nombre, desc: p.desc, regular: p.regular, final: p.final, unidad: p.unidad, etiqueta: p.etiqueta, nota: p.nota, ts: ahora, hist }; n++;
     }
   }
@@ -255,7 +255,7 @@ async function archivosDestino(dest) {
     renderFlyer(c, SP, { scale: esc, getImg, preview: false, exportar: true });
     const suf = ' - ' + DEST_CORTO[dest] + (pg.individual ? ` - ${String(pg.pagina).padStart(2, '0')} ${pg.nombre || 'producto'}`.slice(0, 70) : pg.total > 1 ? ` (${pg.pagina} de ${pg.total})` : '');
     out.push({ blob: await aBlob(c, 'image/png'), nombre: base + suf + '.png', tipo: 'png', w: c.width, h: c.height });
-    if (dest === 'a4' && LAYOUTS[pg.formato].pdf && S.opciones.pdf !== false) out.push({ blob: await generarPDF(esc, c), nombre: base + suf + '.pdf', tipo: 'pdf' });
+    if (dest === 'a4' && LAYOUTS[pg.formato].pdf && S.opciones.pdf !== false) out.push({ blob: await generarPDF(esc, c, pg.formato), nombre: base + suf + '.pdf', tipo: 'pdf' });
   }
   return out;
 }
@@ -293,6 +293,7 @@ function elegirDestinos() {
 }
 
 async function finalizarFolleto() {
+  if (IMG.error.size) { await prepararImagenes(S, { reintentar: true }); programarDibujo(); }
   const avisos = calcularRevision().filter(r => r.k === 'warn');
   if (avisos.length) {
     const seguir = await new Promise(res => {
@@ -388,7 +389,7 @@ async function abrirFolleto(archivo, modal) {
     if (hayContenido() && CARPETA.guardaFolletos) await guardarCopiaFolleto();
     const j = await CARPETA.leerProyecto(archivo);
     if (!j) throw new Error('No encuentro ese folleto: puede que lo hayan borrado desde la otra computadora.');
-    S = normalizarEstado(j); S.avisoEjemplo = false; ACTIVO = { tipo: esColeccion() ? 'foto' : 'producto', i: 0 };
+    const local = S.comercio; S = normalizarEstado(j); S.comercio = comercioAlAbrir(S.comercio, local); S.avisoEjemplo = false; ACTIVO = { tipo: esColeccion() ? 'foto' : 'producto', i: 0 };
     await prepararImagenes(S); construirPanel(); cambio(); reiniciarHistorial(); modal.cerrar(); aviso('Folleto abierto. Revisá fechas y precios.');
   } catch (e) { aviso(e.message); }
 }

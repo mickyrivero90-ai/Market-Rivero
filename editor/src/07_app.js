@@ -6,12 +6,12 @@ let CAT = {};                          // memoria de precios por foto (programa 
 const DOM = {};
 const GRUPOS_FORMATO = [
   ['Folletos de ofertas', 'A4 para imprimir; al terminar elegís también la versión para redes', ['a4_10', 'a4_12', 'a4_16', 'a4_8', 'a4_star4']],
-  ['Redes sociales', 'Facebook, Instagram, WhatsApp', ['post_4', 'post_star4', 'story_3']],
+  ['Redes sociales', 'Facebook, Instagram, WhatsApp', ['post_4', 'post_star4', 'story_3', 'story_4']],
   ['Mensaje o anuncio', 'sin productos: promos de pago, descuentos, avisos', ['mensaje_a4', 'mensaje_post', 'mensaje_story']],
   ['Un solo producto', 'liquidación, fardos, solo efectivo', ['destacado_a4', 'destacado_post', 'destacado_story']],
   ['Mostrar productos', 'sin precios: para dar a conocer lo que tenés', ['coleccion_a4', 'coleccion_post', 'coleccion_story']],
 ];
-const DESC_FORMATO = { a4_10: '2 columnas', a4_12: '3 columnas', a4_16: '4 columnas', a4_8: 'Cartas grandes', a4_star4: '1 estrella + 4', post_4: 'Más legible', post_star4: 'Estrella + 4', story_3: 'Estados · Historias',
+const DESC_FORMATO = { a4_10: '2 columnas', a4_12: '3 columnas', a4_16: '4 columnas', a4_8: 'Cartas grandes', a4_star4: '1 estrella + 4', post_4: 'Más legible', post_star4: 'Estrella + 4', story_3: 'Estados · Historias', story_4: 'Estados · sin estrella',
   mensaje_a4: 'Para imprimir', mensaje_post: 'Facebook · canal WA', mensaje_story: 'Estados · Historias',
   destacado_a4: 'Para imprimir', destacado_post: 'Facebook · Instagram', destacado_story: 'WhatsApp · Instagram', coleccion_a4: 'Para imprimir', coleccion_post: 'Facebook · Instagram', coleccion_story: 'WhatsApp · Instagram' };
 const NOMBRE_GRUPO_TEMA = { marca: 'Colores de la marca', fecha: 'Fechas especiales y promos', impacto: 'Estilos de impacto' };
@@ -135,6 +135,7 @@ function miniatura(id) {
   else if (id === 'a4_8') { R(3, 3, 54, 16, 'ac'); grid(22, 4, 11.6, 2); R(0, 76, 60, 9, 'pp', 0); }
   else if (id === 'a4_star4') { R(3, 3, 54, 16, 'ac'); R(3, 22, 54, 25, 'pp'); grid(50, 2, 10.6, 1.8); R(0, 76, 60, 9, 'pp', 0); }
   else if (id === 'post_star4') { R(3, 3, 54, 14, 'ac'); R(3, 19, 54, 20, 'pp'); grid(41, 2, 9.4, 1.6); R(0, 65, 60, 10, 'pp', 0); }
+  else if (id === 'story_4') { R(3, 12, 54, 18, 'ac'); for (let r = 0; r < 4; r++) R(3, 33 + r * 13.5, 54, 11.5, 'wh'); R(0, 90, 60, 7, 'pp', 0); }
   else if (id === 'story_3') { R(3, 12, 54, 18, 'ac'); R(3, 32, 54, 34, 'pp'); R(3, 69, 54, 8, 'wh'); R(3, 79, 54, 8, 'wh'); R(0, 90, 60, 7, 'pp', 0); }
   else if (id === 'destacado_a4') { R(0, 14, 60, 12, 'ac', 0); R(4, 31, 52, 42, 'pp'); R(0, 77, 60, 8, 'pp', 0); svg.append(svgEl('circle', { cx: 12, cy: 38, r: 5, class: 'wh' })); }
   else if (id === 'destacado_post') { R(0, 12, 60, 11, 'ac', 0); R(4, 27, 52, 34, 'pp'); R(0, 66, 60, 9, 'pp', 0); svg.append(svgEl('circle', { cx: 12, cy: 34, r: 5, class: 'wh' })); }
@@ -279,10 +280,18 @@ async function aplicarSeleccion(tipo, i, items) {
   if (n < items.length) aviso(`Solo había lugar para ${n} de los ${items.length} elegidos. Los demás no se cargaron.`);
   else if (tipo === 'producto') { const f = $(`.prow[data-tipo="producto"][data-i="${dest[0]}"] .in-foco`, DOM.panel); if (f && n === 1) f.focus(); }
 }
+/** Precio recordado de una foto. Si la foto cambió de extensión (la IA la pasa de .jpg a .png), lo busca por el nombre. */
+function recordadoDe(ruta) {
+  if (!ruta || CAT[ruta]) return CAT[ruta] || null;
+  const sinExt = r => String(r).replace(/\.[^./]+$/, ''), base = sinExt(ruta);
+  let mejor = null;
+  for (const [k, v] of Object.entries(CAT)) if (sinExt(k) === base && (!mejor || (v.ts || 0) > (mejor.ts || 0))) mejor = v;
+  return mejor;
+}
 async function asignarProducto(p, it) {
   let info = { alfa: false, claro: false };
   try { info = await analizarFoto(urlImagen(it.ruta, it.mtime)); } catch (e) { /* se marca como faltante al dibujar */ }
-  const m = CAT[it.ruta];
+  const m = recordadoDe(it.ruta);
   Object.assign(p, { archivo: it.ruta, mtime: it.mtime, img: null, demo: null, imgV: (p.imgV || 0) + 1, alfa: info.alfa, quitarFondo: !info.alfa && info.claro, zoom: 1, dx: 0, dy: 0, tol: 40,
     nombre: (m && m.nombre) || it.nombre, desc: (m && m.desc) || '', regular: (m && m.regular) || '', final: (m && m.final) || '', unidad: (m && m.unidad) || '', etiqueta: (m && m.etiqueta) || '', nota: (m && m.nota) || '', pct: '', pago: '', recordado: !!(m && m.final) });
 }
@@ -509,6 +518,9 @@ function calcularRevision() {
     if (alcoholActivo(S)) ok('Leyenda de alcohol incluida', 'Ley 24.788: “Beber con moderación” y “Prohibida su venta a menores de 18 años”.');
     else if (hayAlcohol) info('Leyenda de alcohol apagada', 'Si alguna vez la querés, se activa en «Legales» (Ley 24.788: “Beber con moderación. Prohibida su venta a menores de 18 años”).');
     const sinPrecio = usados.filter(p => !parsePrecio(p.final)).length, sinFoto = usados.filter(p => !srcDe(p)).length, vacios = prods.length - usados.length;
+    const rotas = usados.filter(faltaArchivo);
+    if (rotas.length) warn((rotas.length === 1 ? 'Una foto no cargó: ' : rotas.length + ' fotos no cargaron: ') + rotas.slice(0, 4).map(p => String(p.nombre || 'sin nombre').trim()).join(', ') + (rotas.length > 4 ? '…' : ''),
+      'Saldrían sin foto. Puede ser internet lento, o que la foto se haya borrado o cambiado de nombre en la otra computadora. Esperá un momento y volvé a tocar Finalizar, o elegí la foto de nuevo.');
     if (g === 'mensaje' && !String(S.mensaje.titulo || '').trim()) warn('Falta el título del mensaje', 'Escribilo en el paso 2.');
     const distintos = P && P.pct ? usados.filter(p => (!p.pago || p.pago === P.tipo) && infoProducto(p).R && infoProducto(p).pct !== P.pct && pctReal(infoProducto(p).R.num, infoProducto(p).F ? infoProducto(p).F.num : 0) !== P.pct).length : 0;
     if (distintos) warn(`${distintos} ${distintos === 1 ? 'producto tiene' : 'productos tienen'} un % distinto al de la barra (${P.pct}%)`, 'La barra dice ' + P.pct + '% y esos productos muestran otro descuento. Corregilos o usá “Descuento para todos”, así el folleto dice lo mismo en todos lados.');
@@ -909,9 +921,9 @@ function seccionPie() {
   const L = S.legal, C = S.comercio;
   DOM.pieVista = h('p', { class: 'pie-vista', 'aria-live': 'polite' });
   const cajaChica = h('div', { class: 'stack', hidden: L.letraChica === false || null }, DOM.pieVista,
-    campo('Agregar al final', texto(C, 'legales', { ph: 'Imágenes ilustrativas.', max: 140 }), 'opcional'));
+    campo('Agregar al final', textoLocal(C, 'legales', { ph: 'Imágenes ilustrativas.', max: 140 }), 'opcional'));
   const cajaBanda = h('div', { class: 'stack', hidden: !L.banda || null },
-    campo('Dónde consultar', texto(C, 'consulta', { ph: 'Facebook: Fiambrería Rivero', max: 70 }), 'web, WhatsApp o 0800'),
+    campo('Dónde consultar', textoLocal(C, 'consulta', { ph: 'Facebook: Fiambrería Rivero', max: 70 }), 'web, WhatsApp o 0800'),
     sliderTam('Tamaño de la letra de la banda', L, 'bandaTam', 0.6, 1.8, 1, { ayuda: 'en A4, con menos de 100 % queda más chica que los 4 mm que pide la norma' }));
   setTimeout(pintarPieVista, 0);
   return h('section', { class: 'sec', id: 'caja-pie' }, h('h2', null, 'Pie del folleto', h('small', null, 'letra chica y banda de abajo')),
@@ -933,24 +945,26 @@ function seccionRevision() {
         h('button', { class: 'btn', type: 'button', onclick: () => abrirMarketing('textos') }, '📣 Textos para publicar'))),
     h('p', { class: 'note' }, 'Armado con normas argentinas leídas en fuentes oficiales (Ley 24.240, Dto. 1798/94, Res. 4/2025 y 446/2025, Ley 24.788). Es una guía: no reemplaza el consejo de un contador o abogado.'));
 }
+/** Campo de los datos del local: anota cuándo se cambió (al abrir un folleto viejo se quedan los más nuevos). */
+const textoLocal = (C, key, o = {}) => texto(C, key, { ...o, after: () => { C.ts = Date.now(); cambio(); } });
 function seccionLocalYLegales() {
   const C = S.comercio;
   const selAlcohol = h('select', { id: 'alcohol-modo', 'aria-label': 'Leyenda de alcohol', onchange: e => { S.legal.alcohol = e.target.value; cambio(); } },
     h('option', { value: 'auto' }, 'Automática (si hay vino, fernet, cerveza…)'), h('option', { value: 'si' }, 'Siempre'), h('option', { value: 'no' }, 'Nunca'));
   selAlcohol.value = S.legal.alcohol === true ? 'si' : S.legal.alcohol === false ? 'no' : (S.legal.alcohol || 'auto');
   return [detalles('Datos del local (casi nunca cambian)', h('div', { class: 'stack' },
-      campo('Dirección', texto(C, 'direccion', { ph: 'Barrio, calle y número', max: 70 })),
-      campo('Facebook', texto(C, 'facebook', { ph: 'Nombre de tu página', max: 40 })),
-      campo('WhatsApp o teléfono', texto(C, 'telefono', { ph: 'Ej.: 11 5555-5555', mode: 'tel', max: 30 }), 'opcional'),
-      campo('Link del canal de WhatsApp', texto(C, 'waCanal', { ph: 'https://whatsapp.com/channel/…', mode: 'url', max: 200 }), 'sale como QR'),
-      campo('Link de Facebook', texto(C, 'qrUrl', { ph: 'https://www.facebook.com/tu-pagina', mode: 'url', max: 200 }), 'opcional · 2.º QR'),
-      campo('Link de Google Maps', texto(C, 'mapa', { ph: 'https://maps.app.goo.gl/…', mode: 'url', max: 200 }), 'opcional · para «cómo llegar» en los textos')),
+      campo('Dirección', textoLocal(C, 'direccion', { ph: 'Barrio, calle y número', max: 70 })),
+      campo('Facebook', textoLocal(C, 'facebook', { ph: 'Nombre de tu página', max: 40 })),
+      campo('WhatsApp o teléfono', textoLocal(C, 'telefono', { ph: 'Ej.: 11 5555-5555', mode: 'tel', max: 30 }), 'opcional'),
+      campo('Link del canal de WhatsApp', textoLocal(C, 'waCanal', { ph: 'https://whatsapp.com/channel/…', mode: 'url', max: 200 }), 'sale como QR'),
+      campo('Link de Facebook', textoLocal(C, 'qrUrl', { ph: 'https://www.facebook.com/tu-pagina', mode: 'url', max: 200 }), 'opcional · 2.º QR'),
+      campo('Link de Google Maps', textoLocal(C, 'mapa', { ph: 'https://maps.app.goo.gl/…', mode: 'url', max: 200 }), 'opcional · para «cómo llegar» en los textos')),
       h('p', { class: 'note' }, 'Estos datos se guardan solos y salen en todos los folletos. El QR del canal de WhatsApp se leyó de la foto del cartel del local.')),
     detalles('Legales', h('div', { class: 'stack' },
       h('p', { class: 'hint', style: 'margin:0' }, 'La banda de abajo y la letra chica se cambian en «Pie del folleto» (arriba).'),
       campo('Leyenda de alcohol', selAlcohol, 'Ley 24.788'),
       campo('Stock por producto', texto(S.legal, 'stock', { ph: 'Ej.: 24 unidades por producto', max: 50 }), 'opcional'),
-      h('div', { class: 'grid2' }, campo('Razón social', texto(C, 'razon', { ph: 'Opcional', max: 50 })), campo('CUIT', texto(C, 'cuit', { ph: 'XX-XXXXXXXX-X', mode: 'numeric', max: 14 })))))];
+      h('div', { class: 'grid2' }, campo('Razón social', textoLocal(C, 'razon', { ph: 'Opcional', max: 50 })), campo('CUIT', textoLocal(C, 'cuit', { ph: 'XX-XXXXXXXX-X', mode: 'numeric', max: 14 })))))];
 }
 function seccionConsejos() {
   return detalles('Consejos para vender más', h('ul', { class: 'tips' },
@@ -1006,8 +1020,9 @@ function nombreBase(sinFormato = false) {
 }
 function lienzoExport(escala) { const c = document.createElement('canvas'); renderFlyer(c, S, { scale: escala, getImg, preview: false, exportar: true }); return c; }
 const aBlob = (c, tipo, q) => new Promise(r => c.toBlob(r, tipo, q));
-async function generarPDF(escala = 2, canvas = null) {
-  const L = L_ACTUAL(), c = canvas || lienzoExport(escala), jpg = new Uint8Array(await (await aBlob(c, 'image/jpeg', 0.93)).arrayBuffer());
+/** PDF de una página. formato: el del dibujo que se pasa en canvas (si no, el que está en pantalla). */
+async function generarPDF(escala = 2, canvas = null, formato = null) {
+  const L = LAYOUTS[formato] || L_ACTUAL(), c = canvas || lienzoExport(escala), jpg = new Uint8Array(await (await aBlob(c, 'image/jpeg', 0.93)).arrayBuffer());
   const wpt = L.pdf === 'A4' ? 595.28 : L.w * 0.75, hpt = L.pdf === 'A4' ? 841.89 : L.h * 0.75;
   return crearPDF(jpg, c.width, c.height, wpt, hpt);
 }
@@ -1044,7 +1059,7 @@ async function guardarProyecto() {
   aviso(r === 'ok' ? 'Proyecto guardado.' : r === 'cancelado' ? 'Descarga cancelada.' : 'No se pudo guardar (' + r + ').');
 }
 async function abrirProyecto(file) {
-  try { const j = JSON.parse(await file.text()); S = normalizarEstado(j); await prepararImagenes(S); construirPanel(); cambio(); aviso('Proyecto abierto.'); }
+  try { const j = JSON.parse(await file.text()), local = S.comercio; S = normalizarEstado(j); S.comercio = comercioAlAbrir(S.comercio, local); await prepararImagenes(S); construirPanel(); cambio(); aviso('Proyecto abierto.'); }
   catch (e) { aviso('Ese archivo no es un proyecto válido.'); }
 }
 
@@ -1223,7 +1238,7 @@ async function autotest() {
     t('pegar planilla', pl.length === 3 && pl[0].regular === '20.600' && pl[0].final === '18.540' && pl[1].final === '6.930' && pl[2].regular === '8300', JSON.stringify(pl.map(x => [x.regular, x.final])));
     t('insignia 2x1', notaDeInsignia('2x1', '1.999') === 'Llevando 2 pagás 1: $999,50 c/u', notaDeInsignia('2x1', '1.999'));
     const bakF = S.formato; S.formato = 'a4_10';
-    t('reparto para redes', planDestino(S, 'post').length === 3 && planDestino(S, 'story').length === 4 && planDestino(S, 'a4').length === 1, [planDestino(S, 'post').length, planDestino(S, 'story').length].join('/'));
+    t('reparto para redes', planDestino(S, 'post').length === 3 && planDestino(S, 'story').length === 3 && planDestino(S, 'a4').length === 1, [planDestino(S, 'post').length, planDestino(S, 'story').length].join('/'));
     { const pl1 = planDestino(S, 'story1'), sp = estadoParaPagina(S, pl1[2]);
       t('un producto por imagen', pl1.length === 10 && pl1.every(x => x.individual && x.productos.length === 1) && sp.formato === 'destacado_story' && sp.productos[0] === S.productos[2] && sp.destacado.mensaje === S.titulo, pl1.length + ' imágenes'); }
     t('sin "un producto por imagen" en mensajes', planDestino({ ...S, formato: 'mensaje_post' }, 'story1').length === 0);
@@ -1283,6 +1298,50 @@ async function autotest() {
       }
       t('cuadros: todos los formatos con valores extremos', !malos.length, malos.join(' · ') || fmts.length + ' formatos');
       S.cuadros = CUbak; renderFlyer(c, S, { scale: 0.2, getImg, exportar: true });
+    }
+    { // v3.3: errores del relevamiento
+      const c = document.createElement('canvas'); c.getContext('2d', { willReadFrequently: true });
+      // 1) ninguna imagen queda con agujeros transparentes (salían negros en el PDF y al pasar a JPG):
+      //    todos los fondos en los tres tipos de encabezado, y todos los formatos con dos fondos
+      const agujeros = [], combos = [...['a4_10', 'story_3', 'post_4'].flatMap(f => Object.keys(THEMES).map(tema => [f, tema])), ...Object.keys(LAYOUTS).flatMap(f => ['mercadopago', 'naranja'].map(tema => [f, tema]))];
+      for (const [f, tema] of combos) {
+        renderFlyer(c, { ...S, formato: f, tema, promo: { ...S.promo, tipo: 'mp', logo: '' } }, { scale: 0.12, getImg, exportar: true });
+        const d = c.getContext('2d').getImageData(0, 0, c.width - 1, c.height - 1).data; let n = 0;   // sin el último renglón y columna (a esta escala quedan a medio pintar)
+        for (let i = 3; i < d.length; i += 4) if (d[i] < 255) n++;
+        if (n) agujeros.push(f + '/' + tema + ': ' + n);
+      }
+      t('sin agujeros transparentes en ningún formato ni fondo', !agujeros.length, agujeros.slice(0, 4).join(' · ') || combos.length + ' imágenes');
+      // 2) el PDF del A4 tiene tamaño A4 aunque el folleto se arme en un formato de redes
+      { const bakF = S.formato; S.formato = 'post_4'; const ca = document.createElement('canvas'); renderFlyer(ca, { ...S, formato: 'a4_10' }, { scale: 0.3, getImg, exportar: true });
+        const txt = new TextDecoder('latin1').decode(new Uint8Array(await (await generarPDF(0.3, ca, 'a4_10')).arrayBuffer()));
+        S.formato = bakF; t('PDF A4 desde un formato de redes', /MediaBox \[0 0 595\.28 841\.89\]/.test(txt), (txt.match(/MediaBox \[[^\]]+\]/) || [''])[0]); }
+      // 3) reparto para redes: lo que se ve, sin estrellas inventadas y parejo
+      const conProds = (formato, n) => ({ ...S, formato, productos: Array.from({ length: 16 }, (_, i) => i < n ? nuevoProducto({ nombre: 'P' + i, final: '100' }) : nuevoProducto()) });
+      const resumen = pl => pl.map(x => x.formato + ':' + (x.productos || []).length).join(' ');
+      t('repartir parejo', JSON.stringify(repartir([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 4).map(g => g.length)) === '[4,3,3]' && JSON.stringify(repartir([0, 1, 2, 3, 4], 4).map(g => g.length)) === '[3,2]');
+      const a10 = conProds('a4_10', 10);
+      t('A4 de 10 → posts e historias parejos', resumen(planDestino(a10, 'post')) === 'post_4:4 post_4:3 post_4:3' && resumen(planDestino(a10, 'story')) === 'story_4:4 story_4:3 story_4:3', resumen(planDestino(a10, 'story')));
+      const est = conProds('a4_star4', 5);
+      t('A4 estrella → la estrella solo en la primera', resumen(planDestino(est, 'post')) === 'post_star4:5' && resumen(planDestino(est, 'story')) === 'story_3:3 story_4:2', resumen(planDestino(est, 'story')));
+      const pe = conProds('post_star4', 5);
+      t('Post estrella → sale el mismo post (con estrella)', resumen(planDestino(pe, 'post')) === 'post_star4:5' && resumen(planDestino(pe, 'canal')) === 'post_star4:5' && resumen(planDestino(pe, 'a4')) === 'a4_star4:5');
+      const p4 = conProds('post_4', 10);
+      t('solo los productos que entran en el formato', resumen(planDestino(p4, 'post')) === 'post_4:4' && resumen(planDestino(p4, 'story')) === 'story_4:4' && planDestino(p4, 'post1').length === 4);
+      const uno = planDestino(conProds('a4_star4', 4), 'story');
+      t('historia con un solo producto: grande y sin «SOLO EN EFECTIVO»', resumen(uno) === 'story_3:3 destacado_story:1' && estadoParaPagina(conProds('a4_star4', 4), uno[1]).destacado.mensaje2 === '', resumen(uno));
+      { const S4 = conProds('story_4', 3); renderFlyer(c, S4, { scale: 0.2, getImg, exportar: true }); const n3 = HITS.filter(x => x.tipo === 'producto').length; renderFlyer(c, S4, { scale: 0.2, getImg, preview: true }); const n4 = HITS.filter(x => x.tipo === 'producto').length;
+        renderFlyer(c, S, { scale: 0.2, getImg, preview: true }); t('historia de 4: renglones según los productos', n3 === 3 && n4 === 4, n3 + ' / ' + n4); }
+      // 4) los datos del local no vuelven atrás al abrir un folleto viejo
+      const fab = estadoDemo().comercio, nuevo = { ...fab, direccion: 'Sarli Pizarro 1430', ts: 2000 }, viejo = { ...fab, direccion: 'Solís Pizarro 1430' };
+      t('datos del local: quedan los más nuevos', comercioAlAbrir(viejo, nuevo).direccion === 'Sarli Pizarro 1430' && comercioAlAbrir({ ...nuevo, ts: 3000, direccion: 'X' }, nuevo).direccion === 'X'
+        && comercioAlAbrir(viejo, { ...fab }).direccion === 'Solís Pizarro 1430' && comercioAlAbrir({ ...fab, telefono: '1' }, { ...fab, telefono: '2' }).telefono === '2');
+      // 5) una foto que no cargó se avisa en la revisión
+      { const p = S.productos.find(q => !productoVacio(q) && srcDe(q)); if (p) { const k = claveImg(p); IMG.error.set(k, Date.now()); const r = calcularRevision().some(x => x.k === 'warn' && /no carg/.test(x.t)); IMG.error.delete(k); t('foto que no cargó: aviso antes de terminar', r); } }
+      // 6) foto que la IA pasó de .jpg a .png: se encuentra con su precio
+      { const CATbak = CAT; CAT = { 'Bebidas/Fernet.jpg': { final: '18.540', ts: 1 } };
+        const ok6 = (recordadoDe('Bebidas/Fernet.png') || {}).final === '18.540' && !recordadoDe('Bebidas/Otro.png'); CAT = CATbak;
+        const real = NUBE.rutaReal.call({ arbol: new Map([['productos/Bebidas/Fernet.png', {}]]) }, 'Bebidas/Fernet.jpg');
+        t('foto con IA: precio recordado y foto con el nombre nuevo', ok6 && real === 'Bebidas/Fernet.png', real); }
     }
   } catch (e) { t('excepción', false, e.message + ' ' + (e.stack || '').split('\n')[1]); }
   const pre = document.createElement('pre'); pre.id = 'autotest'; pre.textContent = out.join('\n'); pre.style.cssText = 'position:fixed;left:0;top:0;z-index:99;background:#111;color:#9f9;padding:10px;margin:0;font:13px monospace;max-width:100vw;overflow:auto;max-height:100vh'; document.body.append(pre);

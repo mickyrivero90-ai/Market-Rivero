@@ -5,6 +5,27 @@ Desde la 3.0, la herramienta online (https://mickyrivero90-ai.github.io/Market-R
 se actualiza sola. Si usás el programa de la PC y muestra un número menor, bajá el nuevo
 desde la herramienta online (⋯ Más → Programa para usar sin internet).
 
+Versión 3.3 · 8 de octubre de 2026 · ARREGLOS DEL RELEVAMIENTO
+- Sin cuadrados blancos o negros en las imágenes. El fondo Mercado Pago tenía «códigos QR» de
+  adorno que dejaban agujeros: en el PDF salían negros, y también podían salir así cuando WhatsApp
+  o Facebook pasan la imagen a JPG. Además parecían un QR de verdad. Ahora hay destellos. Lo mismo
+  con el iconito QR de la barra de la promo y con la llave del fondo Día del Trabajador.
+- El PDF para imprimir sale siempre en tamaño A4, aunque el folleto se arme en un formato de
+  redes (antes salía de otro tamaño y con la imagen estirada).
+- Las imágenes para redes salen como se ven en pantalla:
+    · «Post · Estrella + 4» y la historia se descargan iguales a la vista previa (antes se perdía
+      la estrella).
+    · Solo van los productos que entran en el formato elegido («Otros productos guardados» no sale).
+    · Al repartir un folleto en varias historias, la estrella va solo en la primera, si el folleto
+      tiene estrella, y los productos se reparten parejo (10 → 4, 3 y 3), sin tarjetas de relleno.
+    · Formato nuevo: «Historia 9:16 · 4 ofertas», sin estrella.
+- Los datos del local (dirección, teléfono, canal, CUIT…) ya no vuelven atrás al abrir un folleto
+  viejo: quedan los que cambiaste último.
+- Una foto que no cargó (internet lento, o borrada o renombrada en la otra PC) se vuelve a pedir,
+  y antes de terminar la revisión avisa cuáles faltan.
+- Las fotos a las que GitHub les quita el fondo pasan de .jpg a .png: ahora se encuentran igual en
+  los folletos guardados y conservan el precio recordado.
+
 Versión 3.2 · 8 de octubre de 2026
 - Cuadros de productos (paso 2, caja nueva «Cuadros de productos: tamaño y dónde va el precio»):
     · Separación entre cuadros (10 % a 300 %) y margen a los costados (40 % a 200 %). Con más
