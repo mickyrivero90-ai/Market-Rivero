@@ -1187,3 +1187,12 @@ Probado: autoprueba 151 OK (más formatos); combo_post con Fernet + lata, mensaj
    actual() = S.productos[i] (nunca una copia vieja). En combo_* la caja va visible en la fila del producto 1 (pcampos);
    controlesFoto no la repite.
 Probado: autoprueba 151 OK; Playwright: dos fotos subidas desde la PC → fotosExtra = 2, la principal no cambia.
+
+41. VERSIÓN 5.6: COMBO Y UN PRODUCTO, FOTO MÁS GRANDE Y PRECIO ABAJO (9/11/2026)
+------------------------------------------------------------------------------
+ - Causa del hueco: CUADROS_CFG.dy es % del alto del cuadro; en drawHeroV/H (cuadro gigante) subía el precio cientos
+   de píxeles y la foto (que va arriba del nombre, pegado al precio) quedaba chica.
+ - bloqueFilas(z.sinDy): sin corrimiento vertical. precioMovidoHeroV y precioMovidoHeroH lo pasan (la alineación y dx
+   siguen valiendo).
+ - porUnidad(p): vacío si p.combo o p.fotosExtra (un combo no tiene precio por litro/kilo).
+Probado: autoprueba 151 OK; combo_post Fernet + botella con el precio subido 25 % y sin subir: iguales, foto grande.

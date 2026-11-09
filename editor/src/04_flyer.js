@@ -329,6 +329,7 @@ function modoLimpio(S) {
 /** Precio por kilo o litro con el contenido que dice el nombre (Res. 4/2025: «Aceite 850 ml» → «$2.964,71 x litro»).
  *  Lo que se vende por kilo dice cuánto salen 100 g («$783 los 100 g»). '' si no corresponde. */
 function porUnidad(p) {
+  if (p.combo || (p.fotosExtra || []).length) return '';           // un combo junta varios productos: no hay un precio por litro o kilo
   const F = parsePrecio(p.final); if (!F || !(F.num > 0)) return '';
   const u = String(p.unidad || '').toLowerCase().trim();
   if (/kg|kilo/.test(u)) {                                        // fiambres y quesos: 100 g, ¼ kg o los dos
@@ -411,7 +412,7 @@ function bloqueFilas(filas, z, a, cw, ch) {
   });
   const xEn = ww => (a === 'derecha' ? z.w - ww : a === 'centro' ? (z.w - ww) / 2 : 0), L = z.lim, x0 = z.x + xEn(ancho);
   const dx = clamp((+CUADROS_CFG.dx || 0) / 100 * cw, L.l - x0, Math.max(L.l - x0, L.r - x0 - ancho));
-  const dy = clamp((+CUADROS_CFG.dy || 0) / 100 * ch, z.bottom - L.b, Math.max(z.bottom - L.b, z.bottom - alto - L.t));
+  const dy = z.sinDy ? 0 : clamp((+CUADROS_CFG.dy || 0) / 100 * ch, z.bottom - L.b, Math.max(z.bottom - L.b, z.bottom - alto - L.t));   // sinDy: en un solo producto el precio queda abajo
   const bottom = z.bottom - dy;
   fs.forEach(f => {
     const yA = bottom - f.base - f.h;
@@ -715,7 +716,7 @@ function precioMovidoHeroH(ctx, p, info, T, k, w, h, tx, tw) {
   const pu = unidad ? piezaChip(ctx, unidad, 38 * k, { font: FB(900, 28 * k), padX: 15 * k, tracking: 1, fill: T.price, ink: T.priceInk || '#fff' }) : null;
   const pa = info.R ? piezaAntes(ctx, info.R, (PRECIO_CFG.grande ? 42 : 36) * k, T, { color: T.heroSoft, priceColor: T.heroInk, maxW: tw - (pu ? pu.w + 16 * k : 0) }) : null;
   if (pa || pu) filas.push({ h: Math.max(pa ? pa.h : 0, pu ? 38 * k : 0), items: [pa, pu].filter(Boolean), sep: 16 * k, gap: 14 * k, justo: a === 'izquierda' });
-  return bloqueFilas(filas, { x: tx, w: tw, bottom: h - (pz || ps ? 30 : 38) * k, lim: { l: 20 * k, r: w - 20 * k, t: 126 * k, b: h - 14 * k } }, a, w, h).top;
+  return bloqueFilas(filas, { x: tx, w: tw, bottom: h - (pz || ps ? 30 : 38) * k, lim: { l: 20 * k, r: w - 20 * k, t: 126 * k, b: h - 14 * k }, sinDy: true }, a, w, h).top;
 }
 function drawHeroH(ctx, r, p, T, env, o = {}) {
   const { x, y, w, h } = r, k = o.k || Math.min(h / 520, w / 1152), info = infoProducto(p);
@@ -782,7 +783,7 @@ function precioMovidoHeroV(ctx, p, info, T, k, w, h, big, a, limT) {
   const [plateH, pOp] = altoPlaca(140 * k * big), pp = piezaPlaca(ctx, w - 120 * k, plateH, info.F || { int: '0', dec: '' }, T, pOp, {});
   filas.push({ h: pp.h, items: [pp], gap: filas.length ? 10 * k : 0 });
   if (info.R) { const aS = (PRECIO_CFG.grande ? 46 : 38) * k; filas.push({ h: aS * 0.8, items: [piezaAntes(ctx, info.R, aS, T, { color: T.heroSoft, priceColor: T.heroInk, maxW: tw })], gap: 16 * k }); }
-  return bloqueFilas(filas, { x: 40 * k, w: tw, bottom: h - 26 * k, lim: { l: 16 * k, r: w - 16 * k, t: limT, b: h - 12 * k } }, a, w, h).top;
+  return bloqueFilas(filas, { x: 40 * k, w: tw, bottom: h - 26 * k, lim: { l: 16 * k, r: w - 16 * k, t: limT, b: h - 12 * k }, sinDy: true }, a, w, h).top;
 }
 function drawHeroV(ctx, r, p, T, env, o = {}) {
   const { x, y, w, h } = r, k = o.k || Math.min(w / 1000, h / 740), info = infoProducto(p), big = o.big || 1;
