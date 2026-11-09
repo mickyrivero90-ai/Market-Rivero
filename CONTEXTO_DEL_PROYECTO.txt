@@ -1273,3 +1273,11 @@ Probado: autoprueba 157 OK; los tres fondos en post, pizza en historia y hamburg
  - layoutComida(): el ancho de la tarjeta = max(nombre, renglón más largo + 50k, placa) + 2 × pad + 30k, entre 56 % del
    ancho y el máximo. Relleno rgba(255,255,255, S.comida.opac) (0,4–1, de fábrica 0,82); control en seccionComida().
 Probado: autoprueba 157 OK; los tres fondos en post, historia y A4.
+
+49. VERSIÓN 6.4: COMBO DE COMIDA, TEXTO FLOTANDO SOBRE LA FOTO (9/11/2026)
+------------------------------------------------------------------------
+ - S.comida.estilo: 'flotante' (de fábrica) | 'tarjeta'. Flotante: el bloque puede usar hasta 60 % del alto libre; la
+   ventana de la foto es cy = hb + 40 % y alto = 76 % del alto entre encabezado y pie (la comida queda en parte detrás
+   del texto); velo negro en degradé desde 160k arriba del bloque hasta el pie (0,8–0,92 × opac); textos blancos con
+   sombra, nombre y cantidades con T.accent[0], separadores blancos al 28 %. Botones en seccionComida().
+Probado: autoprueba 157 OK; los tres fondos en post, historia y A4.

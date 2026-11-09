@@ -1098,6 +1098,8 @@ function seccionComida() {
   pintar();
   const sumar = h('button', { class: 'btn small', type: 'button', onclick: () => { if (C.items.length >= 12) return; C.items.push({ cant: '', texto: '' }); pintar(); editado(); const ins = $$('.comida-fila input:not(.cant)', lista); if (ins.length) ins[ins.length - 1].focus(); } }, '＋ Agregar renglón');
   const inCartel = t('cartel', '¡SÚPER OFERTA!', 28);
+  const estilo = h('div', { class: 'quick', role: 'group', 'aria-label': 'Cómo va la lista' }, ...[['flotante', 'Texto sobre la foto'], ['tarjeta', 'En tarjeta blanca']].map(([v, tx]) =>
+    h('button', { type: 'button', class: 'q' + ((C.estilo || 'flotante') === v ? ' on' : ''), 'aria-pressed': String((C.estilo || 'flotante') === v), onclick: () => { C.estilo = v; construirPanel(); cambio(); const b = $('#caja-comida', DOM.panel); if (b) b.scrollIntoView({ block: 'end' }); } }, tx)));
   return h('section', { class: 'sec', id: 'caja-comida' }, h('h2', null, ...paso(2, 'Tu combo'), h('small', null, 'lo que trae y el precio')),
     h('div', { class: 'stack' },
       h('p', { class: 'hint', style: 'margin:0' }, 'Elegí el fondo en el paso 1 (pizza, panchos o hamburguesas): trae cargado el combo de ese fondo y lo cambiás acá. Tocá la tarjeta del folleto para volver a esta parte.'),
@@ -1106,7 +1108,8 @@ function seccionComida() {
       h('p', { class: 'lab', style: 'margin:4px 0 0' }, 'Lo que trae', h('em', null, ' · cantidad (sale resaltada) y producto')), lista, sumar,
       h('div', { class: 'grid2' }, campo('Precio del combo', t('precio', '10.500', 14)), campo('Precio por separado', t('antes', 'opcional', 14), 'opcional: sale «POR SEPARADO $…» tachado')),
       campo('Nota chica abajo del precio', t('nota', 'Ej.: Hasta agotar stock', 50), 'opcional'),
-      sliderTam('Tarjeta blanca: qué tan sólida', C, 'opac', 0.4, 1, 0.82, { ayuda: 'menos = se ve más la foto detrás; más = se lee mejor' })));
+      h('div', { class: 'fld tam' }, h('span', null, 'Cómo va la lista'), estilo),
+      sliderTam(C.estilo === 'tarjeta' ? 'Tarjeta blanca: qué tan sólida' : 'Sombra detrás del texto', C, 'opac', 0.4, 1, 0.82, { ayuda: C.estilo === 'tarjeta' ? 'menos = se ve más la foto; más = se lee mejor' : 'menos = se ve más la foto; más = se lee mejor el texto' })));
 }
 /** Folleto de mensaje: textos del anuncio. */
 function seccionMensaje() {

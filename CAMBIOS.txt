@@ -5,6 +5,13 @@ Desde la 3.0, la herramienta online (https://mickyrivero90-ai.github.io/Market-R
 se actualiza sola. Si usás el programa de la PC y muestra un número menor, bajá el nuevo
 desde la herramienta online (⋯ Más → Programa para usar sin internet).
 
+Versión 6.4 · 9 de noviembre de 2026 · COMBO DE COMIDA: TEXTO FLOTANDO SOBRE LA FOTO
+- De fábrica ya no hay tarjeta blanca: el nombre del combo (en amarillo), la lista (letra blanca, la
+  cantidad en amarillo) y el precio van flotando sobre la foto, con sombra y un oscurecido suave
+  abajo para que se lean. La foto de la comida sale mucho más grande.
+- En «Tu combo» → «Cómo va la lista» elegís «Texto sobre la foto» o «En tarjeta blanca». El control
+  de abajo regula la sombra detrás del texto (o, con tarjeta, qué tan sólida es).
+
 Versión 6.3 · 9 de noviembre de 2026 · TARJETA DEL COMBO A MEDIDA Y TRANSLÚCIDA
 - La tarjeta blanca del combo de comida se ajusta al texto: es tan ancha como el renglón más largo
   (o el nombre o el precio), así se ve más la foto a los costados.

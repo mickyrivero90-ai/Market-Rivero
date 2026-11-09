@@ -10,7 +10,7 @@ const COMBOS_COMIDA = {
   pizza: { cartel: '¡SÚPER OFERTA!', nombre: 'Combo Pizzas', precio: '12.700', items: [['1', 'Prepizza Soraide x3'], ['750 g', 'Cremoso Taurinos'], ['1', 'Salsa para pizza Noel 340 g'], ['200 g', 'Paleta especial'], ['100 g', 'Aceitunas descarozadas'], ['1', 'Ají en vaina']] },
   hamburguesa: { cartel: '¡SÚPER OFERTA!', nombre: 'Combo Burgers', precio: '8.000', items: [['1', 'Pan de hamburguesa Soraide x6'], ['3 paq.', 'Medallones Riccissima'], ['150 g', 'Queso cheddar La Serenísima'], ['1', 'Mayonesa Fiesta 237 g']] },
 };
-const comboComida = id => { const c = COMBOS_COMIDA[id] || COMBOS_COMIDA.panchos; return { cartel: c.cartel, nombre: c.nombre, precio: c.precio, antes: '', nota: '', opac: 0.82, auto: true, items: c.items.map(([cant, texto]) => ({ cant, texto })) }; };
+const comboComida = id => { const c = COMBOS_COMIDA[id] || COMBOS_COMIDA.panchos; return { cartel: c.cartel, nombre: c.nombre, precio: c.precio, antes: '', nota: '', opac: 0.82, estilo: 'flotante', auto: true, items: c.items.map(([cant, texto]) => ({ cant, texto })) }; };
 const MAX_COMBO = 2;                                             // fotos extra por cuadro (el combo: 3 fotos en total)
 const nuevaFoto = (o = {}) => ({ id: uid(), img: null, imgV: 0, archivo: null, mtime: null, demo: null, alfa: false, quitarFondo: false, tol: 40, titulo: '', ...o });
 

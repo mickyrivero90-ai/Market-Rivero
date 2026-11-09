@@ -181,9 +181,11 @@ function layoutComida(ctx, S, T, env, kind) {
     const h = pad + nombreS * 1.05 + 16 * k + items.length * filaH + 22 * k + (conAntes ? antesS * 1.2 : 0) + plateH + (nota ? notaS * 1.6 : 0) + pad;
     return { k, pad, nombreS, filaS, filaH, plateH, antesS, notaS, conAntes, nota, h };
   };
-  for (; e > 0.55; e -= 0.05) { g = medir(e); if (g.h <= maxCard) break; }
-  alto = Math.min(g.h, maxCard);
-  const cardY = fy - 24 - alto, ventana = { cy: (hb + cardY) / 2, alto: cardY - hb };
+  const flota = (C.estilo || 'flotante') !== 'tarjeta';           // flotante: la lista va sobre la foto, sin tarjeta
+  const tope0 = flota ? (fy - 24 - hb) * 0.6 : maxCard;
+  for (; e > 0.55; e -= 0.05) { g = medir(e); if (g.h <= tope0) break; }
+  alto = Math.min(g.h, tope0);
+  const cardY = fy - 24 - alto, ventana = flota ? { cy: hb + (fy - hb) * 0.4, alto: (fy - hb) * 0.76 } : { cy: (hb + cardY) / 2, alto: cardY - hb };
   // ── fondo: la foto (o el color del tema si no tiene foto)
   if (T.foto) { fondoFoto(ctx, W, H, T, ventana); ADORNO_PEND = null; } else { drawBackground(ctx, W, H, T, 0.5, 0.1, ribY + ribH); adornos(ctx, [zonaLogo((W - logoW) / 2, P.logoY, logoW)]); }
   if (Lg) { shadow(ctx, 'rgba(0,0,0,.55)', 20, 0, 8); ctx.drawImage(Lg, (W - logoW) / 2, P.logoY, logoW, logoH); noShadow(ctx); HITS.push({ tipo: 'cabecera', i: 0, x: (W - logoW) / 2, y: P.logoY, w: logoW, h: logoH }); }
@@ -199,33 +201,40 @@ function layoutComida(ctx, S, T, env, kind) {
     const pwM = drawPlateMeasure(ctx, cwMax, altoPlaca(120 * k)[0], price, altoPlaca(120 * k)[1]);
     cw = clamp(Math.max(nmW, filasW + 50 * k, pwM) + 2 * pad + 30 * k, Math.min(cwMax, W * 0.56), cwMax); cx = (W - cw) / 2;
   }
-  const opac = clamp(+C.opac || 0.82, 0.4, 1);                    // translúcida: se ve el fondo (se regula en «Tu combo»)
-  ctx.save(); shadow(ctx, 'rgba(0,0,0,.45)', 30 * k, 0, 12 * k); rrPath(ctx, cx, cardY, cw, alto, 34 * k); ctx.fillStyle = `rgba(255,255,255,${opac})`; ctx.fill(); noShadow(ctx);
-  rrPath(ctx, cx + 6 * k, cardY + 6 * k, cw - 12 * k, alto - 12 * k, 28 * k); ctx.lineWidth = 3 * k; ctx.strokeStyle = (T.price || ['#E5202F'])[0]; ctx.globalAlpha = 0.35; ctx.stroke(); ctx.globalAlpha = 1; ctx.restore();
+  const opac = clamp(+C.opac || 0.82, 0.4, 1);                    // tarjeta: qué tan sólida · flotante: qué tan oscuro detrás del texto
+  const inkC = flota ? '#FFFFFF' : T.ink || '#2B1208', accC = flota ? (T.accent || ['#FFE066'])[0] : (T.price || ['#E5202F'])[0], sepC = flota ? 'rgba(255,255,255,.28)' : 'rgba(0,0,0,.14)';
+  const sh = flota ? ['rgba(0,0,0,.95)', 12 * k, 0, 3 * k] : null, stk = flota ? 'rgba(0,0,0,.55)' : null;
+  if (flota) {                                                    // velo oscuro de abajo hacia arriba, para que el texto se lea sobre la foto
+    const v0 = cardY - 160 * k, vg = ctx.createLinearGradient(0, v0, 0, fy); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(Math.min(0.6, 160 * k / (fy - v0)), `rgba(0,0,0,${0.8 * opac})`); vg.addColorStop(1, `rgba(0,0,0,${0.92 * opac})`);
+    ctx.fillStyle = vg; ctx.fillRect(0, v0, W, fy - v0);
+  } else {
+    ctx.save(); shadow(ctx, 'rgba(0,0,0,.45)', 30 * k, 0, 12 * k); rrPath(ctx, cx, cardY, cw, alto, 34 * k); ctx.fillStyle = `rgba(255,255,255,${opac})`; ctx.fill(); noShadow(ctx);
+    rrPath(ctx, cx + 6 * k, cardY + 6 * k, cw - 12 * k, alto - 12 * k, 28 * k); ctx.lineWidth = 3 * k; ctx.strokeStyle = (T.price || ['#E5202F'])[0]; ctx.globalAlpha = 0.35; ctx.stroke(); ctx.globalAlpha = 1; ctx.restore();
+  }
   HITS.push({ tipo: 'comida', i: 0, x: cx, y: cardY, w: cw, h: alto });
   let y = cardY + pad;
   const nm = String(C.nombre || 'Combo').trim().toUpperCase(), tw = cw - 2 * pad;
   const ns = fitSize(ctx, nm, s => FB(900, s), g.nombreS, g.nombreS * 0.5, tw, 0.5);
-  text(ctx, nm, W / 2, y + ns * 0.85, { font: FB(900, ns), fill: T.ink || '#2B1208', align: 'center', tracking: 0.5 }); y += g.nombreS * 1.05 + 16 * k;
+  text(ctx, nm, W / 2, y + ns * 0.85, { font: FB(900, ns), fill: flota ? accC : inkC, align: 'center', tracking: 0.5, shadow: sh, stroke: stk, strokeW: stk ? ns * 0.06 : 0 }); y += g.nombreS * 1.05 + 16 * k;
   // lista: la cantidad resaltada y el producto; el bloque va centrado y cada renglón alineado a la izquierda
   const filas = items.map(x => ({ cant: String(x.cant || '').trim().toUpperCase(), txt: String(x.texto || '').trim().toUpperCase() }));
   let fs = g.filaS; const anchoFila = f => { ctx.font = FB(900, fs); const a = f.cant ? measure(ctx, f.cant + '  ', 0.3) : 0; ctx.font = FB(800, fs); return a + measure(ctx, f.txt, 0.3); };
   const tope = tw - 50 * k; let maxW = Math.max(1, ...filas.map(anchoFila)); if (maxW > tope) { fs *= tope / maxW; maxW = tope; }
-  const lx = W / 2 - maxW / 2, sepC = 'rgba(0,0,0,.14)', acc = (T.price || ['#E5202F'])[0];
+  const lx = W / 2 - maxW / 2, acc = accC;
   filas.forEach((f, i) => {
     if (i) { ctx.fillStyle = sepC; ctx.fillRect(cx + pad, y, cw - 2 * pad, Math.max(1.5, 2 * k)); }
     const base = y + g.filaH * 0.5 + fs * 0.36;
     ctx.font = FB(900, fs); const a = f.cant ? measure(ctx, f.cant + '  ', 0.3) : 0;
-    if (f.cant) text(ctx, f.cant, lx, base, { font: FB(900, fs), fill: acc, tracking: 0.3 });
-    text(ctx, f.txt, lx + a, base, { font: FB(800, fs), fill: T.ink || '#2B1208', tracking: 0.3 });
+    if (f.cant) text(ctx, f.cant, lx, base, { font: FB(900, fs), fill: acc, tracking: 0.3, shadow: sh });
+    text(ctx, f.txt, lx + a, base, { font: FB(800, fs), fill: inkC, tracking: 0.3, shadow: sh });
     y += g.filaH;
   });
   // precio: «POR SEPARADO $…» (si se cargó) y la placa grande, centrados
   y += 22 * k;
-  if (g.conAntes) { const aw = measureAntes(ctx, I.R, g.antesS); drawAntes(ctx, W / 2 - aw / 2, y + g.antesS * 0.85, I.R, g.antesS, T, { maxW: tw, priceColor: T.ink }); y += g.antesS * 1.2; }
+  if (g.conAntes) { const aw = measureAntes(ctx, I.R, g.antesS); drawAntes(ctx, W / 2 - aw / 2, y + g.antesS * 0.85, I.R, g.antesS, T, flota ? { maxW: tw, color: 'rgba(255,255,255,.85)', priceColor: '#FFFFFF' } : { maxW: tw, priceColor: T.ink }); y += g.antesS * 1.2; }
   const [plateH, pOp] = altoPlaca(120 * k), pw = drawPlateMeasure(ctx, tw, plateH, price, pOp);
   drawPlate(ctx, W / 2 - pw / 2 + plateH * 0.04, Math.min(y + plateH, cardY + alto - pad - (g.nota ? g.notaS * 1.6 : 0)), tw, plateH, price, T, pOp);
-  if (g.nota) text(ctx, g.nota, W / 2, cardY + alto - pad - g.notaS * 0.3, { font: FM(800, g.notaS), fill: T.soft || '#7B5A48', align: 'center', maxW: tw });
+  if (g.nota) text(ctx, g.nota, W / 2, cardY + alto - pad - g.notaS * 0.3, { font: FM(800, g.notaS), fill: flota ? 'rgba(255,255,255,.9)' : T.soft || '#7B5A48', align: 'center', maxW: tw, shadow: sh });
   if (T.decorTop) T.decorTop(ctx, W, H, ribY + ribH, { footerY: fy });
   drawFooter(ctx, S, T, env, { x: 0, y: fy, w: W }, fp, { m: P.M });
   if (SAFE && env.preview) zonasApp(ctx, W, H, SAFE);
