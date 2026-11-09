@@ -5,6 +5,13 @@ Desde la 3.0, la herramienta online (https://mickyrivero90-ai.github.io/Market-R
 se actualiza sola. Si usás el programa de la PC y muestra un número menor, bajá el nuevo
 desde la herramienta online (⋯ Más → Programa para usar sin internet).
 
+Versión 5.5 · 9 de noviembre de 2026 · COMBO: SUMAR FOTOS DESDE LA PC
+- Arreglado: en el combo, «＋ Sumar otra foto» con una foto de la PC cambiaba la foto principal en vez
+  de sumarla. Ahora, tanto eligiendo del catálogo como con «Usar una foto de esta PC», la foto se SUMA
+  al combo (hasta 3 por cuadro).
+- En el formato Combo, la parte «Combo: varias fotos en este cuadro» está a la vista en el producto
+  (antes estaba escondida en «Más opciones»).
+
 Versión 5.4 · 9 de noviembre de 2026 · FORMATO COMBO Y TAMAÑOS MÁS FÁCILES
 - Formato nuevo en el paso 1: «Combo» (Post, Historia y A4). Viene con el cartel «¡SÚPER COMBO!» y el
   tachado «POR SEPARADO», y en el paso 2 explica cómo armarlo: primera foto, «＋ Sumar otra foto» y

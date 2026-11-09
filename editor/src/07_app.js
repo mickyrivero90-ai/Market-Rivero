@@ -406,37 +406,40 @@ function controlesFoto(p, i, tipo) {
   const reset = h('button', { class: 'btn small ghost', type: 'button', onclick: () => { p.zoom = 1; p.dx = 0; p.dy = 0; construirListaCasilleros(tipo, i); cambio(); } }, 'Centrar');
   const ajustes = tipo === 'producto' ? h('details', { class: 'more' }, h('summary', null, 'Mover la foto adentro del cuadro'),
     h('div', { class: 'stack', style: 'margin-top:8px' }, h('div', { class: 'grid2' }, campo('Izquierda ↔ derecha', dx), campo('Arriba ↕ abajo', dy)), reset)) : null;
-  return h('div', { class: 'stack' }, tipo === 'producto' ? cajaCombo(p, i) : null, chkFondo, fondoBox, botIA ? h('div', { class: 'row-actions' }, botIA, h('small', { class: 'hint' }, CARPETA.nube ? 'GitHub crea una copia sin fondo y la foto se cambia sola en el folleto.' : 'Crea una copia sin fondo en la carpeta de productos.')) : null, ajustes);
+  return h('div', { class: 'stack' }, tipo === 'producto' && !(S.formato.startsWith('combo_') && i === 0) ? cajaCombo(p, i) : null, chkFondo, fondoBox, botIA ? h('div', { class: 'row-actions' }, botIA, h('small', { class: 'hint' }, CARPETA.nube ? 'GitHub crea una copia sin fondo y la foto se cambia sola en el folleto.' : 'Crea una copia sin fondo en la carpeta de productos.')) : null, ajustes);
 }
 /** Combo: otras fotos en el mismo cuadro (por ejemplo Fernet + gaseosa), con un «+» en el medio. */
 function cajaCombo(p, i) {
-  const combo = p.fotosExtra || (p.fotosExtra = []);
+  const actual = () => { const q = S.productos[i] || p; if (!Array.isArray(q.fotosExtra)) q.fotosExtra = []; return q; };   // siempre el producto de ahora (no una copia vieja)
   const listo = () => { construirListaCasilleros('producto', i); cambio(); };
+  const desdePC = () => {                                         // el selector va pegado a la página: suelto, Brave a veces lo descarta y la foto no llega
+    let inp = document.getElementById('sel-combo');
+    if (!inp) { inp = h('input', { type: 'file', id: 'sel-combo', accept: 'image/*', hidden: true }); document.body.append(inp); }
+    inp.value = '';
+    inp.onchange = async () => {
+      const f = inp.files && inp.files[0]; inp.onchange = null; if (!f) return;
+      try { const r = await leerArchivoImagen(f), q = actual(); if (q.fotosExtra.length >= MAX_COMBO) return; q.fotosExtra.push(nuevaFoto({ img: r.url, alfa: r.alfa, quitarFondo: !!r.claro, imgV: 1 })); listo(); aviso('Foto sumada al combo.'); }
+      catch (e) { aviso('No pude leer esa imagen. Probá con un archivo JPG o PNG.'); }
+    };
+    inp.click();
+  };
   const sumar = async () => {
-    if (combo.length >= MAX_COMBO) return;
+    if (actual().fotosExtra.length >= MAX_COMBO) return;
     if (CARPETA.activa) {
-      const el = await abrirSelector({ titulo: `Combo · elegí la foto ${combo.length + 2}`, multi: false, max: 1 });
+      const el = await abrirSelector({ titulo: `Combo · elegí la foto ${actual().fotosExtra.length + 2}`, multi: false, max: 1, alUsarPC: desdePC });
       if (!el || !el.length) return;
       const it = el[0]; let info = { alfa: false, claro: false };
       try { info = await analizarFoto(urlImagen(it.ruta, it.mtime)); } catch (e) { /* se marca como faltante al dibujar */ }
-      combo.push(nuevaFoto({ archivo: it.ruta, mtime: it.mtime, alfa: info.alfa, quitarFondo: !info.alfa && info.claro, imgV: 1 })); listo();
-    } else {
-      const inp = h('input', { type: 'file', accept: 'image/*' });
-      inp.addEventListener('change', async () => {
-        const f = inp.files && inp.files[0]; if (!f) return;
-        try { const r = await leerArchivoImagen(f); combo.push(nuevaFoto({ img: r.url, alfa: r.alfa, quitarFondo: !!r.claro, imgV: 1 })); listo(); }
-        catch (e) { aviso('No pude leer esa imagen. Probá con un archivo JPG o PNG.'); }
-      });
-      inp.click();
-    }
+      actual().fotosExtra.push(nuevaFoto({ archivo: it.ruta, mtime: it.mtime, alfa: info.alfa, quitarFondo: !info.alfa && info.claro, imgV: 1 })); listo(); aviso('Foto sumada al combo.');
+    } else desdePC();
   };
-  const fichas = combo.map((f, k) => { const mini = srcMini(f);
+  const fichas = actual().fotosExtra.map((f, k) => { const mini = srcMini(f);
     return h('div', { class: 'combo-foto' }, mini ? h('img', { src: mini, alt: 'Foto ' + (k + 2) + ' del combo' }) : h('span', null, 'foto ' + (k + 2)),
-      h('button', { class: 'btn small danger ghost', type: 'button', title: 'Sacar esta foto del combo', onclick: () => { combo.splice(k, 1); listo(); } }, 'Quitar')); });
+      h('button', { class: 'btn small danger ghost', type: 'button', title: 'Sacar esta foto del combo', onclick: () => { actual().fotosExtra.splice(k, 1); listo(); } }, 'Quitar')); });
   return h('div', { class: 'combo' },
     h('p', { class: 'lab', style: 'margin:0' }, 'Combo: varias fotos en este cuadro', h('em', null, ' · ej.: Fernet + gaseosa. Salen una al lado de la otra con un «+»')),
     fichas.length ? h('div', { class: 'combo-fotos' }, ...fichas) : null,
-    combo.length < MAX_COMBO ? h('button', { class: 'btn small', type: 'button', onclick: sumar }, combo.length ? '＋ Sumar otra foto más' : '＋ Sumar otra foto (armar combo)') : h('small', { class: 'hint' }, 'Hasta 3 fotos por cuadro.'));
+    actual().fotosExtra.length < MAX_COMBO ? h('button', { class: 'btn small', type: 'button', onclick: sumar }, actual().fotosExtra.length ? '＋ Sumar otra foto más' : '＋ Sumar otra foto (armar combo)') : h('small', { class: 'hint' }, 'Hasta 3 fotos por cuadro.'));
 }
 async function recortarConIA(p, i, tipo, btn) {
   const orig = btn.textContent; btn.disabled = true; btn.textContent = CARPETA.nube ? 'Pidiendo el recorte…' : 'Recortando… (unos segundos)';
@@ -529,7 +532,7 @@ function filaProducto(p, i) {
       h('div', { class: 'pprecios' }, campoMini('Precio normal', antes), h('label', { class: 'mini' }, h('span', null, '% desc.'), h('span', { class: 'pct' }, pct)), campoMini('Precio final', oferta)),
       selectorCondicion(p),
       h('div', { class: 'pextra' }, h('label', { class: 'mini' }, h('span', null, 'Unidad'), texto(p, 'unidad', { ph: 'x kg, c/u, x fardo…', list: 'lista-unidades', max: 14 })), tamFoto(p)),
-      h('div', { class: 'calc', 'data-calc': String(i) })),
+      h('div', { class: 'calc', 'data-calc': String(i) }), S.formato.startsWith('combo_') && i === 0 ? cajaCombo(p, i) : null),
     h('details', { class: 'pmas' }, h('summary', null, 'Más opciones: 2x1, 3x2, 2.ª al 50 %, nota, mover la foto'), cuerpoMas(p, i)));
   fila.addEventListener('focusin', () => setActivo('producto', i));
   return fila;
@@ -704,7 +707,7 @@ function seccionProductos() {
     : null;
   const ayudaCombo = S.formato.startsWith('combo_') ? h('div', { class: 'caja-aparte stack combo-ayuda' }, h('p', { class: 'lab', style: 'margin:0' }, '🎁 Cómo armar el combo'),
     h('ol', { style: 'margin:0;padding-left:20px' }, h('li', null, 'Tocá el cuadro del folleto (o «Elegir producto») y elegí la primera foto, por ejemplo el Fernet.'),
-      h('li', null, 'Abajo, en el producto, tocá «＋ Sumar otra foto (armar combo)» y elegí la segunda (la gaseosa). Podés sumar una tercera.'),
+      h('li', null, 'En el producto, tocá «＋ Sumar otra foto (armar combo)» y elegí la segunda (la gaseosa). Ojo: no toques la foto chica de la izquierda, esa cambia la primera foto. Podés sumar una tercera.'),
       h('li', null, 'Escribí el nombre del combo (ej.: «Fernet 750 + Coca-Cola 2,25 L») y el precio.'),
       h('li', null, 'El cartel de arriba («¡SÚPER COMBO!») se cambia en «Cartel principal» (más abajo), y su tamaño tocándolo en el folleto.'))) : null;
   return seccion(paso(2, 'Productos y precios'), `${L.slots} ${L.slots === 1 ? 'casillero' : 'casilleros'}`, ayudaCombo,
