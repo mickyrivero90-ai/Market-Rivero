@@ -5,6 +5,11 @@ Desde la 3.0, la herramienta online (https://mickyrivero90-ai.github.io/Market-R
 se actualiza sola. Si usás el programa de la PC y muestra un número menor, bajá el nuevo
 desde la herramienta online (⋯ Más → Programa para usar sin internet).
 
+Versión 4.4 · 9 de noviembre de 2026 · PRECIOS MÁS GRANDES
+- En los cuadros con foto grande el precio sale más grande: la columna del nombre y el precio es un
+  poco más ancha y la placa del precio más alta. Si lo querés todavía más grande (o más chico):
+  «Leyenda del precio» → «Precio final (la placa con el número)».
+
 Versión 4.3 · 9 de noviembre de 2026 · FOTOS CHATAS AL MEDIO Y NOMBRE MÁS ABAJO
 - Las fotos chatas (pañales, papel higiénico, servilletas, cajas) ya no quedan pegadas abajo con
   espacio vacío arriba: van al medio del alto del cuadro. Las altas (botellas) siguen paradas abajo.
