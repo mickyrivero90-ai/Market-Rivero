@@ -5,6 +5,16 @@ Desde la 3.0, la herramienta online (https://mickyrivero90-ai.github.io/Market-R
 se actualiza sola. Si usás el programa de la PC y muestra un número menor, bajá el nuevo
 desde la herramienta online (⋯ Más → Programa para usar sin internet).
 
+Versión 5.9 · 9 de noviembre de 2026 · NOMBRE Y PRECIO CENTRADOS; COMBO EN RENGLONES CON «+»
+- En todos los formatos, el nombre, la descripción y el precio van centrados a la derecha de la foto:
+  a lo ancho y a lo alto (a la altura del medio del cuadro), sin huecos arriba ni abajo.
+- En los combos el nombre se arma solo en renglones, partiendo en el «+»:
+      FERNET BRANCA 750 CC
+               +
+         COCA COLA 3 L
+  todo centrado y el precio abajo. Basta con escribir «Fernet Branca 750 cc + Coca Cola 3 L».
+- Se ve así mientras armás el folleto y en todas las imágenes que se generan al terminar.
+
 Versión 5.8 · 9 de noviembre de 2026 · FOTO A LA IZQUIERDA EN TODOS LOS FORMATOS
 - Regla nueva para todos los folletos (de 4 a 16 productos, estrella + 4, posteos, historias, un
   producto, combo) y para todas las versiones que se generan al terminar (A4, Facebook, canal y chats,
