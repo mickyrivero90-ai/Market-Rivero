@@ -1132,3 +1132,12 @@ Probado: autoprueba 147 OK; A4 de 10 con el nombre subido 15 % y 30 %.
    gridCards pasa filaLlena !== 'arriba'. Botones ⬆ Arriba / ⬇ Abajo en cajaCuadros(). Prueba de la autoprueba ampliada.
  - Las versiones para redes (planDestino/repartir) no cambian: siguen 4, 3, 3 por imagen.
 Probado: autoprueba 147 OK; A4 de 16 con 13 productos → 3, 3, 3 y 4.
+
+36. VERSIÓN 5.1: ARRASTRAR PRODUCTOS A OTRO LUGAR (9/11/2026)
+------------------------------------------------------------
+ - 07_app.js: moverProductoA(i, j) (splice: saca y mete; los del medio se corren). ARRASTRE + activarArrastre():
+   pointerdown sobre un hit 'producto' con producto (mouse o lápiz; en touch no, para no trabar el desplazamiento),
+   arrastre a partir de 8 px, DOM.marcaArrastre (div sobre el canvas, dentro de .hoja) marca el destino, al soltar
+   mueve; ARRASTRE.recien evita que el click de después abra el producto. Solo con «Guías» (sin guías no hay HITS).
+   accionesFila(): select «Mover al lugar» (1 a slots). styles.css: .marca-arrastre, .mover-a.
+Probado: autoprueba 147 OK; arrastre con Playwright del lugar 5 al 1 (queda primero, los demás corridos).

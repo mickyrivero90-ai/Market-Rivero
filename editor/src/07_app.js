@@ -412,12 +412,46 @@ async function recortarConIA(p, i, tipo, btn) {
     construirListaCasilleros(tipo, i); cambio();
   } catch (e) { aviso(e.message); btn.disabled = false; btn.textContent = orig; }
 }
+/** Mueve un producto a otro lugar (los del medio se corren un lugar). */
+function moverProductoA(i, j) {
+  if (i === j || i < 0 || j < 0 || i >= S.productos.length || j >= S.productos.length) return;
+  const [p] = S.productos.splice(i, 1); S.productos.splice(j, 0, p);
+  ACTIVO = { tipo: 'producto', i: j }; construirListaCasilleros('producto', j); cambio();
+}
+/** Arrastrar un producto en el folleto (con «Guías») y soltarlo sobre otro lugar: va directo ahí. */
+const ARRASTRE = { activo: false, recien: false, i: -1, x0: 0, y0: 0, destino: -1 };
+function activarArrastre() {
+  const cv = DOM.canvas, marca = DOM.marcaArrastre;
+  const caja = t => { const L = L_ACTUAL(), r = cv.getBoundingClientRect(), hr = cv.parentElement.getBoundingClientRect(), sx = r.width / L.w, sy = r.height / L.h;
+    return { left: r.left - hr.left + t.x * sx, top: r.top - hr.top + t.y * sy, width: t.w * sx, height: t.h * sy }; };
+  const pintar = t => { if (!t) { marca.hidden = true; return; } const b = caja(t); Object.assign(marca.style, { left: b.left + 'px', top: b.top + 'px', width: b.width + 'px', height: b.height + 'px' });
+    marca.replaceChildren(h('span', null, t.i === ARRASTRE.i ? 'Soltalo en otro lugar' : `Soltá: va al lugar ${t.i + 1}`)); marca.hidden = false; };
+  cv.addEventListener('pointerdown', e => {
+    if (e.button !== 0 || e.pointerType === 'touch') return;      // en el celular se usa «Mover al lugar» de cada producto
+    const t = hitEn(e); if (!t || t.tipo !== 'producto' || casilleroVacio('producto', t.i)) return;
+    Object.assign(ARRASTRE, { activo: false, i: t.i, x0: e.clientX, y0: e.clientY, destino: -1 });
+    const mover = ev => {
+      if (!ARRASTRE.activo && Math.hypot(ev.clientX - ARRASTRE.x0, ev.clientY - ARRASTRE.y0) < 8) return;
+      ARRASTRE.activo = true; cv.style.cursor = 'grabbing';
+      const d = hitEn(ev); ARRASTRE.destino = d && d.tipo === 'producto' ? d.i : -1; pintar(d && d.tipo === 'producto' ? d : null);
+    };
+    const soltar = () => {
+      removeEventListener('pointermove', mover); removeEventListener('pointerup', soltar);
+      marca.hidden = true; cv.style.cursor = '';
+      if (ARRASTRE.activo) { ARRASTRE.recien = true; setTimeout(() => { ARRASTRE.recien = false; }, 300); if (ARRASTRE.destino >= 0 && ARRASTRE.destino !== ARRASTRE.i) moverProductoA(ARRASTRE.i, ARRASTRE.destino); }
+      ARRASTRE.activo = false;
+    };
+    addEventListener('pointermove', mover); addEventListener('pointerup', soltar);
+  });
+}
 function accionesFila(i) {
   const mover = d => { const j = i + d; if (j < 0 || j >= S.productos.length) return; [S.productos[i], S.productos[j]] = [S.productos[j], S.productos[i]]; ACTIVO = { tipo: 'producto', i: j }; construirListaCasilleros('producto', j); cambio(); };
   const quitar = () => { S.productos.splice(i, 1); S.productos.push(nuevoProducto()); construirListaCasilleros('producto'); cambio(); };
   return h('div', { class: 'row-actions' },
     h('button', { class: 'btn small', type: 'button', disabled: i === 0 || null, onclick: () => mover(-1) }, 'Subir ↑'),
     h('button', { class: 'btn small', type: 'button', disabled: i >= S.productos.length - 1 || null, onclick: () => mover(1) }, 'Bajar ↓'),
+    h('label', { class: 'mini mover-a' }, h('span', null, 'Mover al lugar'), h('select', { 'aria-label': 'Mover este producto al lugar', onchange: e => moverProductoA(i, +e.target.value) },
+      ...Array.from({ length: Math.min(L_ACTUAL().slots, S.productos.length) }, (_, k) => h('option', { value: String(k), selected: k === i || null }, String(k + 1))))),
     h('button', { class: 'btn small danger ghost', type: 'button', onclick: quitar }, 'Quitar este producto'));
 }
 
@@ -1227,12 +1261,15 @@ function armarEstructura() {
   DOM.info = h('div', { class: 'info' });
   DOM.canvas = h('canvas', { 'aria-label': 'Vista previa del folleto' });
   DOM.canvas.addEventListener('click', e => {
+    if (ARRASTRE.recien) { ARRASTRE.recien = false; return; }     // se acaba de soltar un producto arrastrado: no es un clic
     const t = hitEn(e);
     if (t) activarCasillero(t.tipo, t.i);
     else if (matchMedia('(max-width: 900px)').matches) { DOM.stage.classList.toggle('expanded'); setTimeout(programarDibujo, 230); }
   });
-  DOM.canvas.addEventListener('mousemove', e => { const t = hitEn(e); DOM.canvas.style.cursor = t ? 'pointer' : 'default'; DOM.canvas.title = t ? textoCasillero(t) : ''; });
-  DOM.stageBox = h('div', { class: 'stage-box' }, h('div', { class: 'hoja' }, DOM.canvas));
+  DOM.canvas.addEventListener('mousemove', e => { if (ARRASTRE.activo) return; const t = hitEn(e); DOM.canvas.style.cursor = t ? (t.tipo === 'producto' && !casilleroVacio('producto', t.i) ? 'grab' : 'pointer') : 'default'; DOM.canvas.title = t ? textoCasillero(t) + (t.tipo === 'producto' && !casilleroVacio('producto', t.i) ? ' · arrastralo para cambiarlo de lugar' : '') : ''; });
+  DOM.marcaArrastre = h('div', { class: 'marca-arrastre', hidden: true });
+  DOM.stageBox = h('div', { class: 'stage-box' }, h('div', { class: 'hoja' }, DOM.canvas, DOM.marcaArrastre));
+  activarArrastre();
   DOM.panel = h('aside', { class: 'panel' });
   const guias = check('Guías', null, verGuias, v => { verGuias = v; programarDibujo(); });
   guias.style.margin = '0';
