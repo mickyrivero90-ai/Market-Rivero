@@ -166,24 +166,30 @@ function bgFotoTema(ctx, W, H, T) { fondoFoto(ctx, W, H, T, { cy: H * 0.45, alto
  *  para que se lean el logo y el pie. */
 function fondoFoto(ctx, W, H, T, v) {
   ctx.fillStyle = vGrad(ctx, 0, H, T.bg); ctx.fillRect(0, 0, W, H);
-  const [id, fx, fy, fw] = T.foto || [], img = (RES.fondos || {})[id];
+  const [id, bx0, by0, bx1, by1] = T.foto || [], img = (RES.fondos || {})[id];
   if (!img) return;
   const iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height, cover = Math.max(W / iw, H / ih);
-  ctx.save(); ctx.filter = 'blur(26px) brightness(0.5) saturate(1.2)';
-  ctx.drawImage(img, (W - iw * cover * 1.1) / 2, (H - ih * cover * 1.1) / 2, iw * cover * 1.1, ih * cover * 1.1); ctx.restore(); ctx.filter = 'none';
-  // nítida: la comida ocupa casi todo el ancho (sin pasarse de «cubrir todo»); su centro, en el centro de la ventana
-  const s = Math.min(cover, Math.max(W / iw, W * 0.98 / (iw * (fw || 0.7)), (v.alto || H * 0.5) * 1.05 / ih));
-  const dw = iw * s, dh = ih * s, x0 = clamp(W / 2 - fx * dw, W - dw, 0);
-  const y = dh >= H ? clamp(v.cy - fy * dh, H - dh, 0) : clamp(v.cy - fy * dh, 0, H - dh);
+  // atrás: la misma foto, desenfocada y oscura, cubriendo todo
+  ctx.save(); ctx.filter = 'blur(22px) brightness(0.55) saturate(1.15)';
+  ctx.drawImage(img, (W - iw * cover * 1.08) / 2, (H - ih * cover * 1.08) / 2, iw * cover * 1.08, ih * cover * 1.08); ctx.restore(); ctx.filter = 'none';
+  // adelante, nítida: la comida ENTERA dentro del hueco libre (entre el encabezado y la tarjeta), lo más grande posible
+  const fw = (bx1 - bx0) * iw, fh = (by1 - by0) * ih, VA = Math.max(H * 0.15, v.alto || H * 0.5);
+  const s = Math.min(W * 0.98 / fw, VA * 1.04 / fh, cover * 1.6);
+  const dw = iw * s, dh = ih * s, x = W / 2 - ((bx0 + bx1) / 2) * dw, y = v.cy - ((by0 + by1) / 2) * dh;
   const off = document.createElement('canvas'), sc = SC || 1; off.width = Math.max(1, Math.round(W * sc)); off.height = Math.max(1, Math.round(H * sc));
-  const o = off.getContext('2d'); o.setTransform(sc, 0, 0, sc, 0, 0); o.drawImage(img, x0, y, dw, dh);
-  const fade = Math.min(dh * 0.18, 160);                          // bordes suaves arriba y abajo si la foto no llega a cubrir
+  const o = off.getContext('2d'); o.setTransform(sc, 0, 0, sc, 0, 0); o.drawImage(img, x, y, dw, dh);
+  // bordes de la foto nítida suavizados hacia el fondo desenfocado (fuera de la comida)
   o.globalCompositeOperation = 'destination-in';
-  const g = o.createLinearGradient(0, y, 0, y + dh); g.addColorStop(0, y > 0 ? 'rgba(0,0,0,0)' : '#000'); g.addColorStop(Math.min(0.49, fade / dh), '#000'); g.addColorStop(Math.max(0.51, 1 - fade / dh), '#000'); g.addColorStop(1, y + dh < H ? 'rgba(0,0,0,0)' : '#000');
-  o.fillStyle = g; o.fillRect(0, 0, W, H);
+  const borde = (a0, a1, c0, c1, horiz) => {                        // a0–a1: lo que ocupa la foto; c0–c1: la comida (queda sólida)
+    const g = horiz ? o.createLinearGradient(a0, 0, a1, 0) : o.createLinearGradient(0, a0, 0, a1), L = a1 - a0, f = t => clamp((t - a0) / L, 0, 1);
+    g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(Math.max(0.001, Math.min(f(c0), f(a0 + Math.min(200, (c0 - a0) * 0.9 + 40)))), '#000');
+    g.addColorStop(Math.min(0.999, Math.max(f(c1), f(a1 - Math.min(200, (a1 - c1) * 0.9 + 40)))), '#000'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    o.fillStyle = g; o.fillRect(0, 0, W, H);
+  };
+  borde(x, x + dw, x + bx0 * dw, x + bx1 * dw, true); borde(y, y + dh, y + by0 * dh, y + by1 * dh, false);
   ctx.drawImage(off, 0, 0, W, H);
-  const top = ctx.createLinearGradient(0, 0, 0, H * 0.32); top.addColorStop(0, 'rgba(0,0,0,.62)'); top.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = top; ctx.fillRect(0, 0, W, H * 0.32);
-  const bot = ctx.createLinearGradient(0, H * 0.62, 0, H); bot.addColorStop(0, 'rgba(0,0,0,0)'); bot.addColorStop(1, 'rgba(0,0,0,.55)'); ctx.fillStyle = bot; ctx.fillRect(0, H * 0.62, W, H * 0.38);
+  const top = ctx.createLinearGradient(0, 0, 0, H * 0.3); top.addColorStop(0, 'rgba(0,0,0,.6)'); top.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = top; ctx.fillRect(0, 0, W, H * 0.3);
+  const bot = ctx.createLinearGradient(0, H * 0.7, 0, H); bot.addColorStop(0, 'rgba(0,0,0,0)'); bot.addColorStop(1, 'rgba(0,0,0,.5)'); ctx.fillStyle = bot; ctx.fillRect(0, H * 0.7, W, H * 0.3);
 }
 
 // ── decoraciones por tema (detrás del contenido y, opcional, encima) ──
@@ -435,14 +441,14 @@ Object.assign(THEMES, {
     accent: ['#FFF37A', '#FFD400'], accentInk: '#06301A', accentDeep: '#B3081D', sello: ['#E5202F', '#B3101C'], price: ['#0B5A2A', '#06301A'], priceInk: '#FFE24A', priceShadow: 'rgba(0,30,10,.6)', hero: ['#EFFFF3', '#A8EBBE'], heroInk: '#06301A', heroSoft: '#3E6F4E', glow: 'rgba(255,230,90,.6)', titulo: 'Oferta en efectivo', subtitulo: '' },
 });
 Object.assign(THEMES, {
-  // combos de comida: foto real de fondo (assets/fondos). foto: [nombre, x e y del centro de la comida (0–1), ancho de la comida (0–1)]
-  pizza: { ..._base, grupo: 'comida', nombre: 'Pizza', swatch: '#C8331E', bg: ['#5A1A0E', '#2E0C06', '#140402'], bgFn: bgFotoTema, foto: ['pizza', 0.62, 0.62, 0.7], footer: '#1E0703',
+  // combos de comida: foto real de fondo (assets/fondos). foto: [nombre, x0, y0, x1, y1] = dónde está la comida en la foto (0–1)
+  pizza: { ..._base, grupo: 'comida', nombre: 'Pizza', swatch: '#C8331E', bg: ['#5A1A0E', '#2E0C06', '#140402'], bgFn: bgFotoTema, foto: ['pizza', 0.14, 0.36, 1.0, 0.98], footer: '#1E0703',
     ribbon: ['#FFD23F', '#F5A300'], ribbonTail: '#B36E00', ribbonFold: '#7A4A00', ribbonInk: '#7A1405', ribbonStroke: '#FFFFFF', accent: ['#FFE38A', '#FFC23D'], accentInk: '#3A0A02', accentDeep: '#C8331E',
     sello: ['#E8331E', '#A81E0C'], price: ['#D7301B', '#9E1B0B'], priceShadow: 'rgba(60,8,0,.55)', ink: '#2A0D05', soft: '#7A3A22', titulo: 'Combo Pizzas', subtitulo: '' },
-  panchos: { ..._base, grupo: 'comida', nombre: 'Panchos', swatch: '#E8A317', bg: ['#6B3A10', '#3A1E06', '#1A0C02'], bgFn: bgFotoTema, foto: ['panchos', 0.62, 0.5, 0.75], footer: '#2A1505',
+  panchos: { ..._base, grupo: 'comida', nombre: 'Panchos', swatch: '#E8A317', bg: ['#6B3A10', '#3A1E06', '#1A0C02'], bgFn: bgFotoTema, foto: ['panchos', 0.08, 0.39, 0.84, 0.74], footer: '#2A1505',
     ribbon: ['#E5202F', '#B3101C'], ribbonTail: '#6E0A12', ribbonFold: '#3A0509', ribbonInk: '#FFFFFF', ribbonStroke: '#4A0509', accent: ['#FFE24A', '#FFC400'], accentInk: '#3A1E06', accentDeep: '#C8101E',
     sello: ['#E5202F', '#B3101C'], price: ['#E5202F', '#A80F1A'], priceShadow: 'rgba(60,5,0,.55)', ink: '#2B1208', soft: '#7B5A30', titulo: 'Combo Panchos', subtitulo: '' },
-  hamburguesa: { ..._base, grupo: 'comida', nombre: 'Hamburguesas', swatch: '#F29A1E', bg: ['#3A2418', '#1E120A', '#0A0603'], bgFn: bgFotoTema, foto: ['hamburguesa', 0.5, 0.52, 0.55], footer: '#140B05',
+  hamburguesa: { ..._base, grupo: 'comida', nombre: 'Hamburguesas', swatch: '#F29A1E', bg: ['#3A2418', '#1E120A', '#0A0603'], bgFn: bgFotoTema, foto: ['hamburguesa', 0.15, 0.06, 0.84, 0.96], footer: '#140B05',
     ribbon: ['#FFC21A', '#F29A1E'], ribbonTail: '#A85F00', ribbonFold: '#6E3E00', ribbonInk: '#2B1208', ribbonStroke: '#FFFFFF', accent: ['#FFE08A', '#FFB82E'], accentInk: '#2B1208', accentDeep: '#D2451A',
     sello: ['#E5202F', '#B3101C'], price: ['#E04A1A', '#A8300C'], priceShadow: 'rgba(60,15,0,.55)', ink: '#2B1208', soft: '#7B4A28', titulo: 'Combo Burgers', subtitulo: '' },
 });

@@ -172,7 +172,7 @@ function layoutComida(ctx, S, T, env, kind) {
   // ── tarjeta: se mide primero para dejarle a la foto todo el lugar que sobre
   const items = (C.items || []).filter(x => String(x.texto || x.cant || '').trim()), cw = W - 2 * P.M - 20, cx = (W - cw) / 2;
   const I = infoProducto(nuevoProducto({ final: C.precio || '', regular: C.antes || '', combo: true })), price = I.F || { int: '0', dec: '' };
-  const minVentana = H * (kind === 'story' ? 0.22 : 0.22), maxCard = fy - 24 - hb - minVentana;
+  const minVentana = H * (kind === 'story' ? 0.3 : 0.3), maxCard = fy - 24 - hb - minVentana;
   let e = 1, alto = 0, g = null;
   const medir = esc => {
     const k = W / 1080 * esc, pad = 30 * k, nombreS = 64 * k, filaS = 34 * k, filaH = filaS * 1.62, plateH = altoPlaca(120 * k)[0];

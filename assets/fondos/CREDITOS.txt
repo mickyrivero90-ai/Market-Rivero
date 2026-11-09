@@ -1,5 +1,5 @@
 Fotos de fondo de los combos de comida (libres para uso comercial, sin atribución obligatoria):
 - pizza.webp        Unsplash · https://unsplash.com/photos/a-slice-of-pizza-with-melted-cheese-being-lifted-RqciGS0ypi0 (Licencia Unsplash)
 - hamburguesa.webp  Unsplash · foto images.unsplash.com/photo-1598182198871-d3f4ab4fd181 «burger with cheese and lettuce» (Licencia Unsplash)
-- panchos.webp      Pexels   · https://www.pexels.com/photo/30299624/ (Licencia Pexels)
+- panchos.webp      Pexels   · https://www.pexels.com/photo/31176117/ (Licencia Pexels)
 Se reducen a 1500 px y se guardan en WEBP para que la herramienta pese poco.
