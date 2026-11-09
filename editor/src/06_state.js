@@ -4,6 +4,13 @@ const LEGALES_VIEJO = 'Imágenes ilustrativas. Precios finales en pesos argentin
 
 // `archivo` = ruta de la foto dentro de la carpeta "productos" (programa local); `img` = foto incrustada (página suelta).
 const nuevoProducto = (o = {}) => ({ id: uid(), nombre: '', desc: '', regular: '', pct: '', final: '', unidad: '', etiqueta: '', nota: '', pago: '', img: null, imgV: 0, archivo: null, mtime: null, demo: null, recordado: false, alfa: false, quitarFondo: false, tol: 40, zoom: 1, dx: 0, dy: 0, fotosExtra: [], ...o });   // fotosExtra: otras fotos en el mismo cuadro (Fernet + gaseosa). combo: true = el de Marketing
+/** Combos de comida que ya arma Rivero Market (se cargan solos al elegir el fondo, mientras no los cambies). */
+const COMBOS_COMIDA = {
+  panchos: { cartel: '¡SÚPER OFERTA!', nombre: 'Combo Panchos', precio: '10.500', items: [['2', 'Pan de Viena Soraide x6'], ['2 paq.', 'Salchichas La Blanca'], ['1', 'Mayonesa Fiesta 237 g'], ['1', 'Ketchup Danica 220 g'], ['1', 'Mostaza Danica 220 g'], ['100 g', 'Papas pay sueltas']] },
+  pizza: { cartel: '¡SÚPER OFERTA!', nombre: 'Combo Pizzas', precio: '12.700', items: [['1', 'Prepizza Soraide x3'], ['750 g', 'Cremoso Taurinos'], ['1', 'Salsa para pizza Noel 340 g'], ['200 g', 'Paleta especial'], ['100 g', 'Aceitunas descarozadas'], ['1', 'Ají en vaina']] },
+  hamburguesa: { cartel: '¡SÚPER OFERTA!', nombre: 'Combo Burgers', precio: '8.000', items: [['1', 'Pan de hamburguesa Soraide x6'], ['3 paq.', 'Medallones Riccissima'], ['150 g', 'Queso cheddar La Serenísima'], ['1', 'Mayonesa Fiesta 237 g']] },
+};
+const comboComida = id => { const c = COMBOS_COMIDA[id] || COMBOS_COMIDA.panchos; return { cartel: c.cartel, nombre: c.nombre, precio: c.precio, antes: '', nota: '', auto: true, items: c.items.map(([cant, texto]) => ({ cant, texto })) }; };
 const MAX_COMBO = 2;                                             // fotos extra por cuadro (el combo: 3 fotos en total)
 const nuevaFoto = (o = {}) => ({ id: uid(), img: null, imgV: 0, archivo: null, mtime: null, demo: null, alfa: false, quitarFondo: false, tol: 40, titulo: '', ...o });
 
@@ -45,7 +52,8 @@ function estadoDemo() {
     mensaje: { kicker: '¡Aprovechá!', titulo: 'Descuento en todos los productos', grande: '', grande2: '', condicion: '', texto: 'Válido para todas tus compras en el local.' },
     destacado: { mensaje: 'OFERTA IMPERDIBLE', mensaje2: '' },
     legal: { banda: false, bandaTam: 1, letraChica: true, alcohol: 'no', stock: '' },
-    cabecera: { logo: 1.35, titulo: 0.85, pie: 0.75 },                // tamaños del logo, el título (cartel) y el pie
+    cabecera: { logo: 1.35, titulo: 0.85, pie: 0.75 },
+    comida: comboComida('panchos'),                                  // folleto «Combo de comida» (lista + precio, foto de fondo)                // tamaños del logo, el título (cartel) y el pie
     cuadros: { sep: 1, margen: 1, foto: 1, estrella: 1, alinear: 'auto', dx: 0, dy: 0, nombre: 1, nombreDy: 0, filaLlena: 'abajo' },
     historia: { ver: true, cta: '' },
     urgencia: '',
@@ -125,6 +133,7 @@ function normalizarEstado(S, op = {}) {
   out.legal = { ...base.legal, ...(S.legal || {}) };
   out.cuadros = { ...base.cuadros, ...(S.cuadros || {}) };
   out.cabecera = { ...base.cabecera, ...(S.cabecera || {}) };
+  out.comida = { ...base.comida, ...(S.comida || {}) }; out.comida.items = (Array.isArray(out.comida.items) ? out.comida.items : []).slice(0, 12).map(x => ({ cant: String((x || {}).cant || ''), texto: String((x || {}).texto || '') }));
   if (!(S.v >= 9)) out.cabecera.logo = base.cabecera.logo;           // v4.7: logo más grande de fábrica
   if (!(S.v >= 8)) out.legal.banda = false;                         // v4.6: la banda legal viene apagada (Miki no la quiere; se puede prender en «Pie del folleto»)
   if (!(S.v >= 6) && out.promo.modo === 'extra') out.promo.modo = 'incluido';   // v2.1: el % ya está en el precio final; nunca se suma otro descuento sin querer
@@ -162,4 +171,6 @@ async function cargarRecursos() {
   RES.logoH = await cargarImagen(ASSETS.logos.horizontal);
   RES.logoV = await cargarImagen(ASSETS.logos.vertical);
   RES.insignia = await cargarImagen(ASSETS.logos.insignia);
+  RES.fondos = {};
+  await Promise.all(Object.entries(ASSETS.fondos || {}).map(async ([k, u]) => { try { RES.fondos[k] = await cargarImagen(u); } catch (e) { /* sin foto: queda el color del tema */ } }));
 }

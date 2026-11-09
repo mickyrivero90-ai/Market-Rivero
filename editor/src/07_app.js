@@ -8,6 +8,7 @@ const GRUPOS_FORMATO = [
   ['Folletos de ofertas', 'A4 para imprimir; al terminar elegís también la versión para redes', ['a4_10', 'a4_12', 'a4_16', 'a4_8', 'a4_star4']],
   ['Redes sociales', 'Facebook, Instagram, WhatsApp', ['post_4', 'post_star4', 'story_3', 'story_4']],
   ['Combo', 'varias fotos en un solo cuadro, con «+» (ej.: Fernet + gaseosa)', ['combo_post', 'combo_story', 'combo_a4']],
+  ['Combo de comida', 'lista de lo que trae y el precio, con foto de pizza, panchos o hamburguesas', ['comida_post', 'comida_story', 'comida_a4']],
   ['Mensaje o anuncio', 'sin productos: promos de pago, descuentos, avisos', ['mensaje_a4', 'mensaje_post', 'mensaje_story']],
   ['Un solo producto', 'liquidación, fardos, solo efectivo', ['destacado_a4', 'destacado_post', 'destacado_story']],
   ['Mostrar productos', 'sin precios: para dar a conocer lo que tenés', ['coleccion_a4', 'coleccion_post', 'coleccion_story']],
@@ -15,8 +16,9 @@ const GRUPOS_FORMATO = [
 const DESC_FORMATO = { a4_10: '2 columnas', a4_12: '3 columnas', a4_16: '4 columnas', a4_8: 'Cartas grandes', a4_star4: '1 estrella + 4', post_4: 'Más legible', post_star4: 'Estrella + 4', story_3: 'Estados · Historias', story_4: 'Estados · sin estrella',
   mensaje_a4: 'Para imprimir', mensaje_post: 'Facebook · canal WA', mensaje_story: 'Estados · Historias',
   combo_post: 'Facebook · canal WA', combo_story: 'Estados · Historias', combo_a4: 'Para imprimir',
+  comida_post: 'Facebook · canal WA', comida_story: 'Estados · Historias', comida_a4: 'Para imprimir',
   destacado_a4: 'Para imprimir', destacado_post: 'Facebook · Instagram', destacado_story: 'WhatsApp · Instagram', coleccion_a4: 'Para imprimir', coleccion_post: 'Facebook · Instagram', coleccion_story: 'WhatsApp · Instagram' };
-const NOMBRE_GRUPO_TEMA = { marca: 'Colores de la marca', fecha: 'Fechas especiales y promos', impacto: 'Estilos de impacto' };
+const NOMBRE_GRUPO_TEMA = { marca: 'Colores de la marca', fecha: 'Fechas especiales y promos', impacto: 'Estilos de impacto', comida: 'Fondo con foto (elegí el del combo)' };
 const INSIGNIAS = ['2x1', '3x2', '2DA AL 50%', '2DA AL 70%', 'LLEVÁ 3', 'NUEVO', 'EXCLUSIVO'];
 const MENSAJES_KICKER = ['¡Aprovechá!', 'Promo del mes', 'Solo por esta semana', '¡Atención!', 'Nuevo en el local'];
 const MENSAJES_TITULO = ['Descuento en todos los productos', 'Pagá con QR y ahorrá', 'Cuotas sin interés en todo el local', 'Ahorrá pagando en efectivo', 'Nuevo horario de atención'];
@@ -27,7 +29,7 @@ const MENSAJES_COLECCION = ['Aquí tenemos todos los productos para tus recetas'
 const MAX_FOTOS = 4;
 const L_ACTUAL = () => LAYOUTS[S.formato] || LAYOUTS.a4_10;
 const esColeccion = () => L_ACTUAL().grupo === 'coleccion';
-const sinProductos = () => ['coleccion', 'mensaje'].includes(L_ACTUAL().grupo);
+const sinProductos = () => ['coleccion', 'mensaje', 'comida'].includes(L_ACTUAL().grupo);
 const lista = tipo => (tipo === 'foto' ? S.coleccion.fotos : S.productos);
 
 function svgEl(tag, attrs = {}) {
@@ -141,6 +143,11 @@ function miniatura(id) {
   else if (id === 'post_star4') { R(3, 3, 54, 14, 'ac'); R(3, 19, 54, 20, 'pp'); grid(41, 2, 9.4, 1.6); R(0, 65, 60, 10, 'pp', 0); }
   else if (id === 'story_4') { R(3, 12, 54, 18, 'ac'); for (let r = 0; r < 4; r++) R(3, 33 + r * 13.5, 54, 11.5, 'wh'); R(0, 90, 60, 7, 'pp', 0); }
   else if (id === 'story_3') { R(3, 12, 54, 18, 'ac'); R(3, 32, 54, 34, 'pp'); R(3, 69, 54, 8, 'wh'); R(3, 79, 54, 8, 'wh'); R(0, 90, 60, 7, 'pp', 0); }
+  else if (id.startsWith('comida_')) {                             // foto de fondo, tarjeta con renglones y precio
+    R(0, 0, vw, vh, 'pp', 2.5); R(8, 3, 44, 8, 'ac'); R(4, vh * 0.42, 52, vh * 0.5, 'wh');
+    for (let r = 0; r < 4; r++) R(12, vh * 0.47 + r * vh * 0.07, 36, vh * 0.035, 'bk', 1);
+    R(18, vh * 0.78, 24, vh * 0.09, 'ac');
+  }
   else if (id.startsWith('combo_')) {                              // dos fotos con un «+» en el medio
     const y0 = vh * 0.26, hh = vh * 0.5; R(0, vh * 0.12, 60, vh * 0.1, 'ac', 0); R(4, y0, 52, hh, 'pp');
     R(10, y0 + hh * 0.18, 13, hh * 0.64, 'wh', 2); R(37, y0 + hh * 0.18, 13, hh * 0.64, 'wh', 2);
@@ -163,7 +170,7 @@ function pintarFormatos() {
         miniatura(id), h('span', { class: 't' }, L.corto), h('span', { class: 'd' }, DESC_FORMATO[id] || ''));
     }))]));
 }
-function temaPorDefecto(L) { const g = L.temas[0]; return g === 'marca' ? 'naranja' : g === 'fecha' ? 'madre' : 'liquidacion'; }
+function temaPorDefecto(L) { const g = L.temas[0]; return g === 'marca' ? 'naranja' : g === 'fecha' ? 'madre' : g === 'comida' ? 'panchos' : 'liquidacion'; }
 function aplicarTextosDeTema(id) {
   const T = THEMES[id];
   if (TITULOS_POR_DEFECTO.has(S.titulo)) S.titulo = T.titulo || 'Ofertas de la semana';
@@ -180,7 +187,9 @@ function elegirFormato(id) {
   ACTIVO = { tipo: L.grupo === 'coleccion' ? 'foto' : 'producto', i: 0 };
   construirPanel(); cambio();
 }
-function elegirTema(id) { S.tema = id; aplicarTextosDeTema(id); pintarTemas(); if (DOM.sugerencias) DOM.sugerencias.replaceChildren(...chipsSugerencias()); cambio(); }
+function elegirTema(id) { S.tema = id; aplicarTextosDeTema(id);
+  if (THEMES[id].grupo === 'comida' && (!S.comida || S.comida.auto)) { S.comida = comboComida(id); if (L_ACTUAL().grupo === 'comida') { construirPanel(); cambio(); return; } }   /* mientras no lo cambies, trae el combo de ese fondo */
+  pintarTemas(); if (DOM.sugerencias) DOM.sugerencias.replaceChildren(...chipsSugerencias()); cambio(); }
 /** Miniatura del fondo de cada temática (con su decoración), para elegir viéndolo. Se dibuja una sola vez. */
 const _miniTemas = new Map();
 function miniTema(id) {
@@ -238,6 +247,7 @@ function textoCasillero(h_) {
   if (h_.tipo === 'barra') return 'Barra de la promo y fechas · clic para editar';
   if (h_.tipo === 'sello') return 'Sello · clic para cambiar lo que dice';
   if (h_.tipo === 'pie') return 'Pie del folleto · clic para cambiar la letra chica o la banda';
+  if (h_.tipo === 'comida') return 'Combo · clic para cambiar la lista, el nombre o el precio';
   if (h_.tipo === 'cabecera') return (h_.i === 0 ? 'Logo' : 'Título') + ' · clic para cambiar su tamaño';
   const vacio = casilleroVacio(h_.tipo, h_.i), que = h_.tipo === 'foto' ? 'foto' : 'casillero';
   return `${que[0].toUpperCase() + que.slice(1)} ${h_.i + 1} · clic para ${vacio ? 'elegir ' + (h_.tipo === 'foto' ? 'la foto' : 'el producto') : 'editarlo'}`;
@@ -250,6 +260,7 @@ function hitEn(e) {
 }
 function activarCasillero(tipo, i) {
   if (tipo === 'sello') { const b = $('#caja-sello', DOM.panel); if (b) { b.scrollIntoView({ block: 'center', behavior: 'smooth' }); b.classList.add('resalta'); setTimeout(() => b.classList.remove('resalta'), 1600); const inp = $('input[type=text]', b); if (inp && !inp.closest('[hidden]')) inp.focus({ preventScroll: true }); } return; }
+  if (tipo === 'comida') { const b = $('#caja-comida', DOM.panel); if (b) { b.scrollIntoView({ block: 'start', behavior: 'smooth' }); b.classList.add('resalta'); setTimeout(() => b.classList.remove('resalta'), 1600); } return; }
   if (tipo === 'cabecera') { CABECERA_ABIERTA = true; const b = $('#caja-cabecera', DOM.panel); if (b) { b.open = true; b.scrollIntoView({ block: 'center', behavior: 'smooth' }); b.classList.add('resalta'); setTimeout(() => b.classList.remove('resalta'), 1600); } return; }
   if (tipo === 'pie') { const b = $('#caja-pie', DOM.panel); if (b) { b.scrollIntoView({ block: 'center', behavior: 'smooth' }); b.classList.add('resalta'); setTimeout(() => b.classList.remove('resalta'), 1600); } return; }
   if (tipo === 'barra') { const b = $('#caja-barra', DOM.panel); if (b) { b.scrollIntoView({ block: 'center', behavior: 'smooth' }); b.classList.add('resalta'); setTimeout(() => b.classList.remove('resalta'), 1600); const inp = $('input[type=text]', b); if (inp) inp.focus({ preventScroll: true }); } return; }
@@ -651,14 +662,15 @@ function calcularRevision() {
     const contra = g === 'unico' && P && P.tipo !== 'efectivo' && /efectivo/i.test(String((S.destacado || {}).mensaje2 || '') + ' ' + String((S.destacado || {}).mensaje || ''));
     if (contra) warn('El sello dice «efectivo» y la promo es ' + P.nombre, 'Se contradicen: corregí el sello en el paso 2 o cambiá la promo de pago en el paso 3.');
     if (P && P.cuotas) ok('Cuotas sin interés: leyenda del CFT incluida', 'Res. 4/2025: con cuotas se informa precio de contado, cantidad de cuotas y CFT. Va al pie: “CFT 0,00 %”.');
-    if (!usados.length && g !== 'mensaje') warn('Todavía no hay productos', 'Tocá un casillero del folleto (o el botón +) para elegir un producto de la carpeta.');
+    if (g === 'comida' && !parsePrecio(S.comida.precio)) warn('Falta el precio del combo', 'Escribilo en el paso 2.');
+    if (!usados.length && g !== 'mensaje' && g !== 'comida') warn('Todavía no hay productos', 'Tocá un casillero del folleto (o el botón +) para elegir un producto de la carpeta.');
     if (vacios && usados.length) warn(vacios + (vacios === 1 ? ' casillero vacío' : ' casilleros vacíos'), 'En el folleto terminado no quedan huecos: los cuadros con producto se agrandan y ocupan todo el lugar (para verlo así, destildá «Guías»). Si preferís otro formato con menos productos, cambialo en el paso 1.');
     if (sinPrecio) warn(sinPrecio + (sinPrecio === 1 ? ' producto sin precio' : ' productos sin precio'), 'Un precio vacío se imprime como $0.');
     if (sinFoto) warn(sinFoto + (sinFoto === 1 ? ' producto sin foto' : ' productos sin foto'), 'Sin foto se ve el logo en su lugar.');
     const sinDesc = usados.filter(p => { const I = infoProducto(p); return I.R && I.F && I.R.num <= I.F.num; }).length;
     if (sinDesc) warn(sinDesc + ' con “precio anterior” menor o igual a la oferta', 'No se muestra descuento en esos productos.');
-    if (g !== 'mensaje') info('El precio “Antes” tiene que ser el real', 'Si nunca lo cobraste, es publicidad engañosa (Dto. 274/2019, art. 11). El % que se muestra se redondea hacia abajo, así nunca anunciás más descuento que el real.');
-    if (g !== 'mensaje') info('Precios finales', 'Mostrá siempre el precio final (con impuestos incluidos). Si hay precio por kg o litro, ponelo en letra menor.');
+    if (g !== 'mensaje' && g !== 'comida') info('El precio “Antes” tiene que ser el real', 'Si nunca lo cobraste, es publicidad engañosa (Dto. 274/2019, art. 11). El % que se muestra se redondea hacia abajo, así nunca anunciás más descuento que el real.');
+    if (g !== 'mensaje' && g !== 'comida') info('Precios finales', 'Mostrá siempre el precio final (con impuestos incluidos). Si hay precio por kg o litro, ponelo en letra menor.');
   }
   if ((+(S.cuadros || {}).margen || 1) < 0.7 && L.pdf === 'A4' && L.grupo !== 'mensaje' && L.grupo !== 'coleccion') warn('Los cuadros quedaron muy pegados al borde de la hoja', 'Muchas impresoras no imprimen los últimos 4 o 5 mm: subí el margen a 70 % o más en «Cuadros de productos».');
   if (S.legal.banda && (+S.legal.bandaTam || 1) < 1 && (L.pdf === 'A4' || planDestino(S, 'a4').length)) warn('La letra de la banda quedó chica para A4', 'La Res. 446/2025 pide letras de al menos 4 mm en el folleto impreso: subí el tamaño a 100 % en «Pie del folleto».');
@@ -1073,6 +1085,28 @@ function seccionFechasPromo() {
       cajaBarra(), opcionesPromo(), unico || mensaje ? null : cajaSello(),
       h('p', { class: 'lab grp' }, 'Medios de pago'), cajaMediosDePago()));
 }
+/** Combo de comida: el cartel, el nombre del combo, lo que trae (cantidad + producto) y el precio. */
+function seccionComida() {
+  const C = S.comida, editado = () => { C.auto = false; cambio(); };
+  const t = (key, ph, max) => h('input', { type: 'text', value: C[key] || '', placeholder: ph, maxlength: max, autocomplete: 'off', oninput: e => { C[key] = e.target.value; editado(); } });
+  const lista = h('div', { class: 'comida-lista' });
+  const pintar = () => lista.replaceChildren(...C.items.map((it, i) => h('div', { class: 'comida-fila' },
+    h('input', { type: 'text', class: 'cant', value: it.cant, placeholder: '2', maxlength: 10, 'aria-label': 'Cantidad del renglón ' + (i + 1), oninput: e => { it.cant = e.target.value; editado(); } }),
+    h('input', { type: 'text', value: it.texto, placeholder: 'Pan de Viena Soraide x6', maxlength: 48, 'aria-label': 'Producto del renglón ' + (i + 1), oninput: e => { it.texto = e.target.value; editado(); } }),
+    h('button', { class: 'btn small ghost', type: 'button', title: 'Subir', disabled: i === 0 || null, onclick: () => { [C.items[i - 1], C.items[i]] = [C.items[i], C.items[i - 1]]; pintar(); editado(); } }, '↑'),
+    h('button', { class: 'btn small danger ghost', type: 'button', title: 'Quitar este renglón', onclick: () => { C.items.splice(i, 1); pintar(); editado(); } }, '✕'))));
+  pintar();
+  const sumar = h('button', { class: 'btn small', type: 'button', onclick: () => { if (C.items.length >= 12) return; C.items.push({ cant: '', texto: '' }); pintar(); editado(); const ins = $$('.comida-fila input:not(.cant)', lista); if (ins.length) ins[ins.length - 1].focus(); } }, '＋ Agregar renglón');
+  const inCartel = t('cartel', '¡SÚPER OFERTA!', 28);
+  return h('section', { class: 'sec', id: 'caja-comida' }, h('h2', null, ...paso(2, 'Tu combo'), h('small', null, 'lo que trae y el precio')),
+    h('div', { class: 'stack' },
+      h('p', { class: 'hint', style: 'margin:0' }, 'Elegí el fondo en el paso 1 (pizza, panchos o hamburguesas): trae cargado el combo de ese fondo y lo cambiás acá. Tocá la tarjeta del folleto para volver a esta parte.'),
+      campo('Cartel de arriba', inCartel), chipsRapidos(['¡SÚPER OFERTA!', '¡SÚPER COMBO!', 'OFERTA IMPERDIBLE', 'SOLO POR HOY'], inCartel, C, 'cartel'),
+      campo('Nombre del combo', t('nombre', 'Combo Panchos', 30)),
+      h('p', { class: 'lab', style: 'margin:4px 0 0' }, 'Lo que trae', h('em', null, ' · cantidad (sale resaltada) y producto')), lista, sumar,
+      h('div', { class: 'grid2' }, campo('Precio del combo', t('precio', '10.500', 14)), campo('Precio por separado', t('antes', 'opcional', 14), 'opcional: sale «POR SEPARADO $…» tachado')),
+      campo('Nota chica abajo del precio', t('nota', 'Ej.: Hasta agotar stock', 50), 'opcional')));
+}
 /** Folleto de mensaje: textos del anuncio. */
 function seccionMensaje() {
   const M = S.mensaje, PF = promoInfo(S);
@@ -1197,16 +1231,17 @@ function construirPanel() {
   const secs = [seccion(paso(1, 'Tipo de folleto y temática'), 'dónde lo vas a usar', ejemploNota(), DOM.fmts, h('div', { style: 'height:14px' }), DOM.temas, h('div', { style: 'height:10px' }), cajaCabecera())];
   if (g === 'coleccion') secs.push(seccionFotos(), seccionMensajes());
   else if (g === 'mensaje') secs.push(seccionMensaje(), seccionFechasPromo());
+  else if (g === 'comida') secs.push(seccionComida(), seccionFechasPromo());
   else secs.push(seccionProductos(), seccionFechasPromo());
   secs.push(seccionPie(), seccionRevision(), seccionMarketing(), ...seccionLocalYLegales(), ...(CARPETA.nube ? [seccionNube()] : []), seccionProyecto());
   DOM.panel.replaceChildren(...secs);
-  pintarFormatos(); pintarTemas(); if (g !== 'mensaje') pintarProductos(); else { DOM.prods = null; refrescarLecturas(); }
+  pintarFormatos(); pintarTemas(); if (g !== 'mensaje' && g !== 'comida') pintarProductos(); else { DOM.prods = null; refrescarLecturas(); }
   DOM.panel.scrollTop = st;
 }
 
 // ── exportar (descarga en la página suelta · Escritorio en el programa) ──
 function nombreBase(sinFormato = false) {
-  const L = L_ACTUAL(), titulo = L.grupo === 'coleccion' ? (S.coleccion.ocasion || 'Productos') : L.grupo === 'mensaje' ? (S.mensaje.titulo || 'Mensaje') : (S.titulo || 'Ofertas');
+  const L = L_ACTUAL(), titulo = L.grupo === 'coleccion' ? (S.coleccion.ocasion || 'Productos') : L.grupo === 'mensaje' ? (S.mensaje.titulo || 'Mensaje') : L.grupo === 'comida' ? (S.comida.nombre || 'Combo') : (S.titulo || 'Ofertas');
   const fecha = S.vigencia.hasta || isoDe(new Date());
   const corto = L.corto.replace(/\s*·\s*/g, ' ').replace(/(\d):(\d)/g, '$1x$2');
   return sinFormato ? `Rivero Market - ${titulo} - ${fecha}` : `Rivero Market - ${titulo} - ${corto} - ${fecha}`;
@@ -1504,7 +1539,7 @@ async function autotest() {
       CUADROS_CFG = CFGbak;
       // todos los formatos con productos, con valores extremos, sin errores
       let malos = [];
-      const fmts = Object.keys(LAYOUTS).filter(f => !LAYOUTS[f].oculto && !['coleccion', 'mensaje'].includes(LAYOUTS[f].grupo));
+      const fmts = Object.keys(LAYOUTS).filter(f => !LAYOUTS[f].oculto && !['coleccion', 'mensaje', 'comida'].includes(LAYOUTS[f].grupo));
       for (const f of fmts) for (const cu of [{ alinear: 'derecha', dx: 30, dy: 40, sep: 3, margen: 2, foto: 1.3, estrella: 1.3 }, { alinear: 'centro', dx: -30, dy: -10, sep: 0.1, margen: 0.4, foto: 0.7, estrella: 0.7 }, { alinear: 'izquierda', dy: 15 }]) {
         try { const r = cajas(f, cu); if (r.some(x => !(x.w > 40 && x.h > 40 && Number.isFinite(x.x + x.y)))) malos.push(f); } catch (e) { malos.push(f + ': ' + e.message); }
       }

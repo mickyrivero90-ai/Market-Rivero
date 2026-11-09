@@ -1,7 +1,7 @@
 // ───────────────────────── marketing: textos para publicar, plan, calculadora, fechas e ideas ─────────────────────────
 // Todo sale del folleto que se está armando (productos, precios, fechas, promo y datos del local).
 // Nada de esto sale en la imagen: son ayudas para publicarla y vender más.
-const EMOJI_TEMA = { naranja: '🧡', rojo: '❤️', verde: '💚', azul: '💙', madre: '💐', padre: '👔', halloween: '🎃', argentina: '⚽', navidad: '🎄', mercadopago: '📱', blackfriday: '🖤', reyes: '👑', patrias: '🇦🇷', trabajador: '🛠️', nino: '🧸', pascuas: '🐣', primavera: '🌸', anionuevo: '🥂', liquidacion: '💥', fuego: '🔥', efectivo: '💵' };
+const EMOJI_TEMA = { pizza: '🍕', panchos: '🌭', hamburguesa: '🍔', naranja: '🧡', rojo: '❤️', verde: '💚', azul: '💙', madre: '💐', padre: '👔', halloween: '🎃', argentina: '⚽', navidad: '🎄', mercadopago: '📱', blackfriday: '🖤', reyes: '👑', patrias: '🇦🇷', trabajador: '🛠️', nino: '🧸', pascuas: '🐣', primavera: '🌸', anionuevo: '🥂', liquidacion: '💥', fuego: '🔥', efectivo: '💵' };
 const HASHTAG_TEMA = { madre: '#DíaDeLaMadre', padre: '#DíaDelPadre', halloween: '#Halloween', argentina: '#VamosArgentina', navidad: '#Navidad', mercadopago: '#MercadoPago', blackfriday: '#BlackFriday', reyes: '#ReyesMagos', patrias: '#FiestasPatrias', trabajador: '#DíaDelTrabajador', nino: '#DíaDelNiño', pascuas: '#Pascuas', primavera: '#Primavera', anionuevo: '#AñoNuevo', liquidacion: '#Liquidación' };
 const LEYENDA_ALCOHOL_TXT = 'Beber con moderación. Prohibida su venta a menores de 18 años.';
 const lsJSON = (k, def) => { try { return JSON.parse(localStorage.getItem(k) || 'null') ?? def; } catch (e) { return def; } };
@@ -36,7 +36,7 @@ function fechasSociales(V) {
 const capitalizar = s => (s ? s[0].toLocaleUpperCase('es-AR') + s.slice(1) : s);
 function datosDelFolleto(S) {
   const L = LAYOUTS[S.formato] || LAYOUTS.a4_10, g = L.grupo, C = S.comercio || {}, V = S.vigencia || {}, P = promoInfo(S);
-  const usados = g === 'coleccion' || g === 'mensaje' ? [] : S.productos.slice(0, L.slots).filter(p => !productoVacio(p));
+  const usados = g === 'coleccion' || g === 'mensaje' || g === 'comida' ? [] : S.productos.slice(0, L.slots).filter(p => !productoVacio(p));
   const porProducto = hayCondicionPorProducto(S);
   const prods = usados.map(p => {
     const I = infoProducto(p), PP = promoDeProducto(p, S);
@@ -44,7 +44,7 @@ function datosDelFolleto(S) {
       etiqueta: String(p.etiqueta || '').trim(), nota: String(p.nota || '').trim(), cond: !porProducto ? null : PP ? (P && PP.tipo === P.tipo ? null : PP.frase) : (P ? 'con cualquier medio de pago' : null),
       alcohol: RE_ALCOHOL.test((p.nombre || '') + ' ' + (p.desc || '')) };
   });
-  const titulo = g === 'mensaje' ? (S.mensaje || {}).titulo : g === 'coleccion' ? (S.coleccion || {}).mensaje : g === 'unico' ? (S.destacado || {}).mensaje || S.titulo : S.titulo;
+  const titulo = g === 'comida' ? (S.comida || {}).nombre : g === 'mensaje' ? (S.mensaje || {}).titulo : g === 'coleccion' ? (S.coleccion || {}).mensaje : g === 'unico' ? (S.destacado || {}).mensaje || S.titulo : S.titulo;
   const dir = String(C.direccion || '').trim(), barrio = (/^\s*(barrio [^,]+)/i.exec(dir) || [])[1] || '', calle = dir.replace(/^\s*barrio [^,]+,\s*/i, '');
   const b = parseISO(V.hasta), faltan = b ? Math.round((b - hoy0()) / 86400000) : null;
   return { S, g, C, V, P, prods, titulo: String(titulo || 'Ofertas de la semana').trim(), emoji: EMOJI_TEMA[S.tema] || '🧡', fechas: fechasSociales(V), faltan, dir, barrio, calle,
@@ -102,6 +102,16 @@ function textoPublicacion(S, destino = 'canal', tono = 'clasico', op = {}) {
     return c;
   };
   const vigencia = [D.fechas ? capitalizar(D.fechas) : '', D.V.agotar ? 'hasta agotar stock' : ''].filter(Boolean).join(' · ');
+  // ── combo de comida: el nombre, lo que trae y el precio ──
+  if (D.g === 'comida') {
+    const Cm = S.comida || {}, pr = parsePrecio(Cm.precio);
+    out.push(`${D.emoji} ${b(mayus(String(Cm.cartel || '¡Súper oferta!')))}`, `${b(mayus(D.titulo))}${pr ? ' · ' + b('$' + Cm.precio) : ''}`, '');
+    (Cm.items || []).filter(x => String(x.texto || '').trim()).forEach(x => out.push(`▪️ ${[String(x.cant || '').trim(), String(x.texto).trim()].filter(Boolean).join(' ')}`));
+    if (D.P) out.push('', `${D.emoji} ${capitalizar(D.P.frase)}`);
+    if (vigencia) out.push(`📅 ${vigencia}`);
+    out.push('', `${D.nombre}${lugar ? '\n' + lugar : ''}`, ...cierre());
+    return out.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+  }
   // ── folletos de mensaje (sin productos) ──
   if (D.g === 'mensaje') {
     const M = S.mensaje || {}, grande = String(M.grande || (D.P && D.P.pct ? D.P.pctTxt + '%' : '')).trim(), cond = String(M.condicion || '').trim() || (D.P ? D.P.frase : '');
@@ -345,7 +355,7 @@ function botonCopiar(fn, etq = 'Copiar') { return h('button', { class: 'btn smal
 function aWhatsApp(texto) { return 'https://wa.me/?text=' + encodeURIComponent(texto); }
 
 function mktTextos() {
-  const D = datosDelFolleto(S), sinProductos = !D.prods.length && !['mensaje', 'coleccion'].includes(D.g);
+  const D = datosDelFolleto(S), sinProductos = !D.prods.length && !['mensaje', 'coleccion', 'comida'].includes(D.g);
   const st = lsJSON('rm.mkt.textos', {}), op = { destino: st.destino || 'canal', tono: st.tono || 'clasico', hashtags: st.hashtags !== false, mapa: st.mapa !== false, alcohol: st.alcohol != null ? st.alcohol : alcoholActivo(S), clave: !!st.clave, variante: 0 };
   const guardarOp = () => lsGuardar('rm.mkt.textos', { destino: op.destino, tono: op.tono, hashtags: op.hashtags, mapa: op.mapa, alcohol: op.alcohol, clave: op.clave });
   const area = h('textarea', { rows: 14, class: 'mkt-texto', 'aria-label': 'Texto para publicar' });

@@ -159,6 +159,33 @@ function bgEfectivo(ctx, W, H, T) {
   ctx.fillStyle = rg; raysPath(ctx, cx, cy, R, 40, 0.1); ctx.fill();
 }
 
+/** Fondo con foto real (combos de comida). Sin «ventana», la comida va al centro (miniaturas y otros formatos). */
+function bgFotoTema(ctx, W, H, T) { fondoFoto(ctx, W, H, T, { cy: H * 0.45, alto: H * 0.6 }); }
+/** La foto de la comida lo más grande y nítida posible, con el centro de la comida en la ventana libre entre el
+ *  encabezado y la tarjeta; el resto se completa con la misma foto desenfocada y oscura. Arriba y abajo se oscurece
+ *  para que se lean el logo y el pie. */
+function fondoFoto(ctx, W, H, T, v) {
+  ctx.fillStyle = vGrad(ctx, 0, H, T.bg); ctx.fillRect(0, 0, W, H);
+  const [id, fx, fy, fw] = T.foto || [], img = (RES.fondos || {})[id];
+  if (!img) return;
+  const iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height, cover = Math.max(W / iw, H / ih);
+  ctx.save(); ctx.filter = 'blur(26px) brightness(0.5) saturate(1.2)';
+  ctx.drawImage(img, (W - iw * cover * 1.1) / 2, (H - ih * cover * 1.1) / 2, iw * cover * 1.1, ih * cover * 1.1); ctx.restore(); ctx.filter = 'none';
+  // nítida: la comida ocupa casi todo el ancho (sin pasarse de «cubrir todo»); su centro, en el centro de la ventana
+  const s = Math.min(cover, Math.max(W / iw, W * 0.98 / (iw * (fw || 0.7)), (v.alto || H * 0.5) * 1.05 / ih));
+  const dw = iw * s, dh = ih * s, x0 = clamp(W / 2 - fx * dw, W - dw, 0);
+  const y = dh >= H ? clamp(v.cy - fy * dh, H - dh, 0) : clamp(v.cy - fy * dh, 0, H - dh);
+  const off = document.createElement('canvas'), sc = SC || 1; off.width = Math.max(1, Math.round(W * sc)); off.height = Math.max(1, Math.round(H * sc));
+  const o = off.getContext('2d'); o.setTransform(sc, 0, 0, sc, 0, 0); o.drawImage(img, x0, y, dw, dh);
+  const fade = Math.min(dh * 0.18, 160);                          // bordes suaves arriba y abajo si la foto no llega a cubrir
+  o.globalCompositeOperation = 'destination-in';
+  const g = o.createLinearGradient(0, y, 0, y + dh); g.addColorStop(0, y > 0 ? 'rgba(0,0,0,0)' : '#000'); g.addColorStop(Math.min(0.49, fade / dh), '#000'); g.addColorStop(Math.max(0.51, 1 - fade / dh), '#000'); g.addColorStop(1, y + dh < H ? 'rgba(0,0,0,0)' : '#000');
+  o.fillStyle = g; o.fillRect(0, 0, W, H);
+  ctx.drawImage(off, 0, 0, W, H);
+  const top = ctx.createLinearGradient(0, 0, 0, H * 0.32); top.addColorStop(0, 'rgba(0,0,0,.62)'); top.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = top; ctx.fillRect(0, 0, W, H * 0.32);
+  const bot = ctx.createLinearGradient(0, H * 0.62, 0, H); bot.addColorStop(0, 'rgba(0,0,0,0)'); bot.addColorStop(1, 'rgba(0,0,0,.55)'); ctx.fillStyle = bot; ctx.fillRect(0, H * 0.62, W, H * 0.38);
+}
+
 // ── decoraciones por tema (detrás del contenido y, opcional, encima) ──
 function decorMadre(ctx, W, H, hh) {
   const r = rnd(7);
@@ -406,6 +433,18 @@ Object.assign(THEMES, {
     accent: ['#FFE98A', '#FFC400'], accentInk: '#3A0508', accentDeep: '#B3081D', sello: ['#2B0A0E', '#120406'], hero: ['#FFF3B0', '#FFC81A'], glow: 'rgba(255,230,90,.7)', titulo: 'Oferta imperdible', subtitulo: '' },
   efectivo: { ..._base, grupo: 'impacto', nombre: 'Efectivo', swatch: '#1F9E49', bg: ['#2DBE5C', '#16863F', '#0B5A2A'], bgFn: bgEfectivo, footer: '#06301A', ribbon: ['#FFE24A', '#FFC400'], ribbonTail: '#C99700', ribbonFold: '#8F6A00', ribbonInk: '#0B5A2A', ribbonStroke: '#FFFFFF',
     accent: ['#FFF37A', '#FFD400'], accentInk: '#06301A', accentDeep: '#B3081D', sello: ['#E5202F', '#B3101C'], price: ['#0B5A2A', '#06301A'], priceInk: '#FFE24A', priceShadow: 'rgba(0,30,10,.6)', hero: ['#EFFFF3', '#A8EBBE'], heroInk: '#06301A', heroSoft: '#3E6F4E', glow: 'rgba(255,230,90,.6)', titulo: 'Oferta en efectivo', subtitulo: '' },
+});
+Object.assign(THEMES, {
+  // combos de comida: foto real de fondo (assets/fondos). foto: [nombre, x e y del centro de la comida (0–1), ancho de la comida (0–1)]
+  pizza: { ..._base, grupo: 'comida', nombre: 'Pizza', swatch: '#C8331E', bg: ['#5A1A0E', '#2E0C06', '#140402'], bgFn: bgFotoTema, foto: ['pizza', 0.62, 0.62, 0.7], footer: '#1E0703',
+    ribbon: ['#FFD23F', '#F5A300'], ribbonTail: '#B36E00', ribbonFold: '#7A4A00', ribbonInk: '#7A1405', ribbonStroke: '#FFFFFF', accent: ['#FFE38A', '#FFC23D'], accentInk: '#3A0A02', accentDeep: '#C8331E',
+    sello: ['#E8331E', '#A81E0C'], price: ['#D7301B', '#9E1B0B'], priceShadow: 'rgba(60,8,0,.55)', ink: '#2A0D05', soft: '#7A3A22', titulo: 'Combo Pizzas', subtitulo: '' },
+  panchos: { ..._base, grupo: 'comida', nombre: 'Panchos', swatch: '#E8A317', bg: ['#6B3A10', '#3A1E06', '#1A0C02'], bgFn: bgFotoTema, foto: ['panchos', 0.62, 0.5, 0.75], footer: '#2A1505',
+    ribbon: ['#E5202F', '#B3101C'], ribbonTail: '#6E0A12', ribbonFold: '#3A0509', ribbonInk: '#FFFFFF', ribbonStroke: '#4A0509', accent: ['#FFE24A', '#FFC400'], accentInk: '#3A1E06', accentDeep: '#C8101E',
+    sello: ['#E5202F', '#B3101C'], price: ['#E5202F', '#A80F1A'], priceShadow: 'rgba(60,5,0,.55)', ink: '#2B1208', soft: '#7B5A30', titulo: 'Combo Panchos', subtitulo: '' },
+  hamburguesa: { ..._base, grupo: 'comida', nombre: 'Hamburguesas', swatch: '#F29A1E', bg: ['#3A2418', '#1E120A', '#0A0603'], bgFn: bgFotoTema, foto: ['hamburguesa', 0.5, 0.52, 0.55], footer: '#140B05',
+    ribbon: ['#FFC21A', '#F29A1E'], ribbonTail: '#A85F00', ribbonFold: '#6E3E00', ribbonInk: '#2B1208', ribbonStroke: '#FFFFFF', accent: ['#FFE08A', '#FFB82E'], accentInk: '#2B1208', accentDeep: '#D2451A',
+    sello: ['#E5202F', '#B3101C'], price: ['#E04A1A', '#A8300C'], priceShadow: 'rgba(60,15,0,.55)', ink: '#2B1208', soft: '#7B4A28', titulo: 'Combo Burgers', subtitulo: '' },
 });
 Object.values(THEMES).forEach(T => { if (!T.grupo) T.grupo = 'marca'; });
 /** Títulos y frases sugeridas por temática (botones rápidos debajo del título). */

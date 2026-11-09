@@ -236,7 +236,7 @@ function agregarFotosALaCarpeta(files, categoria = '') {
 }
 
 // ── finalizar: imagen en el Escritorio ──
-const hayContenido = () => !S.avisoEjemplo && (L_ACTUAL().grupo === 'mensaje' || S.productos.some(p => !productoVacio(p)) || S.coleccion.fotos.some(f => srcDe(f)));
+const hayContenido = () => !S.avisoEjemplo && (['mensaje', 'comida'].includes(L_ACTUAL().grupo) || S.productos.some(p => !productoVacio(p)) || S.coleccion.fotos.some(f => srcDe(f)));
 function nombreCopia() {
   const d = new Date(), p = n => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())} ${nombreBase().replace(/^Rivero Market - /, '')}`;   // con segundos: dos copias seguidas no se pisan
