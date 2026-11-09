@@ -1098,3 +1098,12 @@ Probado: autoprueba 147 OK; captura de la pantalla con guías.
  - 07_app.js: cajaCabecera() («Logo, título y pie: tamaños», después de «Cuadros de productos»); el texto de la casilla
    de la banda ya no promete el recordatorio.
 Probado: autoprueba 147 OK; canal, uno por imagen (post e historia), A4 de 16 y de 10.
+
+32. VERSIÓN 4.7: LOGO TODAVÍA MÁS GRANDE (9/11/2026)
+---------------------------------------------------
+ - Miki quiere el carrito, RIVERO y MARKET bien destacados. El logo es una sola imagen (proporciones de la marca): crece
+   todo junto. En los A4 con sello el logo casi no crecía (maxLogo dejaba 4 × selloR + 60).
+ - drawHeaderWide: maxLogo = W − 2M − (3 × selloR + 40) y después selloR = min(selloR, (W − 2M − logoW − 40) / 4)
+   (el sello baja hasta ~75 %). CAB_CFG.logo de fábrica 1,35 (límite 1,7). ESTADO_VERSION 9: los estados de antes
+   toman el logo de fábrica nuevo.
+Probado: autoprueba 147 OK; canal con sello y sin sello, A4 de 16.

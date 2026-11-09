@@ -1,5 +1,5 @@
 // ───────────────────────── estado y datos de ejemplo ─────────────────────────
-const ESTADO_VERSION = 8;
+const ESTADO_VERSION = 9;
 const LEGALES_VIEJO = 'Imágenes ilustrativas. Precios finales en pesos argentinos.';   // hasta la v3.0 (ahora «precios finales» ya va en la letra chica)
 
 // `archivo` = ruta de la foto dentro de la carpeta "productos" (programa local); `img` = foto incrustada (página suelta).
@@ -44,7 +44,7 @@ function estadoDemo() {
     mensaje: { kicker: '¡Aprovechá!', titulo: 'Descuento en todos los productos', grande: '', grande2: '', condicion: '', texto: 'Válido para todas tus compras en el local.' },
     destacado: { mensaje: 'OFERTA IMPERDIBLE', mensaje2: '' },
     legal: { banda: false, bandaTam: 1, letraChica: true, alcohol: 'no', stock: '' },
-    cabecera: { logo: 1.2, titulo: 0.85, pie: 0.75 },                // tamaños del logo, el título (cartel) y el pie
+    cabecera: { logo: 1.35, titulo: 0.85, pie: 0.75 },                // tamaños del logo, el título (cartel) y el pie
     cuadros: { sep: 1, margen: 1, foto: 1, estrella: 1, alinear: 'auto', dx: 0, dy: 0 },
     historia: { ver: true, cta: '' },
     urgencia: '',
@@ -124,6 +124,7 @@ function normalizarEstado(S, op = {}) {
   out.legal = { ...base.legal, ...(S.legal || {}) };
   out.cuadros = { ...base.cuadros, ...(S.cuadros || {}) };
   out.cabecera = { ...base.cabecera, ...(S.cabecera || {}) };
+  if (!(S.v >= 9)) out.cabecera.logo = base.cabecera.logo;           // v4.7: logo más grande de fábrica
   if (!(S.v >= 8)) out.legal.banda = false;                         // v4.6: la banda legal viene apagada (Miki no la quiere; se puede prender en «Pie del folleto»)
   if (!(S.v >= 6) && out.promo.modo === 'extra') out.promo.modo = 'incluido';   // v2.1: el % ya está en el precio final; nunca se suma otro descuento sin querer
   if (!(S.v >= 5)) { out.legal.alcohol = 'no'; if (S.coleccion) S.coleccion.alcohol = false; }   // v2.0: la leyenda de alcohol viene apagada (se puede volver a activar en Legales)

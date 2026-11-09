@@ -317,7 +317,7 @@ const chipCard = p => { const c = chipProducto(p, S_DIBUJO); return c && LIMPIO 
 /** Cuadros de productos (se eligen en "Cuadros de productos"): separación, margen a los costados, fotos, producto estrella
  *  y dónde va el precio adentro de cada cuadro (alinear: 'auto' = como venía; dx y dy en % del cuadro, dy positivo = más arriba). */
 let CUADROS_CFG = { sep: 1, margen: 1, foto: 1, estrella: 1, alinear: 'auto', dx: 0, dy: 0 };
-let CAB_CFG = { logo: 1.2, titulo: 0.85, pie: 0.75 };            // tamaños del logo, el título y el pie (S.cabecera)
+let CAB_CFG = { logo: 1.35, titulo: 0.85, pie: 0.75 };            // tamaños del logo, el título y el pie (S.cabecera)
 /** ¿El precio va donde se eligió (y no con la diagramación de siempre)? */
 const precioMovido = () => CUADROS_CFG.alinear !== 'auto' || !!CUADROS_CFG.dx || !!CUADROS_CFG.dy;
 const alinPrecio = nat => (['izquierda', 'centro', 'derecha'].includes(CUADROS_CFG.alinear) ? CUADROS_CFG.alinear : nat);
@@ -972,7 +972,8 @@ function ajustarCabecera(g, W, maxLogo) {
 }
 function drawHeaderWide(ctx, W, S, T, g) {
   // logo y subtítulo al centro; el sello (promo) a la derecha, sin tocarse
-  g = ajustarCabecera(g, W, W - 2 * g.M - (g.selloR ? 4 * g.selloR + 60 : 0));
+  g = ajustarCabecera(g, W, W - 2 * g.M - (g.selloR ? 3 * g.selloR + 40 : 0));   // el logo tiene prioridad: el sello se achica hasta 75 %
+  if (g.selloR) g = { ...g, selloR: Math.min(g.selloR, (W - 2 * g.M - g.logoW - 40) / 4) };
   const lx = (W - g.logoW) / 2;
   adornos(ctx, [zonaLogo(lx, g.logoY, g.logoW)]);
   const L = RES.logoH;
@@ -1136,7 +1137,7 @@ function renderFlyer(canvas, S, opts = {}) {
   CUADROS_CFG = { sep: clamp(Number.isFinite(+CU.sep) && CU.sep !== '' && CU.sep != null ? +CU.sep : 1, 0, 3), margen: clamp(+CU.margen || 1, 0.3, 2.5), foto: clamp(+CU.foto || 1, 0.6, 1.5), estrella: clamp(+CU.estrella || 1, 0.6, 1.5),
     alinear: ['izquierda', 'centro', 'derecha'].includes(CU.alinear) ? CU.alinear : 'auto', dx: clamp(+CU.dx || 0, -40, 40), dy: clamp(+CU.dy || 0, -20, 50) };
   const CB = S.cabecera || {};
-  CAB_CFG = { logo: clamp(+CB.logo || 1.2, 0.7, 1.6), titulo: clamp(+CB.titulo || 0.85, 0.5, 1.3), pie: clamp(+CB.pie || 0.75, 0.5, 1.2) };
+  CAB_CFG = { logo: clamp(+CB.logo || 1.35, 0.7, 1.7), titulo: clamp(+CB.titulo || 0.85, 0.5, 1.3), pie: clamp(+CB.pie || 0.75, 0.5, 1.2) };
   const PI = typeof promoInfo === 'function' ? promoInfo(S) : null;
   ETQ_PRECIO = PR.etiqueta != null ? PR.etiqueta : 'FINAL';        // la placa dice FINAL (o lo que se elija): es el precio que paga el cliente
   PROMO_ACT = PI && PI.verPrecio ? PI : null;                      // debajo de cada precio: la condición de pago (o la cuota)
