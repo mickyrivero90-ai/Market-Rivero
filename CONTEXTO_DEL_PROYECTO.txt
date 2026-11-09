@@ -1107,3 +1107,12 @@ Probado: autoprueba 147 OK; canal, uno por imagen (post e historia), A4 de 16 y 
    (el sello baja hasta ~75 %). CAB_CFG.logo de fábrica 1,35 (límite 1,7). ESTADO_VERSION 9: los estados de antes
    toman el logo de fábrica nuevo.
 Probado: autoprueba 147 OK; canal con sello y sin sello, A4 de 16.
+
+33. VERSIÓN 4.8: NOMBRE PEGADO AL PRECIO Y CON TAMAÑO REGULABLE (9/11/2026)
+-------------------------------------------------------------------------
+ - Miki: el nombre seguía arriba de todo y chico (su folleto tiene el precio corrido a mano: precioMovido() → sin lift).
+ - drawCard con o.foto: el nombre se dibuja desde y0 = max(top, techo − 8k − alto del nombre − descripción), o sea
+   pegado arriba del precio en los dos caminos (normal y precio movido).
+ - CUADROS_CFG.nombre (S.cuadros.nombre, 0,7–2, de fábrica 1; está en CUADROS_NORMAL y en el estado base): multiplica el
+   tamaño máximo (y mínimo) del nombre en drawCard, drawCardV, drawHeroH y drawHeroV. Control en cajaCuadros().
+Probado: autoprueba 147 OK; A4 de 16, 12 y 10 con nombre al 100 %, 160 % y 140 % con el precio corrido.

@@ -316,7 +316,7 @@ const notaDe = p => [String(p.nota || '').trim(), porUnidad(p)].filter(Boolean).
 const chipCard = p => { const c = chipProducto(p, S_DIBUJO); return c && LIMPIO && !c.price && (!p.pago || p.pago === c.P.tipo) ? null : c; };
 /** Cuadros de productos (se eligen en "Cuadros de productos"): separación, margen a los costados, fotos, producto estrella
  *  y dónde va el precio adentro de cada cuadro (alinear: 'auto' = como venía; dx y dy en % del cuadro, dy positivo = más arriba). */
-let CUADROS_CFG = { sep: 1, margen: 1, foto: 1, estrella: 1, alinear: 'auto', dx: 0, dy: 0 };
+let CUADROS_CFG = { sep: 1, margen: 1, foto: 1, estrella: 1, alinear: 'auto', dx: 0, dy: 0, nombre: 1 };
 let CAB_CFG = { logo: 1.35, titulo: 0.85, pie: 0.75 };            // tamaños del logo, el título y el pie (S.cabecera)
 /** ¿El precio va donde se eligió (y no con la diagramación de siempre)? */
 const precioMovido = () => CUADROS_CFG.alinear !== 'auto' || !!CUADROS_CFG.dx || !!CUADROS_CFG.dy;
@@ -474,7 +474,7 @@ function drawCard(ctx, r, p, T, env, o = {}) {
   drawProductArt(ctx, p, z, T, env, { k, lim: [4 * k, 8 * k + w * ff + 6 * k], aire: o.aire });
   const tx = w * (ff + 0.015) + 8 * k, tw = w - tx - 16 * k;
   // de abajo hacia arriba: promo/nota, placa, precio anterior; arriba el nombre y la descripción en lo que queda
-  const nm = String(p.nombre || '').trim().toUpperCase(), nMax = (o.foto ? 30 : 42) * k, nMin = (o.foto ? 16 : 20) * k;
+  const fn = CUADROS_CFG.nombre || 1, nm = String(p.nombre || '').trim().toUpperCase(), nMax = (o.foto ? 30 : 42) * k * fn, nMin = Math.min((o.foto ? 16 : 20) * k * fn, nMax);
   let techo, lift = 0;                                            // lift (foto grande): nombre y precio juntos, en el medio del alto
   if (precioMovido()) techo = precioMovidoCard(ctx, p, info, T, k, w, h, tx, tw);
   else {
@@ -501,8 +501,10 @@ function drawCard(ctx, r, p, T, env, o = {}) {
   }
   const top = Math.max(17 * k + lift, o.foto ? 32 * k : 0), desc = String(p.desc || '').trim(), dSize = 18 * k;   // foto grande: el nombre un poco más abajo de la esquina
   const wf = fitBlock(ctx, nm || 'NOMBRE DEL PRODUCTO', s => FB(900, s), nMax, nMin, tw, 2, Math.max(24 * k, techo - top - (desc ? 0 : 0)), 0.92, 0.4);
-  wf.lines.forEach((ln, i) => text(ctx, ln, tx, top + wf.size * 0.82 + i * wf.size * 0.92, { font: FB(900, wf.size), fill: nm ? T.ink : 'rgba(60,25,10,.35)', tracking: 0.4 }));
-  const ty = top + wf.size * 0.92 * wf.lines.length + 3 * k;
+  // foto grande: el nombre va pegado arriba del precio (no arriba de todo), así se leen juntos
+  const y0 = o.foto ? Math.max(top, techo - 8 * k - wf.size * 0.92 * wf.lines.length - (desc ? dSize * 1.3 : 0)) : top;
+  wf.lines.forEach((ln, i) => text(ctx, ln, tx, y0 + wf.size * 0.82 + i * wf.size * 0.92, { font: FB(900, wf.size), fill: nm ? T.ink : 'rgba(60,25,10,.35)', tracking: 0.4 }));
+  const ty = y0 + wf.size * 0.92 * wf.lines.length + 3 * k;
   if (desc && techo - ty >= dSize * 1.05) {                       // descripción: usa el espacio que quede entre el nombre y el precio anterior
     const maxL = techo - ty >= dSize * 2.4 ? 2 : 1;
     const df = wrapFit(ctx, desc, s => FM(600, s), dSize, 12.5 * k, tw, maxL, 0);
@@ -563,7 +565,7 @@ function drawCardV(ctx, r, p, T, env, o = {}) {
     }
   }
   const nm = String(p.nombre || '').trim().toUpperCase(), [nx, nAl] = a === 'izquierda' ? [pad, 'left'] : a === 'derecha' ? [w - pad, 'right'] : [cx, 'center'];
-  const wf = fitBlock(ctx, nm || 'NOMBRE DEL PRODUCTO', s => FB(900, s), 27 * k, 14 * k, tw, 2, h * 0.17, 0.92, 0.4);   // nombre chico: la foto y el precio se ven primero
+  const fn = CUADROS_CFG.nombre || 1, wf = fitBlock(ctx, nm || 'NOMBRE DEL PRODUCTO', s => FB(900, s), 27 * k * fn, Math.min(14 * k * fn, 27 * k * fn), tw, 2, h * 0.17 * fn, 0.92, 0.4);   // nombre chico: la foto y el precio se ven primero
   const nameTop = yb - wf.size * 0.92 * wf.lines.length;
   wf.lines.forEach((ln, i) => text(ctx, ln, nx, nameTop + wf.size * 0.82 + i * wf.size * 0.92, { font: FB(900, wf.size), fill: nm ? T.ink : 'rgba(60,25,10,.35)', align: nAl, tracking: 0.4 }));
   drawProductArt(ctx, p, { x: pad, y: 6 * k, w: tw, h: Math.max(40 * k, nameTop - 12 * k) }, T, env, { k, glowR: 0.5, lim: [4 * k, w - 4 * k], aire: o.aire });
@@ -691,7 +693,7 @@ function drawHeroH(ctx, r, p, T, env, o = {}) {
   const ff = o.foto || 0.40, z = { x: 20 * k, y: 16 * k, w: w * ff, h: h - 30 * k };   // la foto queda dentro del cuadro
   drawProductArt(ctx, p, z, T, env, { k, glowColor: 'rgba(255,255,255,.85)', glowR: 0.62, lim: [10 * k, 26 * k + w * ff] });
   if (o.sticker !== false) stickerEstrella(ctx, w * 0.43 - 6 * k, 22 * k, k, T);
-  const tx = w * (ff + 0.03), tw = w - tx - 34 * k, nMax = (o.nombre || 98) * k;
+  const tx = w * (ff + 0.03), tw = w - tx - 34 * k, nMax = (o.nombre || 98) * k * (CUADROS_CFG.nombre || 1);
   let extra = 0;                                                   // o.centrar: nombre y precio juntos, en el medio del alto
   let anteTop;
   if (precioMovido()) anteTop = precioMovidoHeroH(ctx, p, info, T, k, w, h, tx, tw);
@@ -791,7 +793,7 @@ function drawHeroV(ctx, r, p, T, env, o = {}) {
   // el nombre, chico y pegado al precio: lo que se ve primero es la foto y el precio (la foto usa todo el resto)
   let wf, nameTop;
   if (precioMovido()) { nameTop = nameTop0; wf = fitBlock(ctx, nm || 'NOMBRE DEL PRODUCTO', s => FB(900, s), 92 * k * big, 34 * k, tw, 2, anteTop - 4 * k - nameTop - descH, 0.92, 0.5); }
-  else { wf = fitBlock(ctx, nm || 'NOMBRE DEL PRODUCTO', s => FB(900, s), 56 * k * big, 26 * k, tw, 2, h * 0.15, 0.92, 0.5); nameTop = anteTop - 10 * k - descH - wf.size * 0.92 * wf.lines.length; }
+  else { wf = fitBlock(ctx, nm || 'NOMBRE DEL PRODUCTO', s => FB(900, s), 56 * k * big * (CUADROS_CFG.nombre || 1), 26 * k, tw, 2, h * 0.15 * (CUADROS_CFG.nombre || 1), 0.92, 0.5); nameTop = anteTop - 10 * k - descH - wf.size * 0.92 * wf.lines.length; }
   const imgBottom = nameTop - 8 * k;
   const z = { x: w * 0.12, y: 16 * k, w: w * 0.76, h: imgBottom - 16 * k };   // la foto queda dentro del cuadro
   drawProductArt(ctx, p, z, T, env, { k, glowColor: 'rgba(255,255,255,.85)', glowR: 0.5, lim: [10 * k, w - 10 * k] });
@@ -1135,7 +1137,7 @@ function renderFlyer(canvas, S, opts = {}) {
     porUnidad: PR.porUnidad !== false, fraccion: fraccionDe(PR.fraccion) };
   const CU = S.cuadros || {};
   CUADROS_CFG = { sep: clamp(Number.isFinite(+CU.sep) && CU.sep !== '' && CU.sep != null ? +CU.sep : 1, 0, 3), margen: clamp(+CU.margen || 1, 0.3, 2.5), foto: clamp(+CU.foto || 1, 0.6, 1.5), estrella: clamp(+CU.estrella || 1, 0.6, 1.5),
-    alinear: ['izquierda', 'centro', 'derecha'].includes(CU.alinear) ? CU.alinear : 'auto', dx: clamp(+CU.dx || 0, -40, 40), dy: clamp(+CU.dy || 0, -20, 50) };
+    alinear: ['izquierda', 'centro', 'derecha'].includes(CU.alinear) ? CU.alinear : 'auto', dx: clamp(+CU.dx || 0, -40, 40), dy: clamp(+CU.dy || 0, -20, 50), nombre: clamp(+CU.nombre || 1, 0.7, 2) };
   const CB = S.cabecera || {};
   CAB_CFG = { logo: clamp(+CB.logo || 1.35, 0.7, 1.7), titulo: clamp(+CB.titulo || 0.85, 0.5, 1.3), pie: clamp(+CB.pie || 0.75, 0.5, 1.2) };
   const PI = typeof promoInfo === 'function' ? promoInfo(S) : null;

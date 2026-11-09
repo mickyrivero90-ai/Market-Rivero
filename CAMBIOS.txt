@@ -5,6 +5,13 @@ Desde la 3.0, la herramienta online (https://mickyrivero90-ai.github.io/Market-R
 se actualiza sola. Si usás el programa de la PC y muestra un número menor, bajá el nuevo
 desde la herramienta online (⋯ Más → Programa para usar sin internet).
 
+Versión 4.8 · 9 de noviembre de 2026 · NOMBRE PEGADO AL PRECIO Y CON TAMAÑO REGULABLE
+- En los cuadros con la foto a la izquierda, el nombre del producto va pegado arriba del precio (ya
+  no arriba de todo a la derecha), también si corriste el precio a mano.
+- Nuevo control: «Cuadros de productos» → «Nombre del producto (la descripción)», de 70 % a 200 %.
+  Vale para el folleto, las imágenes de redes y las de un producto por imagen. Si un nombre largo no
+  entra, se achica solo.
+
 Versión 4.7 · 9 de noviembre de 2026 · LOGO TODAVÍA MÁS GRANDE
 - El logo completo (el carrito con la R, RIVERO y MARKET, que crecen juntos y parejos) sale más
   grande. Si hay sello de promo («10 % OFF», «¡Súper ofertas!»), el sello se achica un poco para
