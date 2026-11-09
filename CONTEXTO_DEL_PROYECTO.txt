@@ -1141,3 +1141,12 @@ Probado: autoprueba 147 OK; A4 de 16 con 13 productos → 3, 3, 3 y 4.
    mueve; ARRASTRE.recien evita que el click de después abra el producto. Solo con «Guías» (sin guías no hay HITS).
    accionesFila(): select «Mover al lugar» (1 a slots). styles.css: .marca-arrastre, .mover-a.
 Probado: autoprueba 147 OK; arrastre con Playwright del lugar 5 al 1 (queda primero, los demás corridos).
+
+37. VERSIÓN 5.2: UN PRODUCTO POR IMAGEN, EL TEXTO YA NO QUEDA DETRÁS DEL PRECIO (9/11/2026)
+------------------------------------------------------------------------------------------
+ - Causa: con precioMovido(), drawHeroV ponía el nombre en nameTop0 (h × imgFrac) con letra de 92k y el precio
+   (precioMovidoHeroV) podía subir hasta nameTop0 + 40k: la descripción quedaba debajo de la placa.
+ - drawHeroV: un solo camino para el nombre (56k × big × CUADROS_CFG.nombre, pegado arriba de anteTop); la zona de la
+   foto tiene como mínimo 40k de alto. drawHeroH con o.centrar: el nombre arranca en max(top, anteTop − 10k − desc −
+   alto del nombre).
+Probado: autoprueba 147 OK; uno por imagen (post) con el precio en su lugar y subido 15 % y 35 %, alineado al centro.
