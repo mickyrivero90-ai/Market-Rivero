@@ -622,7 +622,8 @@ function drawEmptyCard(ctx, r, T, env, k) {
     rrPath(ctx, 0, 0, r.w, r.h, 26 * k); ctx.fillStyle = 'rgba(255,255,255,.13)'; ctx.fill();
     ctx.setLineDash([14 * k, 10 * k]); ctx.lineWidth = 3 * k; ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.stroke(); ctx.setLineDash([]);
     text(ctx, '+', r.w / 2, r.h / 2 + 6 * k, { font: FB(900, 76 * k, false), fill: 'rgba(255,255,255,.85)', align: 'center' });
-    text(ctx, 'ELEGIR PRODUCTO', r.w / 2, r.h / 2 + 42 * k, { font: FM(800, 17 * k), fill: 'rgba(255,255,255,.9)', align: 'center', tracking: 2.5 * k });
+    text(ctx, 'ELEGIR PRODUCTO', r.w / 2, r.h / 2 + 42 * k, { font: FM(800, 17 * k), fill: 'rgba(255,255,255,.9)', align: 'center', tracking: 2.5 * k, maxW: r.w - 16 * k });
+    text(ctx, 'SI QUEDA VACÍO, NO SALE', r.w / 2, r.h / 2 + 66 * k, { font: FM(700, 13 * k), fill: 'rgba(255,255,255,.7)', align: 'center', tracking: 1.5 * k, maxW: r.w - 16 * k });   // los demás cuadros se agrandan
     ctx.restore(); return;
   }
   drawRelleno(ctx, r, T, k);
