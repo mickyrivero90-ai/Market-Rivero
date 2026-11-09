@@ -1257,3 +1257,13 @@ Probado: autoprueba 151 OK; combo_post con el pack x3 + una botella.
    (falta precio; sin avisos de productos), nombreBase. 08_programa: hayContenido. 10_marketing: texto del combo y
    emojis 🍕🌭🍔.
 Probado: autoprueba 157 OK; comida_post con los 3 fondos, comida_story y comida_a4.
+
+47. VERSIÓN 6.2: FONDOS DE COMIDA, EL PLATO ENTERO A LA VISTA (9/11/2026)
+------------------------------------------------------------------------
+ - Miki: la hamburguesa y la pizza se veían tapadas/cortadas y el de panchos parecía solo papas.
+ - T.foto = [id, x0, y0, x1, y1]: recuadro de la comida en la foto. fondoFoto(): escala = min(98 % del ancho / ancho de
+   la comida, 104 % del alto libre / alto de la comida, cover × 1,6); centro del recuadro en el centro de la ventana;
+   bordes de la foto nítida suavizados en horizontal y vertical hasta el recuadro (destination-in). Fondo desenfocado
+   brightness 0,55.
+ - panchos.webp reemplazada por Pexels 31176117 (pancho con papas pay). layoutComida: minVentana 30 % del alto.
+Probado: autoprueba 157 OK; los tres fondos en post, pizza en historia y hamburguesa en A4.

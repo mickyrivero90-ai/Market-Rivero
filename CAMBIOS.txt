@@ -5,6 +5,13 @@ Desde la 3.0, la herramienta online (https://mickyrivero90-ai.github.io/Market-R
 se actualiza sola. Si usás el programa de la PC y muestra un número menor, bajá el nuevo
 desde la herramienta online (⋯ Más → Programa para usar sin internet).
 
+Versión 6.2 · 9 de noviembre de 2026 · FONDOS DE COMIDA: EL PLATO ENTERO A LA VISTA
+- La foto ya no se amplía tanto: la comida entera (la hamburguesa completa, la pizza con el queso
+  estirándose, el pancho con las papas pay) entra nítida en el lugar libre entre el cartel y la
+  tarjeta, y alrededor sigue la misma foto, desenfocada.
+- Foto nueva para Panchos: se ven el pan, la salchicha y las papas pay.
+- La tarjeta del combo es un poco más compacta para dejarle más lugar a la foto.
+
 Versión 6.1 · 9 de noviembre de 2026 · COMBOS DE COMIDA CON FOTO DE FONDO
 - Formato nuevo en el paso 1: «Combo de comida» (Post, Historia y A4). Arriba el logo y un cartel
   («¡SÚPER OFERTA!»), las fechas y el medio de pago; abajo una tarjeta con el nombre del combo, lo
