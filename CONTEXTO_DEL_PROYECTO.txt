@@ -1281,3 +1281,13 @@ Probado: autoprueba 157 OK; los tres fondos en post, historia y A4.
    del texto); velo negro en degradé desde 160k arriba del bloque hasta el pie (0,8–0,92 × opac); textos blancos con
    sombra, nombre y cantidades con T.accent[0], separadores blancos al 28 %. Botones en seccionComida().
 Probado: autoprueba 157 OK; los tres fondos en post, historia y A4.
+
+50. VERSIÓN 6.5: COMBO DE COMIDA, TAMAÑO Y LADO DEL TEXTO (9/11/2026)
+--------------------------------------------------------------------
+ - S.comida.tamTexto (0,6–2, de fábrica 1,25: nombre, renglones; «antes» y nota hasta 1,4), tamPrecio (0,6–1,8; placa
+   120k × PT) y alinear ('izquierda' | 'centro' | 'derecha'): la tarjeta/bloque se ubica a ese lado y el nombre, la
+   lista (bloque con renglones alineados a la izquierda), el «antes», la placa y la nota se alinean al mismo borde.
+   Flotante: el bloque puede usar hasta 72 % del alto libre.
+ - elegirTema() con combo automático conserva estilo, opac, tamTexto, tamPrecio y alinear.
+ - assets/fondos/panchos.webp espejada (recuadro [0,16, 0,39, 0,92, 0,74]).
+Probado: autoprueba 157 OK; panchos a la derecha, pizza centro, hamburguesa a la izquierda y al 160 % en A4.
