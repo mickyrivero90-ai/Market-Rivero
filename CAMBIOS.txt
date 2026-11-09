@@ -5,6 +5,14 @@ Desde la 3.0, la herramienta online (https://mickyrivero90-ai.github.io/Market-R
 se actualiza sola. Si usás el programa de la PC y muestra un número menor, bajá el nuevo
 desde la herramienta online (⋯ Más → Programa para usar sin internet).
 
+Versión 5.4 · 9 de noviembre de 2026 · FORMATO COMBO Y TAMAÑOS MÁS FÁCILES
+- Formato nuevo en el paso 1: «Combo» (Post, Historia y A4). Viene con el cartel «¡SÚPER COMBO!» y el
+  tachado «POR SEPARADO», y en el paso 2 explica cómo armarlo: primera foto, «＋ Sumar otra foto» y
+  el precio.
+- Tocá el logo o el título en el folleto y se abre directo «🔠 Tamaño del logo, del título y del pie».
+  Ese cuadro ahora está en el paso 1, a la vista, y sirve en todos los formatos (también en «Mensaje»).
+- El formato «Mensaje» también toma el tamaño del logo y del título.
+
 Versión 5.3 · 9 de noviembre de 2026 · VARIAS FOTOS EN UN MISMO CUADRO (COMBOS)
 - En cada producto (paso 2, abrí el producto) hay una parte nueva: «Combo: varias fotos en este
   cuadro». Con «＋ Sumar otra foto (armar combo)» elegís otra foto (por ejemplo, Fernet + gaseosa) y

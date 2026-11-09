@@ -47,11 +47,17 @@ function layoutMensaje(ctx, S, T, env, kind) {
   const P = { a4: { M: 44, logoW: 560, logoY: 30, kY: 206, kH: 44, ribY: 268, ribH: 190, foot: 'print' },
     post: { M: 34, logoW: 420, logoY: 20, kY: 154, kH: 36, ribY: 204, ribH: 150, foot: 'post' },
     story: { M: 40, logoW: 520, logoY: 120, kY: 296, kH: 42, ribY: 356, ribH: 200, foot: 'story' } }[kind];
+  {                                                               // tamaños elegidos del logo y del título
+    const Lg = RES.logoH, ar = Lg ? (Lg.naturalHeight || Lg.height) / (Lg.naturalWidth || Lg.width) : 0.32;
+    const lw = Math.min(P.logoW * CAB_CFG.logo, W * 0.8), dL = (lw - P.logoW) * ar, rh = P.ribH * CAB_CFG.titulo;
+    Object.assign(P, { logoW: lw, kY: P.kY + dL, ribY: P.ribY + dL, ribH: rh });
+  }
   const SAFE = kind === 'story' ? 176 : 0;
   drawBackground(ctx, W, H, T, 0.5, 0.1, P.ribY + P.ribH);
   adornos(ctx, [zonaLogo((W - P.logoW) / 2, P.logoY, P.logoW)]);
   const L = RES.logoH;
-  if (L) { const lh = P.logoW * (L.naturalHeight || L.height) / (L.naturalWidth || L.width); shadow(ctx, 'rgba(90,25,0,.40)', 18, 0, 8); ctx.drawImage(L, (W - P.logoW) / 2, P.logoY, P.logoW, lh); noShadow(ctx); }
+  if (L) { const lh = P.logoW * (L.naturalHeight || L.height) / (L.naturalWidth || L.width); shadow(ctx, 'rgba(90,25,0,.40)', 18, 0, 8); ctx.drawImage(L, (W - P.logoW) / 2, P.logoY, P.logoW, lh); noShadow(ctx); HITS.push({ tipo: 'cabecera', i: 0, x: (W - P.logoW) / 2, y: P.logoY, w: P.logoW, h: lh }); }
+  HITS.push({ tipo: 'cabecera', i: 1, x: P.M, y: P.ribY, w: W - 2 * P.M, h: P.ribH });
   const kk = String(Mj.kicker || '').trim().toUpperCase();
   if (kk) chip(ctx, W / 2, P.kY, kk, { h: P.kH, font: FM(900, P.kH * 0.5), fill: 'rgba(50,15,3,.92)', ink: T.accent[0], padX: P.kH * 0.6, tracking: P.kH * 0.06, align: 'center' });
   const rb = drawRibbonMulti(ctx, P.M, P.ribY, W - 2 * P.M, P.ribH, Mj.titulo || 'Aprovechá nuestras promos', T);
@@ -125,8 +131,9 @@ function layoutDestacado(ctx, S, T, env, kind) {
   const lx = (W - P.logoW) / 2;                                    // logo al centro
   adornos(ctx, [zonaLogo(lx, P.logoY, P.logoW)]);
   const L = RES.logoH;
-  if (L) { const lh = P.logoW * (L.naturalHeight || L.height) / (L.naturalWidth || L.width); shadow(ctx, 'rgba(0,0,0,.45)', 16, 0, 8); ctx.drawImage(L, lx, P.logoY, P.logoW, lh); noShadow(ctx); }
+  if (L) { const lh = P.logoW * (L.naturalHeight || L.height) / (L.naturalWidth || L.width); shadow(ctx, 'rgba(0,0,0,.45)', 16, 0, 8); ctx.drawImage(L, lx, P.logoY, P.logoW, lh); noShadow(ctx); HITS.push({ tipo: 'cabecera', i: 0, x: lx, y: P.logoY, w: P.logoW, h: lh }); }
   drawBanner(ctx, W, P.bY, P.bH, D.mensaje || 'OFERTA IMPERDIBLE', T, { M: P.M, max: P.bMax });
+  HITS.push({ tipo: 'cabecera', i: 1, x: 0, y: P.bY, w: W, h: P.bH });
   const hb = drawInfoRow(ctx, W, S, T, { M: P.M, y: P.infoY, h: P.infoH });
   const fp = footerPlan(ctx, S, W, H, P.foot), fh = fp.total, fy = H - SAFE - fh;
   if (SAFE) franjaHistoria(ctx, S, T, W, H, SAFE);
@@ -229,6 +236,9 @@ Object.assign(LAYOUTS, {
   post_4: { nombre: 'Post Facebook / Instagram · 4 ofertas', corto: 'Post 4:5 · 4 ofertas', w: 1080, h: 1350, slots: 4, hero: false, grupo: 'redes', temas: TODOS_LOS_TEMAS, draw: (c, S, T, e) => layoutPost4(c, S, T, e) },
   destacado_a4: { nombre: 'Un solo producto · A4 (liquidación, efectivo)', corto: 'A4 · 1 producto', w: 1240, h: 1754, slots: 1, hero: true, pdf: 'A4', grupo: 'unico', temas: ['impacto', 'marca', 'fecha'], draw: (c, S, T, e) => layoutDestacado(c, S, T, e, 'a4') },
   destacado_post: { nombre: 'Un solo producto · Post 4:5', corto: 'Post 4:5 · 1 producto', w: 1080, h: 1350, slots: 1, hero: true, grupo: 'unico', temas: ['impacto', 'marca', 'fecha'], draw: (c, S, T, e) => layoutDestacado(c, S, T, e, 'post') },
+  combo_a4: { nombre: 'Combo · A4 (varias fotos con «+»)', corto: 'Combo · A4', w: 1240, h: 1754, slots: 1, hero: true, pdf: 'A4', grupo: 'unico', temas: ['impacto', 'marca', 'fecha'], draw: (c, S, T, e) => layoutDestacado(c, S, T, e, 'a4') },
+  combo_post: { nombre: 'Combo · Post 4:5 (varias fotos con «+»)', corto: 'Combo · Post 4:5', w: 1080, h: 1350, slots: 1, hero: true, grupo: 'unico', temas: ['impacto', 'marca', 'fecha'], draw: (c, S, T, e) => layoutDestacado(c, S, T, e, 'post') },
+  combo_story: { nombre: 'Combo · Historia 9:16 (varias fotos con «+»)', corto: 'Combo · Historia', w: 1080, h: 1920, slots: 1, hero: true, grupo: 'unico', temas: ['impacto', 'marca', 'fecha'], draw: (c, S, T, e) => layoutDestacado(c, S, T, e, 'story') },
   destacado_story: { nombre: 'Un solo producto · Historia 9:16', corto: 'Historia · 1 producto', w: 1080, h: 1920, slots: 1, hero: true, grupo: 'unico', temas: ['impacto', 'marca', 'fecha'], draw: (c, S, T, e) => layoutDestacado(c, S, T, e, 'story') },
   mensaje_a4: { nombre: 'Mensaje · A4 (anuncio sin productos)', corto: 'A4 · Mensaje', w: 1240, h: 1754, slots: 0, hero: false, pdf: 'A4', grupo: 'mensaje', temas: ['fecha', 'marca', 'impacto'], draw: (c, S, T, e) => layoutMensaje(c, S, T, e, 'a4') },
   mensaje_post: { nombre: 'Mensaje · Post 4:5', corto: 'Post 4:5 · Mensaje', w: 1080, h: 1350, slots: 0, hero: false, grupo: 'mensaje', temas: ['fecha', 'marca', 'impacto'], draw: (c, S, T, e) => layoutMensaje(c, S, T, e, 'post') },

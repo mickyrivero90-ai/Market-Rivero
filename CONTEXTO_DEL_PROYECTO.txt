@@ -1165,3 +1165,15 @@ Probado: autoprueba 147 OK; uno por imagen (post) con el precio en su lugar y su
  - 07_app.js: cajaCombo(p, i) dentro de controlesFoto (solo productos): fichas con miniatura y «Quitar», botón
    «＋ Sumar otra foto» (con carpeta/nube: abrirSelector; sin carpeta: input file → leerArchivoImagen).
 Probado: autoprueba 148 OK (nueva: fotos extra se guardan, máx. 2); A4 de 12, canal y uno por imagen con 2 y 3 fotos.
+
+39. VERSIÓN 5.4: FORMATO COMBO Y TAMAÑOS MÁS FÁCILES (9/11/2026)
+---------------------------------------------------------------
+ - Miki no encontraba dónde agrandar el logo y el título (estaba en el formato «Mensaje», que no usaba CAB_CFG, y el
+   cuadro de tamaños estaba dentro de la sección de productos, que «Mensaje» no tiene).
+ - LAYOUTS combo_a4 / combo_post / combo_story (grupo 'unico', dibujan layoutDestacado). GRUPOS_FORMATO: grupo «Combo».
+   elegirFormato(combo_*): S.destacado.mensaje = '¡SÚPER COMBO!' (si era uno de MENSAJES1 o vacío) y productos[0].combo
+   = true. miniatura() de combo. seccionProductos(): ayuda «Cómo armar el combo» en los formatos combo_*.
+ - HITS 'cabecera' (i 0 = logo, 1 = título) en drawHeaderWide, drawHeaderStack, layoutDestacado y layoutMensaje;
+   activarCasillero('cabecera') abre y resalta #caja-cabecera. cajaCabecera() pasó al paso 1 (para todos los grupos).
+ - layoutMensaje(): logoW × CAB_CFG.logo (máx. 80 % del ancho) y ribH × CAB_CFG.titulo, corriendo kY y ribY.
+Probado: autoprueba 151 OK (más formatos); combo_post con Fernet + lata, mensaje_post, clic en el logo abre los tamaños.
