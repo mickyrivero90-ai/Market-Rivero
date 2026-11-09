@@ -1062,3 +1062,10 @@ Probado: autoprueba 147 OK (nueva: «cuadros que se agrandan»); imágenes de 13
  - 07_app.js: UNIDADES con cantidades.
 Probado: autoprueba 147 OK; imágenes del canal (13 productos: 4, 3, 3 y 3), uno por imagen (post e historia),
 historias de 4 y A4 de 16, 12 y 10, con datos completos y con datos mínimos (sin precio anterior, con unidad y nota).
+
+28. VERSIÓN 4.3: FOTOS CHATAS AL MEDIO Y NOMBRE MÁS ABAJO (9/11/2026)
+-------------------------------------------------------------------
+ - drawProductArt(): si la foto ocupa menos del 80 % del alto útil (dh < piso * 0,8), su base va en z.y + (z.h + dh) / 2
+   (centrada); si no, en el piso como antes. p.dy (control «Arriba ↕ abajo» de controlesFoto) se suma encima.
+ - drawCard con o.foto: el nombre empieza en max(17k + lift, 32k).
+Probado: autoprueba 147 OK; A4 de 12 y post de 4 con fotos chatas de productos/Repostería.
