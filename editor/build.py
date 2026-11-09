@@ -55,6 +55,7 @@ assets = {
     },
     "productos": {},
     "colecciones": {},
+    "fondos": {},
 }
 PD = os.path.join(ROOT, "assets", "productos")
 for fn in sorted(os.listdir(PD)):
@@ -65,6 +66,11 @@ if os.path.isdir(CD):
     for fn in sorted(os.listdir(CD)):
         if fn.endswith(".webp"):
             assets["colecciones"][fn[:-5]] = datauri(os.path.join(CD, fn), "image/webp")
+FD = os.path.join(ROOT, "assets", "fondos")                 # fotos de fondo de los combos de comida (pizza, panchos, hamburguesas)
+if os.path.isdir(FD):
+    for fn in sorted(os.listdir(FD)):
+        if fn.endswith(".webp"):
+            assets["fondos"][fn[:-5]] = datauri(os.path.join(FD, fn), "image/webp")
 assets_js = "const ASSETS=" + json.dumps(assets, separators=(",", ":")) + ";"
 # ── versión: editor/VERSION + CAMBIOS.txt (se ve arriba a la izquierda del programa) ──
 import time

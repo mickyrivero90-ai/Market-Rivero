@@ -1236,3 +1236,24 @@ historia 3 y 4, un producto.
    mandó Miki (fondo blanco quitado por inundación desde los bordes, tol 28, borde suavizado; 2 atrás al 90 % y 1
    adelante al centro, con sombra). Script en el scratchpad de la sesión; se le entregó el PNG.
 Probado: autoprueba 151 OK; combo_post con el pack x3 + una botella.
+
+46. VERSIÓN 6.1: COMBOS DE COMIDA CON FOTO DE FONDO (9/11/2026)
+--------------------------------------------------------------
+ - Pedido de Miki: reemplazar sus carteles de Word (Combo Panchos / Pizzas / Burgers) por un formato tipo mensaje con
+   renglones y precio centrado, con fondos de fotos reales (queso estirado, cheddar chorreando, muchas papas pay).
+ - assets/fondos/{pizza,panchos,hamburguesa}.webp (Unsplash/Pexels, ver CREDITOS.txt). build.py → ASSETS.fondos;
+   cargarRecursos() → RES.fondos. Para bajarlas se creó el entorno de nube «Market-Rivero» con images.unsplash.com e
+   images.pexels.com permitidos.
+ - 04b_temas.js: temas pizza / panchos / hamburguesa (grupo 'comida', T.foto = [id, x, y del centro de la comida,
+   ancho de la comida]); bgFotoTema y fondoFoto(ctx, W, H, T, ventana): base desenfocada y oscura (ctx.filter) + la
+   foto nítida escalada para que la comida ocupe el ancho (sin pasar de «cubrir»), con su centro en la ventana libre y
+   bordes suavizados (canvas aparte + destination-in), y oscurecido arriba y abajo.
+ - 04c_formatos.js: layoutComida(kind) y LAYOUTS comida_post / comida_story / comida_a4 (grupo 'comida', temas
+   ['comida']); FAMILIA.comida. La tarjeta se mide primero (escala 1 → 0,55 hasta que entre dejando 22 % de alto para
+   la foto). HITS 'cabecera' y 'comida'.
+ - 06_state.js: COMBOS_COMIDA y comboComida(id); S.comida = { cartel, nombre, precio, antes, nota, auto, items[{cant,
+   texto}] } (máx. 12 renglones). elegirTema() carga el combo del fondo mientras S.comida.auto (se apaga al editar).
+ - 07_app.js: seccionComida() (#caja-comida), grupo «Combo de comida», miniatura, temaPorDefecto 'panchos', revisión
+   (falta precio; sin avisos de productos), nombreBase. 08_programa: hayContenido. 10_marketing: texto del combo y
+   emojis 🍕🌭🍔.
+Probado: autoprueba 157 OK; comida_post con los 3 fondos, comida_story y comida_a4.

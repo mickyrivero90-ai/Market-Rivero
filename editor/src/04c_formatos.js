@@ -159,6 +159,69 @@ function layoutDestacado(ctx, S, T, env, kind) {
   }
 }
 
+/** Folleto «Combo de comida»: foto real de fondo (pizza, panchos, hamburguesas), el cartel, una tarjeta con el nombre del
+ *  combo y la lista de lo que trae (cantidad resaltada, una línea entre cada uno) y el precio grande centrado abajo. */
+function layoutComida(ctx, S, T, env, kind) {
+  const C = S.comida || {}, [W, H] = { a4: [1240, 1754], post: [1080, 1350], story: [1080, 1920] }[kind];
+  const P = { a4: { M: 44, logoW: 520, logoY: 30, ribH: 150, infoH: 50, foot: 'print' }, post: { M: 34, logoW: 420, logoY: 20, ribH: 120, infoH: 42, foot: 'post' },
+    story: { M: 40, logoW: 480, logoY: 120, ribH: 140, infoH: 48, foot: 'story' } }[kind];
+  const Lg = RES.logoH, ar = Lg ? (Lg.naturalHeight || Lg.height) / (Lg.naturalWidth || Lg.width) : 0.3;
+  const logoW = Math.min(P.logoW * CAB_CFG.logo, W * 0.8), logoH = logoW * ar, ribH = P.ribH * CAB_CFG.titulo;
+  const ribY = P.logoY + logoH + 18, infoY = ribY + ribH + 18, hb = infoY + P.infoH;
+  const SAFE = kind === 'story' ? 176 : 0, fp = footerPlan(ctx, S, W, H, P.foot), fy = H - SAFE - fp.total;
+  // ── tarjeta: se mide primero para dejarle a la foto todo el lugar que sobre
+  const items = (C.items || []).filter(x => String(x.texto || x.cant || '').trim()), cw = W - 2 * P.M - 20, cx = (W - cw) / 2;
+  const I = infoProducto(nuevoProducto({ final: C.precio || '', regular: C.antes || '', combo: true })), price = I.F || { int: '0', dec: '' };
+  const minVentana = H * (kind === 'story' ? 0.22 : 0.22), maxCard = fy - 24 - hb - minVentana;
+  let e = 1, alto = 0, g = null;
+  const medir = esc => {
+    const k = W / 1080 * esc, pad = 30 * k, nombreS = 64 * k, filaS = 34 * k, filaH = filaS * 1.62, plateH = altoPlaca(120 * k)[0];
+    const antesS = 30 * k, notaS = 22 * k, conAntes = !!(I.R && I.F && I.R.num > I.F.num), nota = String(C.nota || '').trim();
+    const h = pad + nombreS * 1.05 + 16 * k + items.length * filaH + 22 * k + (conAntes ? antesS * 1.2 : 0) + plateH + (nota ? notaS * 1.6 : 0) + pad;
+    return { k, pad, nombreS, filaS, filaH, plateH, antesS, notaS, conAntes, nota, h };
+  };
+  for (; e > 0.55; e -= 0.05) { g = medir(e); if (g.h <= maxCard) break; }
+  alto = Math.min(g.h, maxCard);
+  const cardY = fy - 24 - alto, ventana = { cy: (hb + cardY) / 2, alto: cardY - hb };
+  // ── fondo: la foto (o el color del tema si no tiene foto)
+  if (T.foto) { fondoFoto(ctx, W, H, T, ventana); ADORNO_PEND = null; } else { drawBackground(ctx, W, H, T, 0.5, 0.1, ribY + ribH); adornos(ctx, [zonaLogo((W - logoW) / 2, P.logoY, logoW)]); }
+  if (Lg) { shadow(ctx, 'rgba(0,0,0,.55)', 20, 0, 8); ctx.drawImage(Lg, (W - logoW) / 2, P.logoY, logoW, logoH); noShadow(ctx); HITS.push({ tipo: 'cabecera', i: 0, x: (W - logoW) / 2, y: P.logoY, w: logoW, h: logoH }); }
+  drawRibbon(ctx, P.M, ribY, W - 2 * P.M, ribH, C.cartel || '¡SÚPER OFERTA!', T, { max: ribH * 0.78 });
+  HITS.push({ tipo: 'cabecera', i: 1, x: P.M, y: ribY, w: W - 2 * P.M, h: ribH });
+  drawInfoRow(ctx, W, S, T, { M: P.M, y: infoY, h: P.infoH });
+  if (SAFE) franjaHistoria(ctx, S, T, W, H, SAFE);
+  // ── tarjeta
+  const { k, pad } = g;
+  ctx.save(); shadow(ctx, 'rgba(0,0,0,.5)', 30 * k, 0, 12 * k); rrPath(ctx, cx, cardY, cw, alto, 34 * k); ctx.fillStyle = 'rgba(255,255,255,.94)'; ctx.fill(); noShadow(ctx);
+  rrPath(ctx, cx + 6 * k, cardY + 6 * k, cw - 12 * k, alto - 12 * k, 28 * k); ctx.lineWidth = 3 * k; ctx.strokeStyle = (T.price || ['#E5202F'])[0]; ctx.globalAlpha = 0.35; ctx.stroke(); ctx.globalAlpha = 1; ctx.restore();
+  HITS.push({ tipo: 'comida', i: 0, x: cx, y: cardY, w: cw, h: alto });
+  let y = cardY + pad;
+  const nm = String(C.nombre || 'Combo').trim().toUpperCase(), tw = cw - 2 * pad;
+  const ns = fitSize(ctx, nm, s => FB(900, s), g.nombreS, g.nombreS * 0.5, tw, 0.5);
+  text(ctx, nm, W / 2, y + ns * 0.85, { font: FB(900, ns), fill: T.ink || '#2B1208', align: 'center', tracking: 0.5 }); y += g.nombreS * 1.05 + 16 * k;
+  // lista: la cantidad resaltada y el producto; el bloque va centrado y cada renglón alineado a la izquierda
+  const filas = items.map(x => ({ cant: String(x.cant || '').trim().toUpperCase(), txt: String(x.texto || '').trim().toUpperCase() }));
+  let fs = g.filaS; const anchoFila = f => { ctx.font = FB(900, fs); const a = f.cant ? measure(ctx, f.cant + '  ', 0.3) : 0; ctx.font = FB(800, fs); return a + measure(ctx, f.txt, 0.3); };
+  const tope = tw - 50 * k; let maxW = Math.max(1, ...filas.map(anchoFila)); if (maxW > tope) { fs *= tope / maxW; maxW = tope; }
+  const lx = W / 2 - maxW / 2, sepC = 'rgba(0,0,0,.14)', acc = (T.price || ['#E5202F'])[0];
+  filas.forEach((f, i) => {
+    if (i) { ctx.fillStyle = sepC; ctx.fillRect(cx + pad, y, cw - 2 * pad, Math.max(1.5, 2 * k)); }
+    const base = y + g.filaH * 0.5 + fs * 0.36;
+    ctx.font = FB(900, fs); const a = f.cant ? measure(ctx, f.cant + '  ', 0.3) : 0;
+    if (f.cant) text(ctx, f.cant, lx, base, { font: FB(900, fs), fill: acc, tracking: 0.3 });
+    text(ctx, f.txt, lx + a, base, { font: FB(800, fs), fill: T.ink || '#2B1208', tracking: 0.3 });
+    y += g.filaH;
+  });
+  // precio: «POR SEPARADO $…» (si se cargó) y la placa grande, centrados
+  y += 22 * k;
+  if (g.conAntes) { const aw = measureAntes(ctx, I.R, g.antesS); drawAntes(ctx, W / 2 - aw / 2, y + g.antesS * 0.85, I.R, g.antesS, T, { maxW: tw, priceColor: T.ink }); y += g.antesS * 1.2; }
+  const [plateH, pOp] = altoPlaca(120 * k), pw = drawPlateMeasure(ctx, tw, plateH, price, pOp);
+  drawPlate(ctx, W / 2 - pw / 2 + plateH * 0.04, Math.min(y + plateH, cardY + alto - pad - (g.nota ? g.notaS * 1.6 : 0)), tw, plateH, price, T, pOp);
+  if (g.nota) text(ctx, g.nota, W / 2, cardY + alto - pad - g.notaS * 0.3, { font: FM(800, g.notaS), fill: T.soft || '#7B5A48', align: 'center', maxW: tw });
+  if (T.decorTop) T.decorTop(ctx, W, H, ribY + ribH, { footerY: fy });
+  drawFooter(ctx, S, T, env, { x: 0, y: fy, w: W }, fp, { m: P.M });
+  if (SAFE && env.preview) zonasApp(ctx, W, H, SAFE);
+}
 /** Historia sin producto estrella: 2 a 4 productos en renglones. Al repartir un folleto en varias historias, usa
  *  tantos renglones como productos le tocan (sin tarjetas de relleno); en pantalla muestra los 4 casilleros. */
 /** Carteles de góndola: 4 por hoja A4 (A6, 105 × 148 mm) para recortar, con el mismo precio del folleto. */
@@ -239,6 +302,9 @@ Object.assign(LAYOUTS, {
   post_4: { nombre: 'Post Facebook / Instagram · 4 ofertas', corto: 'Post 4:5 · 4 ofertas', w: 1080, h: 1350, slots: 4, hero: false, grupo: 'redes', temas: TODOS_LOS_TEMAS, draw: (c, S, T, e) => layoutPost4(c, S, T, e) },
   destacado_a4: { nombre: 'Un solo producto · A4 (liquidación, efectivo)', corto: 'A4 · 1 producto', w: 1240, h: 1754, slots: 1, hero: true, pdf: 'A4', grupo: 'unico', temas: ['impacto', 'marca', 'fecha'], draw: (c, S, T, e) => layoutDestacado(c, S, T, e, 'a4') },
   destacado_post: { nombre: 'Un solo producto · Post 4:5', corto: 'Post 4:5 · 1 producto', w: 1080, h: 1350, slots: 1, hero: true, grupo: 'unico', temas: ['impacto', 'marca', 'fecha'], draw: (c, S, T, e) => layoutDestacado(c, S, T, e, 'post') },
+  comida_post: { nombre: 'Combo de comida · Post 4:5 (lista + precio, foto de fondo)', corto: 'Comida · Post 4:5', w: 1080, h: 1350, slots: 0, hero: false, grupo: 'comida', temas: ['comida'], draw: (c, S, T, e) => layoutComida(c, S, T, e, 'post') },
+  comida_story: { nombre: 'Combo de comida · Historia 9:16', corto: 'Comida · Historia', w: 1080, h: 1920, slots: 0, hero: false, grupo: 'comida', temas: ['comida'], draw: (c, S, T, e) => layoutComida(c, S, T, e, 'story') },
+  comida_a4: { nombre: 'Combo de comida · A4', corto: 'Comida · A4', w: 1240, h: 1754, slots: 0, hero: false, pdf: 'A4', grupo: 'comida', temas: ['comida'], draw: (c, S, T, e) => layoutComida(c, S, T, e, 'a4') },
   combo_a4: { nombre: 'Combo · A4 (varias fotos con «+»)', corto: 'Combo · A4', w: 1240, h: 1754, slots: 1, hero: true, pdf: 'A4', grupo: 'unico', temas: ['impacto', 'marca', 'fecha'], draw: (c, S, T, e) => layoutDestacado(c, S, T, e, 'a4') },
   combo_post: { nombre: 'Combo · Post 4:5 (varias fotos con «+»)', corto: 'Combo · Post 4:5', w: 1080, h: 1350, slots: 1, hero: true, grupo: 'unico', temas: ['impacto', 'marca', 'fecha'], draw: (c, S, T, e) => layoutDestacado(c, S, T, e, 'post') },
   combo_story: { nombre: 'Combo · Historia 9:16 (varias fotos con «+»)', corto: 'Combo · Historia', w: 1080, h: 1920, slots: 1, hero: true, grupo: 'unico', temas: ['impacto', 'marca', 'fecha'], draw: (c, S, T, e) => layoutDestacado(c, S, T, e, 'story') },
@@ -271,6 +337,7 @@ const FAMILIA = {
   unico: { a4: 'destacado_a4', post: 'destacado_post', canal: 'destacado_post', story: 'destacado_story' },
   coleccion: { a4: 'coleccion_a4', post: 'coleccion_post', canal: 'coleccion_post', story: 'coleccion_story' },
   mensaje: { a4: 'mensaje_a4', post: 'mensaje_post', canal: 'mensaje_post', story: 'mensaje_story' },
+  comida: { a4: 'comida_a4', post: 'comida_post', canal: 'comida_post', story: 'comida_story' },
 };
 /** Arma las imágenes para un destino: [{formato, productos (índices), pagina, total}]. */
 function planDestino(S, dest) {

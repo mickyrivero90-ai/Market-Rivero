@@ -5,6 +5,20 @@ Desde la 3.0, la herramienta online (https://mickyrivero90-ai.github.io/Market-R
 se actualiza sola. Si usás el programa de la PC y muestra un número menor, bajá el nuevo
 desde la herramienta online (⋯ Más → Programa para usar sin internet).
 
+Versión 6.1 · 9 de noviembre de 2026 · COMBOS DE COMIDA CON FOTO DE FONDO
+- Formato nuevo en el paso 1: «Combo de comida» (Post, Historia y A4). Arriba el logo y un cartel
+  («¡SÚPER OFERTA!»), las fechas y el medio de pago; abajo una tarjeta con el nombre del combo, lo
+  que trae (la cantidad resaltada en color, una línea entre cada producto) y el precio grande
+  centrado. Opcional: «Precio por separado» (sale tachado) y una nota chica.
+- Tres fondos con fotos reales: Pizza (el queso estirándose), Panchos (cubiertos de papas pay) y
+  Hamburguesas (con el cheddar chorreando). La foto sale grande y nítida entre el encabezado y la
+  tarjeta.
+- Cada fondo trae cargado su combo (Panchos $10.500, Pizzas $12.700, Burgers $8.000, con sus
+  productos). Lo cambiás en el paso 2 «Tu combo»: renglones con cantidad y producto, ↑ para
+  reordenar, ✕ para quitar y «＋ Agregar renglón».
+- Tocá la tarjeta del folleto para ir directo a editar el combo. En Marketing, los textos para
+  publicar arman la lista del combo con el precio.
+
 Versión 6.0 · 9 de noviembre de 2026 · COMBOS ANCHOS MÁS GRANDES
 - Si el combo es muy ancho (por ejemplo un pack de 3 vinos + una gaseosa), las fotos pueden tomar
   hasta un poco más de la mitad del cuadro, así salen más grandes. El nombre y el precio siguen
