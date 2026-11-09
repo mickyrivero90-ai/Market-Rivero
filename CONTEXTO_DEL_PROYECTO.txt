@@ -1228,3 +1228,11 @@ Probado: autoprueba 151 OK; A4 de 16, 12, 10 y 8, estrella + 4, post 4, post est
    anchas de las historias de 4 siguen con su diseño).
 Probado: autoprueba 151 OK; combo en post, historia y A4; A4 de 16, 12 y 10, post 4, estrella + 4 (A4 y post),
 historia 3 y 4, un producto.
+
+45. VERSIÓN 6.0: COMBOS ANCHOS MÁS GRANDES (9/11/2026)
+-----------------------------------------------------
+ - layoutDestacado(): con combo, o.foto = clamp(0,3 × proporcionCombo + 0,25, 0,5, 0,62) (antes 0,5 fijo).
+ - Aparte (no es parte del programa): imagen «Vino Toro x3 (agrupados, sin fondo).png» armada con PIL desde la foto que
+   mandó Miki (fondo blanco quitado por inundación desde los bordes, tol 28, borde suavizado; 2 atrás al 90 % y 1
+   adelante al centro, con sombra). Script en el scratchpad de la sesión; se le entregó el PNG.
+Probado: autoprueba 151 OK; combo_post con el pack x3 + una botella.

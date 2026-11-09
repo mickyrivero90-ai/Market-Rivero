@@ -147,7 +147,8 @@ function layoutDestacado(ctx, S, T, env, kind) {
   const combo = imgs0.length > 1;                                 // combo: las fotos siempre a la izquierda (media tarjeta) y el texto a la derecha
   // regla para todos los formatos: la foto a la izquierda (media tarjeta, lo más grande posible) y a la derecha el nombre
   // y el precio. (alta / combo quedan por si algún día se quiere volver a la foto arriba para fotos chatas.)
-  drawHeroH(ctx, caja, p0, T, env, { k: Math.min(caja.h / 560, caja.w / 1000), foto: combo || alta ? 0.5 : 0.5, nombre: 62, sticker: false, centrar: true });
+  const fotoF = combo ? clamp(0.3 * proporcionCombo(imgs0) + 0.25, 0.5, 0.62) : 0.5;   // combo muy ancho (pack + botella): la foto toma un poco más de la mitad
+  drawHeroH(ctx, caja, p0, T, env, { k: Math.min(caja.h / 560, caja.w / 1000), foto: fotoF, nombre: 62, sticker: false, centrar: true });
   if (D.mensaje2) drawBadge(ctx, P.M + P.bR * 0.98 + 10, heroY + P.bR * 1.02 + 8, P.bR, { etiqueta: D.mensaje2 }, T, 0, -0.16, 1);
   { const rU = Math.min(W * 0.12, 140); stickerUrgencia(ctx, S, T, W - P.M - rU * 0.8, heroY + rU * 0.85, rU); }   // en la esquina del cuadro: arriba está el cartel grande
   if (T.decorTop) T.decorTop(ctx, W, H, P.bY + P.bH, { footerY: fy });
