@@ -1267,3 +1267,9 @@ Probado: autoprueba 157 OK; comida_post con los 3 fondos, comida_story y comida_
    brightness 0,55.
  - panchos.webp reemplazada por Pexels 31176117 (pancho con papas pay). layoutComida: minVentana 30 % del alto.
 Probado: autoprueba 157 OK; los tres fondos en post, pizza en historia y hamburguesa en A4.
+
+48. VERSIÓN 6.3: TARJETA DEL COMBO A MEDIDA Y TRANSLÚCIDA (9/11/2026)
+--------------------------------------------------------------------
+ - layoutComida(): el ancho de la tarjeta = max(nombre, renglón más largo + 50k, placa) + 2 × pad + 30k, entre 56 % del
+   ancho y el máximo. Relleno rgba(255,255,255, S.comida.opac) (0,4–1, de fábrica 0,82); control en seccionComida().
+Probado: autoprueba 157 OK; los tres fondos en post, historia y A4.
