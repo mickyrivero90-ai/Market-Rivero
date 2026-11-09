@@ -111,15 +111,21 @@ function layoutDestacado(ctx, S, T, env, kind) {
   const D = S.destacado || {};
   const dims = { a4: [1240, 1754], post: [1080, 1350], story: [1080, 1920] }[kind], W = dims[0], H = dims[1];
   const P = {
-    a4: { M: 44, logoW: 400, logoY: 26, bY: 160, bH: 170, bMax: 150, bR: 122, bCy: 160, infoY: 354, infoH: 48, heroGap: 28, foot: 'print' },
-    post: { M: 34, logoW: 330, logoY: 18, bY: 122, bH: 132, bMax: 116, bR: 96, bCy: 120, infoY: 276, infoH: 40, heroGap: 22, foot: 'post' },
-    story: { M: 40, logoW: 400, logoY: 120, bY: 296, bH: 176, bMax: 140, bR: 110, bCy: 312, infoY: 512, infoH: 46, heroGap: 26, foot: 'story' },
+    a4: { M: 44, logoW: 500, logoY: 26, bY: 160, bH: 170, bMax: 150, bR: 122, bCy: 160, infoY: 354, infoH: 48, heroGap: 28, foot: 'print' },
+    post: { M: 34, logoW: 420, logoY: 18, bY: 122, bH: 132, bMax: 116, bR: 96, bCy: 120, infoY: 276, infoH: 40, heroGap: 22, foot: 'post' },
+    story: { M: 40, logoW: 500, logoY: 120, bY: 296, bH: 176, bMax: 140, bR: 110, bCy: 312, infoY: 512, infoH: 46, heroGap: 26, foot: 'story' },
   }[kind];
+  {                                                               // tamaños elegidos del logo y del cartel (título)
+    const Lg = RES.logoH, ar = Lg ? (Lg.naturalHeight || Lg.height) / (Lg.naturalWidth || Lg.width) : 0.32;
+    const lw = Math.min(P.logoW * CAB_CFG.logo, W * 0.72), dL = (lw - P.logoW) * ar, bH = P.bH * CAB_CFG.titulo, dB = bH - P.bH;
+    Object.assign(P, { logoW: lw, bY: P.bY + dL, bH, bMax: P.bMax * CAB_CFG.titulo, bCy: P.bCy + dL, infoY: P.infoY + dL + dB });
+  }
   const SAFE = kind === 'story' ? 176 : 0;
   drawBackground(ctx, W, H, T, 0.5, 0.2, P.bY + P.bH);
-  adornos(ctx, [zonaLogo(P.M + 6, P.logoY, P.logoW)]);
+  const lx = (W - P.logoW) / 2;                                    // logo al centro
+  adornos(ctx, [zonaLogo(lx, P.logoY, P.logoW)]);
   const L = RES.logoH;
-  if (L) { const lh = P.logoW * (L.naturalHeight || L.height) / (L.naturalWidth || L.width); shadow(ctx, 'rgba(0,0,0,.45)', 16, 0, 8); ctx.drawImage(L, P.M + 6, P.logoY, P.logoW, lh); noShadow(ctx); }
+  if (L) { const lh = P.logoW * (L.naturalHeight || L.height) / (L.naturalWidth || L.width); shadow(ctx, 'rgba(0,0,0,.45)', 16, 0, 8); ctx.drawImage(L, lx, P.logoY, P.logoW, lh); noShadow(ctx); }
   drawBanner(ctx, W, P.bY, P.bH, D.mensaje || 'OFERTA IMPERDIBLE', T, { M: P.M, max: P.bMax });
   const hb = drawInfoRow(ctx, W, S, T, { M: P.M, y: P.infoY, h: P.infoH });
   const fp = footerPlan(ctx, S, W, H, P.foot), fh = fp.total, fy = H - SAFE - fh;

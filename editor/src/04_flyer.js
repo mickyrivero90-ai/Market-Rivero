@@ -317,6 +317,7 @@ const chipCard = p => { const c = chipProducto(p, S_DIBUJO); return c && LIMPIO 
 /** Cuadros de productos (se eligen en "Cuadros de productos"): separación, margen a los costados, fotos, producto estrella
  *  y dónde va el precio adentro de cada cuadro (alinear: 'auto' = como venía; dx y dy en % del cuadro, dy positivo = más arriba). */
 let CUADROS_CFG = { sep: 1, margen: 1, foto: 1, estrella: 1, alinear: 'auto', dx: 0, dy: 0 };
+let CAB_CFG = { logo: 1.2, titulo: 0.85, pie: 0.75 };            // tamaños del logo, el título y el pie (S.cabecera)
 /** ¿El precio va donde se eligió (y no con la diagramación de siempre)? */
 const precioMovido = () => CUADROS_CFG.alinear !== 'auto' || !!CUADROS_CFG.dx || !!CUADROS_CFG.dy;
 const alinPrecio = nat => (['izquierda', 'centro', 'derecha'].includes(CUADROS_CFG.alinear) ? CUADROS_CFG.alinear : nat);
@@ -843,7 +844,7 @@ function letraChica(S) {
 /** Calcula alturas del pie. kind: 'print' (A4: capitales ≥ 4 mm) | 'post' | 'story'. */
 function footerPlan(ctx, S, W, H, kind = 'print', o = {}) {
   const L = S.legal || {};
-  const infoH = o.infoH || (kind === 'print' ? 172 : kind === 'post' ? 150 : 156);
+  const infoH = (o.infoH || (kind === 'print' ? 172 : kind === 'post' ? 150 : 156)) * CAB_CFG.pie;   // dirección, Facebook y QR: alto regulable
   const pagosH = pagosVisibles(S).length ? (kind === 'print' ? 62 : kind === 'post' ? 58 : 64) : 0;
   if (!L.banda) return { infoH, pagosH, legalH: 0, total: infoH + pagosH, lines: [], fs: 0, lh: 0, kind };
   const mm = W / 210, tam = clamp(+L.bandaTam || 1, 0.6, 1.8);
@@ -961,12 +962,23 @@ function globoChat(ctx, cx, cy, r, fill) {
 }
 
 // ───────── encabezado ─────────
+/** Encabezado con los tamaños elegidos: el logo crece (y empuja lo de abajo) y el cartel del título se achica o
+ *  agranda. Lo que gana o pierde el encabezado lo pierden o ganan los cuadros de las ofertas. */
+function ajustarCabecera(g, W, maxLogo) {
+  const L = RES.logoH, ar = L ? (L.naturalHeight || L.height) / (L.naturalWidth || L.width) : 0.32;
+  const logoW = Math.min(g.logoW * CAB_CFG.logo, Math.max(g.logoW, maxLogo)), dLogo = (logoW - g.logoW) * ar;
+  const ribbonH = g.ribbonH * CAB_CFG.titulo, dRib = ribbonH - g.ribbonH;
+  return { ...g, logoW, subY: g.subY + dLogo, ribbonY: g.ribbonY + dLogo, ribbonH, titleMax: g.titleMax * CAB_CFG.titulo, pillY: g.pillY + dLogo + dRib, selloCy: g.selloCy != null ? g.selloCy + dLogo * 0.4 : g.selloCy };
+}
 function drawHeaderWide(ctx, W, S, T, g) {
-  adornos(ctx, [zonaLogo(g.M + 6, g.logoY, g.logoW)]);
+  // logo y subtítulo al centro; el sello (promo) a la derecha, sin tocarse
+  g = ajustarCabecera(g, W, W - 2 * g.M - (g.selloR ? 4 * g.selloR + 60 : 0));
+  const lx = (W - g.logoW) / 2;
+  adornos(ctx, [zonaLogo(lx, g.logoY, g.logoW)]);
   const L = RES.logoH;
-  if (L) { const lw = g.logoW, lh = lw * (L.naturalHeight || L.height) / (L.naturalWidth || L.width); shadow(ctx, 'rgba(90,25,0,.40)', 18, 0, 8); ctx.drawImage(L, g.M + 6, g.logoY, lw, lh); noShadow(ctx); }
+  if (L) { const lw = g.logoW, lh = lw * (L.naturalHeight || L.height) / (L.naturalWidth || L.width); shadow(ctx, 'rgba(90,25,0,.40)', 18, 0, 8); ctx.drawImage(L, lx, g.logoY, lw, lh); noShadow(ctx); }
   const sub = String(S.subtitulo || '').trim().toUpperCase();
-  if (sub) chip(ctx, g.M + 14, g.subY - g.subSize * 0.35 - g.subSize * 0.86, sub, { h: g.subSize * 1.72, font: FM(800, g.subSize), fill: 'rgba(50,15,3,.92)', ink: T.accent[0], padX: g.subSize * 0.8, tracking: g.subSize * 0.1 });
+  if (sub) chip(ctx, W / 2, g.subY - g.subSize * 0.35 - g.subSize * 0.86, sub, { h: g.subSize * 1.72, font: FM(800, g.subSize), fill: 'rgba(50,15,3,.92)', ink: T.accent[0], padX: g.subSize * 0.8, tracking: g.subSize * 0.1, align: 'center' });
   const st = selloTexto(S);
   if (st && g.selloR) drawSello(ctx, W - g.M - g.selloR - 6, g.selloCy, g.selloR, st, T);
   if (g.selloR) HITS.push({ tipo: 'sello', i: 0, x: W - g.M - g.selloR * 2 - 6, y: g.selloCy - g.selloR, w: g.selloR * 2, h: g.selloR * 2 });   // clic: editar el sello
@@ -974,6 +986,7 @@ function drawHeaderWide(ctx, W, S, T, g) {
   return drawInfoRow(ctx, W, S, T, { M: g.M, y: g.pillY, h: g.pillH });
 }
 function drawHeaderStack(ctx, W, S, T, g) {
+  g = ajustarCabecera(g, W, W - 2 * g.M - 2 * Math.min(W * 0.1, 130) - 20);
   adornos(ctx, [zonaLogo((W - g.logoW) / 2, g.logoY, g.logoW)]);
   const L = RES.logoH;
   if (L) { const lw = g.logoW, lh = lw * (L.naturalHeight || L.height) / (L.naturalWidth || L.width); shadow(ctx, 'rgba(90,25,0,.40)', 18, 0, 8); ctx.drawImage(L, (W - lw) / 2, g.logoY, lw, lh); noShadow(ctx); }
@@ -1122,6 +1135,8 @@ function renderFlyer(canvas, S, opts = {}) {
   const CU = S.cuadros || {};
   CUADROS_CFG = { sep: clamp(Number.isFinite(+CU.sep) && CU.sep !== '' && CU.sep != null ? +CU.sep : 1, 0, 3), margen: clamp(+CU.margen || 1, 0.3, 2.5), foto: clamp(+CU.foto || 1, 0.6, 1.5), estrella: clamp(+CU.estrella || 1, 0.6, 1.5),
     alinear: ['izquierda', 'centro', 'derecha'].includes(CU.alinear) ? CU.alinear : 'auto', dx: clamp(+CU.dx || 0, -40, 40), dy: clamp(+CU.dy || 0, -20, 50) };
+  const CB = S.cabecera || {};
+  CAB_CFG = { logo: clamp(+CB.logo || 1.2, 0.7, 1.6), titulo: clamp(+CB.titulo || 0.85, 0.5, 1.3), pie: clamp(+CB.pie || 0.75, 0.5, 1.2) };
   const PI = typeof promoInfo === 'function' ? promoInfo(S) : null;
   ETQ_PRECIO = PR.etiqueta != null ? PR.etiqueta : 'FINAL';        // la placa dice FINAL (o lo que se elija): es el precio que paga el cliente
   PROMO_ACT = PI && PI.verPrecio ? PI : null;                      // debajo de cada precio: la condición de pago (o la cuota)
