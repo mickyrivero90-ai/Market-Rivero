@@ -170,7 +170,8 @@ function layoutComida(ctx, S, T, env, kind) {
   const ribY = P.logoY + logoH + 18, infoY = ribY + ribH + 18, hb = infoY + P.infoH;
   const SAFE = kind === 'story' ? 176 : 0, fp = footerPlan(ctx, S, W, H, P.foot), fy = H - SAFE - fp.total;
   // ── tarjeta: se mide primero para dejarle a la foto todo el lugar que sobre
-  const items = (C.items || []).filter(x => String(x.texto || x.cant || '').trim()), cw = W - 2 * P.M - 20, cx = (W - cw) / 2;
+  const items = (C.items || []).filter(x => String(x.texto || x.cant || '').trim()), cwMax = W - 2 * P.M - 20;
+  let cw = cwMax, cx = (W - cw) / 2;
   const I = infoProducto(nuevoProducto({ final: C.precio || '', regular: C.antes || '', combo: true })), price = I.F || { int: '0', dec: '' };
   const minVentana = H * (kind === 'story' ? 0.3 : 0.3), maxCard = fy - 24 - hb - minVentana;
   let e = 1, alto = 0, g = null;
@@ -192,7 +193,14 @@ function layoutComida(ctx, S, T, env, kind) {
   if (SAFE) franjaHistoria(ctx, S, T, W, H, SAFE);
   // ── tarjeta
   const { k, pad } = g;
-  ctx.save(); shadow(ctx, 'rgba(0,0,0,.5)', 30 * k, 0, 12 * k); rrPath(ctx, cx, cardY, cw, alto, 34 * k); ctx.fillStyle = 'rgba(255,255,255,.94)'; ctx.fill(); noShadow(ctx);
+  {                                                               // la tarjeta, del ancho de lo que lleva (el renglón más largo, el nombre o el precio)
+    const nmW = (ctx.font = FB(900, g.nombreS), measure(ctx, String(C.nombre || 'Combo').trim().toUpperCase(), 0.5));
+    const filasW = Math.max(0, ...items.map(x => { ctx.font = FB(900, g.filaS); const a = String(x.cant || '').trim() ? measure(ctx, String(x.cant).trim().toUpperCase() + '  ', 0.3) : 0; ctx.font = FB(800, g.filaS); return a + measure(ctx, String(x.texto || '').trim().toUpperCase(), 0.3); }));
+    const pwM = drawPlateMeasure(ctx, cwMax, altoPlaca(120 * k)[0], price, altoPlaca(120 * k)[1]);
+    cw = clamp(Math.max(nmW, filasW + 50 * k, pwM) + 2 * pad + 30 * k, Math.min(cwMax, W * 0.56), cwMax); cx = (W - cw) / 2;
+  }
+  const opac = clamp(+C.opac || 0.82, 0.4, 1);                    // translúcida: se ve el fondo (se regula en «Tu combo»)
+  ctx.save(); shadow(ctx, 'rgba(0,0,0,.45)', 30 * k, 0, 12 * k); rrPath(ctx, cx, cardY, cw, alto, 34 * k); ctx.fillStyle = `rgba(255,255,255,${opac})`; ctx.fill(); noShadow(ctx);
   rrPath(ctx, cx + 6 * k, cardY + 6 * k, cw - 12 * k, alto - 12 * k, 28 * k); ctx.lineWidth = 3 * k; ctx.strokeStyle = (T.price || ['#E5202F'])[0]; ctx.globalAlpha = 0.35; ctx.stroke(); ctx.globalAlpha = 1; ctx.restore();
   HITS.push({ tipo: 'comida', i: 0, x: cx, y: cardY, w: cw, h: alto });
   let y = cardY + pad;

@@ -1105,7 +1105,8 @@ function seccionComida() {
       campo('Nombre del combo', t('nombre', 'Combo Panchos', 30)),
       h('p', { class: 'lab', style: 'margin:4px 0 0' }, 'Lo que trae', h('em', null, ' · cantidad (sale resaltada) y producto')), lista, sumar,
       h('div', { class: 'grid2' }, campo('Precio del combo', t('precio', '10.500', 14)), campo('Precio por separado', t('antes', 'opcional', 14), 'opcional: sale «POR SEPARADO $…» tachado')),
-      campo('Nota chica abajo del precio', t('nota', 'Ej.: Hasta agotar stock', 50), 'opcional')));
+      campo('Nota chica abajo del precio', t('nota', 'Ej.: Hasta agotar stock', 50), 'opcional'),
+      sliderTam('Tarjeta blanca: qué tan sólida', C, 'opac', 0.4, 1, 0.82, { ayuda: 'menos = se ve más la foto detrás; más = se lee mejor' })));
 }
 /** Folleto de mensaje: textos del anuncio. */
 function seccionMensaje() {
