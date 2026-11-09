@@ -1039,3 +1039,26 @@ Probado: autoprueba 146 OK; prueba_ofertas.py 16 de 16.
    sigue completa con «ELEGIR PRODUCTO». drawRelleno() queda solo si no hay ningún producto.
  - 07_app.js: el aviso de casilleros vacíos de la revisión explica que se agrandan y que se ve destildando «Guías».
 Probado: autoprueba 147 OK (nueva: «cuadros que se agrandan»); imágenes de 13 en 16, 10 en 16, 7 en 10 y 9 en 12.
+
+27. VERSIÓN 4.2: FOTOS GRANDES Y SIEMPRE DENTRO DE SU CUADRO (9/11/2026)
+-----------------------------------------------------------------------
+ - Pedido de Miki (con un folleto de ejemplo): foto grande a la izquierda, nombre chico arriba a la derecha, precio
+   grande abajo del nombre; la foto lo más grande posible sin salirse del cuadro ni tapar el texto. Lo demás (antes,
+   ahorrás, x litro, condición de pago) ya se apaga desde «Leyenda del precio» o dejando vacío el precio normal.
+ - 04_flyer.js drawProductArt(): la foto nunca sale de la zona (alto: z.h * 0.965; ancho: o.lim) aunque tenga zoom,
+   dx, dy o el «tamaño de foto» de Cuadros > 1 (antes crecía hasta la separación). Ninguna zona sale del cuadro:
+   drawCard, drawCardWide, drawHeroH y drawHeroV ya no tienen «pop» (o.pop y o.techo quedan sin uso).
+ - 05_images.js recortarBordes(): en prepararImagenes(), solo para fotos de productos: recorta lo transparente
+   (alfa < 24) o, si las 4 esquinas son claras y parejas, el fondo liso (distancia <= 22), con 1,5 % de aire.
+ - gridCards(): un estilo para toda la imagen según el cuadro más angosto: 'ancho' (> 3,2: drawCardWide), 'foto'
+   (>= 1 y al menos 300 de ancho: drawCard con o.foto = 0.5) o 'vertical' (drawCardV). k = el del cuadro más chico.
+   Un renglón con menos cuadros se ensancha hasta la proporción máxima del tipo de la grilla llena (1,7 vertical,
+   3,1 apaisada) y va centrado.
+ - drawCard con o.foto: foto al 50 %, nombre 30k (mín. 16k), placa x1,2 y «lift» que centra nombre + precio en el alto.
+   drawCardV: nombre 27k y como mucho h * 0,17.
+ - drawHeroH: o.foto, o.nombre, o.sticker, o.centrar. layoutDestacado(): foto con alto/ancho >= 1,25 y cuadro con
+   ancho/alto >= 0,8 → drawHeroH (foto 0,47, nombre 62, centrado); si no, drawHeroV con el nombre de 56k pegado al
+   precio anterior (la foto usa el resto).
+ - 07_app.js: UNIDADES con cantidades.
+Probado: autoprueba 147 OK; imágenes del canal (13 productos: 4, 3, 3 y 3), uno por imagen (post e historia),
+historias de 4 y A4 de 16, 12 y 10, con datos completos y con datos mínimos (sin precio anterior, con unidad y nota).

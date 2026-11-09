@@ -127,7 +127,11 @@ function layoutDestacado(ctx, S, T, env, kind) {
   const heroY = hb + P.heroGap, bottom = fy - 24;
   const caja = conMargen({ x: P.M, y: heroY, w: W - 2 * P.M, h: bottom - heroY });
   casillero(ctx, env, 'producto', 0, caja);
-  drawHeroV(ctx, caja, prodAt(S, 0), T, env, { big: kind === 'post' ? 0.9 : 1.02, imgFrac: kind === 'post' ? 0.45 : 0.46, pop: 26, sticker: false, techo: P.heroGap - 6 });
+  // foto alta (botellas, latas, sachets) en un cuadro ancho: va a la izquierda, con el nombre y el precio a la derecha;
+  // así la foto sale lo más grande posible. Si no, la foto va arriba y el precio abajo.
+  const p0 = prodAt(S, 0), img0 = env.getImg(p0), alta = img0 && (img0.naturalHeight || img0.height) / (img0.naturalWidth || img0.width) >= 1.25;
+  if (alta && caja.w / caja.h >= 0.8) drawHeroH(ctx, caja, p0, T, env, { k: Math.min(caja.h / 560, caja.w / 1000), foto: 0.47, nombre: 62, sticker: false, centrar: true });
+  else drawHeroV(ctx, caja, p0, T, env, { big: kind === 'post' ? 0.9 : 1.02, imgFrac: kind === 'post' ? 0.45 : 0.46, sticker: false });
   if (D.mensaje2) drawBadge(ctx, P.M + P.bR * 0.98 + 10, heroY + P.bR * 1.02 + 8, P.bR, { etiqueta: D.mensaje2 }, T, 0, -0.16, 1);
   { const rU = Math.min(W * 0.12, 140); stickerUrgencia(ctx, S, T, W - P.M - rU * 0.8, heroY + rU * 0.85, rU); }   // en la esquina del cuadro: arriba está el cartel grande
   if (T.decorTop) T.decorTop(ctx, W, H, P.bY + P.bH, { footerY: fy });
