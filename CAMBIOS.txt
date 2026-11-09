@@ -5,6 +5,13 @@ Desde la 3.0, la herramienta online (https://mickyrivero90-ai.github.io/Market-R
 se actualiza sola. Si usás el programa de la PC y muestra un número menor, bajá el nuevo
 desde la herramienta online (⋯ Más → Programa para usar sin internet).
 
+Versión 5.6 · 9 de noviembre de 2026 · COMBO Y UN PRODUCTO: FOTO MÁS GRANDE, PRECIO ABAJO
+- En las imágenes de un solo producto y en el Combo, el precio queda siempre abajo del cuadro y la
+  foto usa todo el espacio de arriba: sale mucho más grande y sin huecos vacíos. Antes, si habías
+  subido el precio en «Cuadros de productos» → «Subir o bajar» (pensado para los cuadros chicos de la
+  grilla), en estas imágenes subía muchísimo y achicaba la foto.
+- En los combos ya no sale el precio por litro o kilo (no tiene sentido sumando productos distintos).
+
 Versión 5.5 · 9 de noviembre de 2026 · COMBO: SUMAR FOTOS DESDE LA PC
 - Arreglado: en el combo, «＋ Sumar otra foto» con una foto de la PC cambiaba la foto principal en vez
   de sumarla. Ahora, tanto eligiendo del catálogo como con «Usar una foto de esta PC», la foto se SUMA
