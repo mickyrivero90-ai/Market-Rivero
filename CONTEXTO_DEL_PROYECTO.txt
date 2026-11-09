@@ -1214,3 +1214,17 @@ Probado: autoprueba 151 OK; combo_post, combo_story y combo_a4 con Fernet + bote
  - layoutDestacado(): siempre drawHeroH (foto 0,5, centrado). drawHeroV queda sin uso (se deja por si se quiere volver).
 Probado: autoprueba 151 OK; A4 de 16, 12, 10 y 8, estrella + 4, post 4, post estrella, historia 3 y 4, y un producto
 (post, historia, A4) con una foto chata.
+
+44. VERSIÓN 5.9: NOMBRE Y PRECIO CENTRADOS; COMBO EN RENGLONES CON «+» (9/11/2026)
+--------------------------------------------------------------------------------
+ - columnaCentrada(ctx, p, T, k, h, tx, tw, o): mide el bloque del precio (o.bloque({ medir: true }) → bloqueFilas con
+   z.medir devuelve { alto } sin dibujar), arma el nombre con renglonesNombre() y centra todo (nombre + descripción +
+   12k + bloque) en el alto libre; dibuja el bloque con a = 'centro' y bottom calculado, y el nombre y la descripción
+   centrados en la columna.
+ - renglonesNombre(): si es combo (p.combo o fotosExtra) y el nombre tiene «+», un renglón por producto con «+» entre
+   medio (letra común a todos los renglones, la que entra en ancho y alto); si no, fitBlock de 2 renglones.
+ - precioMovidoCard / precioMovidoHeroH aceptan op = { a, bottom, medir, placa }. drawCard con o.foto y drawHeroH usan
+   siempre columnaCentrada (la alineación y el corrimiento del precio de «Cuadros» ya no se aplican ahí; las tarjetas
+   anchas de las historias de 4 siguen con su diseño).
+Probado: autoprueba 151 OK; combo en post, historia y A4; A4 de 16, 12 y 10, post 4, estrella + 4 (A4 y post),
+historia 3 y 4, un producto.
