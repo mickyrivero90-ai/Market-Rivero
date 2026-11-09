@@ -1081,3 +1081,20 @@ Probado: autoprueba 147 OK; canal con 13 productos, A4 de 12 y post de 4.
    pantalla suma «SI QUEDA VACÍO, NO SALE». Se dejó la grilla completa en pantalla para poder tocar un lugar
    vacío y elegir el producto.
 Probado: autoprueba 147 OK; captura de la pantalla con guías.
+
+31. VERSIÓN 4.6: LOGO GRANDE Y AL CENTRO, PIE MÁS BAJO, SIN BANDA LEGAL (9/11/2026)
+---------------------------------------------------------------------------------
+ - Pedido de Miki: logo grande (se tiene que notar la marca), título mediano o regulable, pie chico (solo dirección,
+   QR y Facebook), lo de las resoluciones no lo quiere, y el logo con el subtítulo al centro.
+ - 06_state.js: ESTADO_VERSION 8. S.cabecera = { logo: 1.2, titulo: 0.85, pie: 0.75 }. legal.banda de fábrica false y,
+   para estados de antes de la v8, se apaga una vez al abrir.
+ - 04_flyer.js: CAB_CFG (en renderFlyer, con límites logo 0,7–1,6, título 0,5–1,3, pie 0,5–1,2). ajustarCabecera(g, W,
+   maxLogo): el logo crece y empuja subY, ribbonY y pillY; el cartel (ribbonH, titleMax) se escala; lo que cambia el
+   alto del encabezado lo ganan o pierden los cuadros (los layouts usan lo que devuelve drawInfoRow).
+   drawHeaderWide: logo y subtítulo centrados; maxLogo deja lugar al sello (4 × selloR + 60). drawHeaderStack: maxLogo
+   deja lugar al sticker de urgencia. footerPlan(): infoH × CAB_CFG.pie (drawFooter escala con k = hI / 190).
+ - 04c_formatos.js layoutDestacado(): logo base más grande (a4 500, post 420, story 500), × CAB_CFG.logo (máx. 72 % del
+   ancho) y centrado; banner × CAB_CFG.titulo; infoY y bCy corridos.
+ - 07_app.js: cajaCabecera() («Logo, título y pie: tamaños», después de «Cuadros de productos»); el texto de la casilla
+   de la banda ya no promete el recordatorio.
+Probado: autoprueba 147 OK; canal, uno por imagen (post e historia), A4 de 16 y de 10.

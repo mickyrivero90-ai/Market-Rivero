@@ -5,6 +5,17 @@ Desde la 3.0, la herramienta online (https://mickyrivero90-ai.github.io/Market-R
 se actualiza sola. Si usás el programa de la PC y muestra un número menor, bajá el nuevo
 desde la herramienta online (⋯ Más → Programa para usar sin internet).
 
+Versión 4.6 · 9 de noviembre de 2026 · LOGO GRANDE Y AL CENTRO, PIE MÁS BAJO, SIN BANDA LEGAL
+- El logo de Rivero Market sale más grande y al centro, con el recuadro negro de abajo («Solo en
+  efectivo», «Regalale lo mejor»…) también centrado. El sello de la promo queda a la derecha.
+- El cartel del título («Especial Día de la Madre», «Oferta imperdible»…) sale mediano.
+- El pie (dirección, Facebook y QR) es más bajo.
+- La banda «Para más información o limitaciones aplicables…» viene apagada (también en los folletos
+  que ya tenías). Si algún día la querés: «Pie del folleto».
+- Todo eso lo ganan los cuadros de las ofertas.
+- Nuevo, en el paso 2: «Logo, título y pie: tamaños», para regular vos el tamaño del logo, del
+  cartel del título y del pie. ↺ vuelve al tamaño recomendado.
+
 Versión 4.5 · 9 de noviembre de 2026 · AVISO EN LOS LUGARES VACÍOS
 - En pantalla, con «Guías» tildado, cada lugar vacío dice «SI QUEDA VACÍO, NO SALE». En el folleto
   terminado no aparecen: los cuadros con producto se agrandan. Para verlo como va a salir, destildá

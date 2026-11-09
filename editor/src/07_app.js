@@ -627,7 +627,7 @@ function seccionProductos() {
     : null;
   return seccion(paso(2, 'Productos y precios'), `${L.slots} ${L.slots === 1 ? 'casillero' : 'casilleros'}`,
     h('p', { class: 'hint' }, CARPETA.activa ? `Tocá un casillero del folleto, o la foto de la lista, para elegir el producto ${CARPETA.nube ? 'de tus fotos en la nube' : 'de tu carpeta'}. El nombre y el último precio se cargan solos.` : 'Tocá un casillero para subir su foto. Podés pegar una imagen con Ctrl+V.'),
-    cajaLeyendaPrecio(), cajaCuadros(), acc, ayudaFotos, DOM.prods, h('datalist', { id: 'lista-unidades' }, ...UNIDADES.map(u => h('option', { value: u }))));
+    cajaLeyendaPrecio(), cajaCuadros(), cajaCabecera(), acc, ayudaFotos, DOM.prods, h('datalist', { id: 'lista-unidades' }, ...UNIDADES.map(u => h('option', { value: u }))));
 }
 // ── pegar precios desde una planilla (Excel, Google Sheets o texto) ──
 const esNumeroPrecio = c => /^\$?\s*[\d.,]+\s*$/.test(String(c).trim()) && /\d/.test(c);
@@ -778,6 +778,18 @@ function cajaCuadros() {
       corrimiento('Subir o bajar', 'dy', -10, 40, v => (v === 0 ? 'en su lugar' : v > 0 ? `${v} % más arriba` : `${-v} % más abajo`)),
       h('p', { class: 'hint', style: 'margin:0' }, 'El nombre del producto se acomoda en el lugar que deja el precio. Si algo no entra, el precio frena en el borde del cuadro.'),
       h('button', { class: 'btn small ghost', type: 'button', onclick: () => { Object.assign(C, CUADROS_NORMAL); CUADROS_ABIERTO = true; construirPanel(); cambio(); const c = $('#caja-cuadros', DOM.panel); if (c) c.scrollIntoView({ block: 'center' }); } }, '↺ Cuadros como venían')));
+}
+/** Tamaños del logo, del cartel del título y del pie: lo que se achica arriba o abajo lo ganan los cuadros. */
+let CABECERA_ABIERTA = false;
+function cajaCabecera() {
+  const CB = S.cabecera || (S.cabecera = { logo: 1.2, titulo: 0.85, pie: 0.75 });
+  return h('details', { class: 'caja-aparte cuadros', id: 'caja-cabecera', open: CABECERA_ABIERTA, ontoggle: e => { CABECERA_ABIERTA = e.target.open; } },
+    h('summary', null, 'Logo, título y pie: tamaños'),
+    h('div', { class: 'stack', style: 'margin-top:10px' },
+      h('p', { class: 'hint', style: 'margin:0' }, 'Lo que achiques arriba o abajo lo ganan los cuadros de las ofertas. Vale para el folleto y para las imágenes de redes. ↺ vuelve al tamaño recomendado.'),
+      sliderTam('Logo de Rivero Market', CB, 'logo', 0.7, 1.6, 1.2, { ayuda: 'más grande = se nota más la marca' }),
+      sliderTam('Cartel del título («Especial Día de la Madre», «Oferta imperdible»…)', CB, 'titulo', 0.5, 1.3, 0.85, { ayuda: 'si el texto no entra a lo ancho, se achica solo' }),
+      sliderTam('Pie (dirección, Facebook y QR)', CB, 'pie', 0.5, 1.2, 0.75, { ayuda: 'más chico = cuadros más grandes' })));
 }
 function seccionFotos() {
   DOM.prods = h('div', { class: 'prods' });
@@ -995,7 +1007,7 @@ function seccionPie() {
   return h('section', { class: 'sec', id: 'caja-pie' }, h('h2', null, 'Pie del folleto', h('small', null, 'letra chica y banda de abajo')),
     h('div', { class: 'stack' },
       check('Letra chica (fechas y condiciones)', 'Va arriba de la banda. Se arma sola con la vigencia y la promo, sin repetir datos.', L.letraChica !== false, v => { L.letraChica = v; cajaChica.hidden = !v; cambio(); }), cajaChica,
-      check('Banda «Para más información o limitaciones aplicables consulte en…»', 'La pide la Res. 446/2025 en los folletos. Si la sacás, te lo recuerdo antes de terminar.', !!L.banda, v => { L.banda = v; cajaBanda.hidden = !v; cambio(); }), cajaBanda,
+      check('Banda «Para más información o limitaciones aplicables consulte en…»', 'Viene apagada. Prendela solo si la querés en el folleto.', !!L.banda, v => { L.banda = v; cajaBanda.hidden = !v; cambio(); }), cajaBanda,
       cajaHistoria(),
       h('p', { class: 'hint', style: 'margin:0' }, 'Tip: tocando el pie en la vista previa venís directo acá.')));
 }
