@@ -5,6 +5,11 @@ Desde la 3.0, la herramienta online (https://mickyrivero90-ai.github.io/Market-R
 se actualiza sola. Si usás el programa de la PC y muestra un número menor, bajá el nuevo
 desde la herramienta online (⋯ Más → Programa para usar sin internet).
 
+Versión 6.0 · 9 de noviembre de 2026 · COMBOS ANCHOS MÁS GRANDES
+- Si el combo es muy ancho (por ejemplo un pack de 3 vinos + una gaseosa), las fotos pueden tomar
+  hasta un poco más de la mitad del cuadro, así salen más grandes. El nombre y el precio siguen
+  centrados a la derecha.
+
 Versión 5.9 · 9 de noviembre de 2026 · NOMBRE Y PRECIO CENTRADOS; COMBO EN RENGLONES CON «+»
 - En todos los formatos, el nombre, la descripción y el precio van centrados a la derecha de la foto:
   a lo ancho y a lo alto (a la altura del medio del cuadro), sin huecos arriba ni abajo.
