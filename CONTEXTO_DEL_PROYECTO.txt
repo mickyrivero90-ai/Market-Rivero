@@ -180,8 +180,9 @@ computadora o con otra persona, sin tener que explicar todo de nuevo.
 - Fechas: se piden fecha de inicio y de fin (Ley 24.240 art. 7). "Hasta agotar stock"
   pide indicar la cantidad (Dto. 1798/94 art. 7); hay un campo "Stock por producto".
 - Casilleros vacíos: en pantalla se ven como "ELEGIR PRODUCTO" (para tocarlos). En el
-  archivo final no sale ningún hueco: se completan con una tarjeta de la marca que
-  dice "Y MUCHAS OFERTAS MÁS EN EL LOCAL".
+  archivo final no sale ningún hueco: desde la 4.1 los cuadros con producto se agrandan
+  y ocupan todo el lugar (antes se completaban con una tarjeta de la marca que decía
+  "Y MUCHAS OFERTAS MÁS EN EL LOCAL"; esa tarjeta queda solo si no hay ningún producto).
 - Cada casillero tiene número en la pantalla (esos números y las guías NO salen en la
   imagen final; se comprobó).
 - Historias y Estados (1080x1920): se dejó libre una franja abajo (176 px) y otra
@@ -1026,3 +1027,15 @@ Probado: autoprueba 142 OK.
      «Mis folletos»; si es el folleto abierto, también S.resultados), resumenResultados() en la lista y
      compararSemanas() con dos o más. servidor.py: meta_proyecto() devuelve «resultados».
 Probado: autoprueba 146 OK; prueba_ofertas.py 16 de 16.
+
+26. VERSIÓN 4.1: LOS CUADROS SE AGRANDAN SI SOBRAN LUGARES (9/11/2026)
+---------------------------------------------------------------------
+ - Pedido de Miki: con 13 productos en el A4 de 16 no quería las 3 tarjetas «Y muchas ofertas más en el local».
+ - 04_flyer.js: filasGrilla(n, cols, rows) reparte n cuadros en renglones parejos, los más llenos arriba
+   (13/4 → 4,3,3,3). gridCards(): sin env.preview, saca los casilleros vacíos y usa filasGrilla; cada renglón
+   ocupa todo el ancho y todos tienen el mismo alto. El tamaño de letra (k) es el del cuadro más chico de cada
+   tipo (vertical u horizontal), para que la letra sea pareja en todo el folleto. Vale para todos los formatos que
+   usan gridCards (A4 de 8, 10, 12 y 16, estrella + 4, post e historia de 4). Con env.preview (Guías) la grilla
+   sigue completa con «ELEGIR PRODUCTO». drawRelleno() queda solo si no hay ningún producto.
+ - 07_app.js: el aviso de casilleros vacíos de la revisión explica que se agrandan y que se ve destildando «Guías».
+Probado: autoprueba 147 OK (nueva: «cuadros que se agrandan»); imágenes de 13 en 16, 10 en 16, 7 en 10 y 9 en 12.

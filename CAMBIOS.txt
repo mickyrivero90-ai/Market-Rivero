@@ -5,6 +5,14 @@ Desde la 3.0, la herramienta online (https://mickyrivero90-ai.github.io/Market-R
 se actualiza sola. Si usás el programa de la PC y muestra un número menor, bajá el nuevo
 desde la herramienta online (⋯ Más → Programa para usar sin internet).
 
+Versión 4.1 · 9 de noviembre de 2026 · LOS CUADROS SE AGRANDAN SI SOBRAN LUGARES
+- Si ponés menos productos que los lugares del formato (por ejemplo, 13 en el A4 de 16), el
+  folleto terminado ya no lleva tarjetas «Y muchas ofertas más en el local»: los cuadros con
+  producto se agrandan y ocupan todo el espacio. Se reparten parejo, con los renglones más llenos
+  arriba (13 en el de 16 → 4, 3, 3 y 3; 10 → 4, 3 y 3; 12 → 3 renglones de 4, más altos).
+- En pantalla, con «Guías» tildado, se siguen viendo los casilleros vacíos («+ Elegir producto»)
+  para poder agregar uno. Para ver cómo va a salir, destildá «Guías».
+
 Versión 4.0 · 8 de octubre de 2026 · PÁGINA PÚBLICA DE OFERTAS Y «¿CÓMO TE FUE?»
 - Página pública de ofertas, para tus clientes: al terminar un folleto en la herramienta online,
   con la nube conectada, tildá «Publicar estas ofertas en tu página». En 1 o 2 minutos quedan en
