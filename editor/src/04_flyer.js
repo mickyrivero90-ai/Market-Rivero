@@ -482,7 +482,7 @@ function drawCard(ctx, r, p, T, env, o = {}) {
     const cwChip = mpH ? promoChipAncho(ctx, mpH, mpV.label, mpV.price) : 0;
     ctx.font = nF; const notaAlLado = mpH && nota && tw - cwChip - 14 * k >= measure(ctx, nota, 0) * 0.95;   // si no entra cómoda al lado, va abajo (sin apretar la letra)
     const notaAbajo = nota && !notaAlLado, notaH = notaAbajo ? nFs * 1.3 : 0;
-    const [plateH, pOp] = altoPlaca((mpH ? 58 : 70) * k * (o.foto ? 1.2 : 1)), bajo = (mpH || notaAbajo ? 10 : 16) * k + (mpH ? mpH + 5 * k : 0) + notaH;
+    const [plateH, pOp] = altoPlaca((mpH ? 58 : 70) * k * (o.foto ? 1.4 : 1)), bajo = (mpH || notaAbajo ? 10 : 16) * k + (mpH ? mpH + 5 * k : 0) + notaH;
     if (o.foto) {
       const nf = fitBlock(ctx, nm || 'NOMBRE DEL PRODUCTO', s => FB(900, s), nMax, nMin, tw, 2, nMax * 2, 0.92, 0.4);
       const fila = info.R || p.unidad ? 34 * k : 0, bloque = nf.size * 0.92 * nf.lines.length + 12 * k + fila + plateH + bajo;
@@ -1020,7 +1020,7 @@ function gridCards(ctx, S, T, env, items, box, cols, rows, gx, gy) {
       if (productoVacio(p)) drawEmptyCard(ctx, r, T, env, k);
       else if (estilo === 'ancho' || cw / ch > 3.2) drawCardWide(ctx, r, p, T, env, { aire: gy });
       else if (estilo === 'vertical') drawCardV(ctx, r, p, T, env, { k, aire: gy });
-      else drawCard(ctx, r, p, T, env, { k, aire: gy, foto: 0.5 });
+      else drawCard(ctx, r, p, T, env, { k, aire: gy, foto: 0.46 });
       casillero(ctx, env, 'producto', i, r);
     }
   });

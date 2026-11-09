@@ -1069,3 +1069,8 @@ historias de 4 y A4 de 16, 12 y 10, con datos completos y con datos mínimos (si
    (centrada); si no, en el piso como antes. p.dy (control «Arriba ↕ abajo» de controlesFoto) se suma encima.
  - drawCard con o.foto: el nombre empieza en max(17k + lift, 32k).
 Probado: autoprueba 147 OK; A4 de 12 y post de 4 con fotos chatas de productos/Repostería.
+
+29. VERSIÓN 4.4: PRECIOS MÁS GRANDES (9/11/2026)
+-----------------------------------------------
+ - gridCards(): drawCard con o.foto = 0.46 (antes 0.5). drawCard con o.foto: placa x1,4 (antes x1,2).
+Probado: autoprueba 147 OK; canal con 13 productos, A4 de 12 y post de 4.
