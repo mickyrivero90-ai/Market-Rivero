@@ -45,7 +45,7 @@ function estadoDemo() {
     destacado: { mensaje: 'OFERTA IMPERDIBLE', mensaje2: '' },
     legal: { banda: false, bandaTam: 1, letraChica: true, alcohol: 'no', stock: '' },
     cabecera: { logo: 1.35, titulo: 0.85, pie: 0.75 },                // tamaños del logo, el título (cartel) y el pie
-    cuadros: { sep: 1, margen: 1, foto: 1, estrella: 1, alinear: 'auto', dx: 0, dy: 0, nombre: 1 },
+    cuadros: { sep: 1, margen: 1, foto: 1, estrella: 1, alinear: 'auto', dx: 0, dy: 0, nombre: 1, nombreDy: 0 },
     historia: { ver: true, cta: '' },
     urgencia: '',
     sellos: { cantidad: 10, premio: 'un producto de regalo', minimo: '', vence: '' },

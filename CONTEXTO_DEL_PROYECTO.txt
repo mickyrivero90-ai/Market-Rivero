@@ -1116,3 +1116,10 @@ Probado: autoprueba 147 OK; canal con sello y sin sello, A4 de 16.
  - CUADROS_CFG.nombre (S.cuadros.nombre, 0,7–2, de fábrica 1; está en CUADROS_NORMAL y en el estado base): multiplica el
    tamaño máximo (y mínimo) del nombre en drawCard, drawCardV, drawHeroH y drawHeroV. Control en cajaCuadros().
 Probado: autoprueba 147 OK; A4 de 16, 12 y 10 con nombre al 100 %, 160 % y 140 % con el precio corrido.
+
+34. VERSIÓN 4.9: SUBIR EL NOMBRE DEL PRODUCTO (9/11/2026)
+--------------------------------------------------------
+ - CUADROS_CFG.nombreDy (S.cuadros.nombreDy, 0–40 % del alto del cuadro, de fábrica 0): sube el nombre en drawCard
+   (desde la posición pegada al precio, con tope arriba en 6k y abajo en techo − 4k) y en drawCardV (desde nameTop).
+   Control «Subir el nombre» en cajaCuadros(). Bajarlo no se permite porque se encimaría con el precio.
+Probado: autoprueba 147 OK; A4 de 10 con el nombre subido 15 % y 30 %.

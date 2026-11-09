@@ -749,7 +749,7 @@ function cajaLeyendaPrecio() {
 }
 /** Cuadros de productos: separación, margen, fotos, producto estrella y dónde va el precio adentro de cada cuadro. */
 let CUADROS_ABIERTO = false;
-const CUADROS_NORMAL = { sep: 1, margen: 1, foto: 1, estrella: 1, alinear: 'auto', dx: 0, dy: 0, nombre: 1 };
+const CUADROS_NORMAL = { sep: 1, margen: 1, foto: 1, estrella: 1, alinear: 'auto', dx: 0, dy: 0, nombre: 1, nombreDy: 0 };
 function cajaCuadros() {
   const C = S.cuadros || (S.cuadros = { ...CUADROS_NORMAL }), L = L_ACTUAL(), conEstrella = ['a4_star4', 'post_star4', 'story_3'].includes(S.formato);
   const alin = h('div', { class: 'quick', role: 'group', 'aria-label': 'Dónde va el precio' });
@@ -772,7 +772,9 @@ function cajaCuadros() {
       sliderTam('Margen a los costados', C, 'margen', 0.4, 2, 1, { ayuda: L.pdf === 'A4' ? 'para imprimir, no menos de 70 %' : 'más margen = cuadros más angostos' }),
       conEstrella ? sliderTam('Producto estrella (el cuadro grande)', C, 'estrella', 0.7, 1.3, 1, { ayuda: 'los de abajo usan lo que queda' }) : null,
       sliderTam('Fotos de los productos', C, 'foto', 0.7, 1.3, 1, { ayuda: 'todas juntas; nunca se salen de su cuadro' }),
-      sliderTam('Nombre del producto (la descripción)', C, 'nombre', 0.7, 2, 1, { ayuda: 'va pegado arriba del precio; si no entra, se achica solo' }),
+      h('p', { class: 'lab', style: 'margin:8px 0 0' }, 'Nombre del producto (la descripción, por ejemplo «LECHE ENTERA COSALTA»)'),
+      sliderTam('Tamaño del nombre', C, 'nombre', 0.7, 2, 1, { ayuda: 'si un nombre largo no entra, se achica solo' }),
+      corrimiento('Subir el nombre', 'nombreDy', 0, 40, v => (v === 0 ? 'pegado arriba del precio (lo más abajo posible)' : `${v} % más arriba`)),
       h('p', { class: 'lab', style: 'margin:8px 0 0' }, 'Dónde va el precio adentro de cada cuadro'),
       h('div', { class: 'fld tam' }, h('span', null, 'Alineación'), alin),
       corrimiento('Correr a los costados', 'dx', -30, 30, v => (v === 0 ? 'en su lugar' : v < 0 ? `${-v} % a la izquierda` : `${v} % a la derecha`)),
