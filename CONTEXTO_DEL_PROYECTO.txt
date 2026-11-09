@@ -1202,3 +1202,15 @@ Probado: autoprueba 151 OK; combo_post Fernet + botella con el precio subido 25 
  - layoutDestacado(): si el producto tiene fotos extra cargadas (imgs0.length > 1) usa drawHeroH (foto 0,5), aunque el
    conjunto no sea «alto» (antes elegía drawHeroV con foto arriba). Mismo límite de proporción de la caja (≥ 0,8).
 Probado: autoprueba 151 OK; combo_post, combo_story y combo_a4 con Fernet + botella.
+
+43. VERSIÓN 5.8: FOTO A LA IZQUIERDA EN TODOS LOS FORMATOS (9/11/2026)
+---------------------------------------------------------------------
+ - Pedido de Miki (regla general): foto a la izquierda y lo más grande posible, nombre y precio a la derecha, en todos
+   los formatos y destinos.
+ - gridCards(): estilo 'foto' siempre (drawCard con o.foto), salvo renglones con proporción > 4,2 ('ancho',
+   drawCardWide, también con foto a la izquierda). o.foto = clamp(1,25 × ch / cw, 0,3, 0,46). k = min(ch/253, cw/520).
+   drawCardV queda sin uso en las grillas.
+ - story_3 (estrella): drawHeroH (foto 0,45) en vez de drawHeroV. cartel_1 (formato viejo): drawHeroH centrado.
+ - layoutDestacado(): siempre drawHeroH (foto 0,5, centrado). drawHeroV queda sin uso (se deja por si se quiere volver).
+Probado: autoprueba 151 OK; A4 de 16, 12, 10 y 8, estrella + 4, post 4, post estrella, historia 3 y 4, y un producto
+(post, historia, A4) con una foto chata.
