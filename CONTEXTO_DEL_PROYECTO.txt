@@ -1123,3 +1123,12 @@ Probado: autoprueba 147 OK; A4 de 16, 12 y 10 con nombre al 100 %, 160 % y 140 %
    (desde la posición pegada al precio, con tope arriba en 6k y abajo en techo − 4k) y en drawCardV (desde nameTop).
    Control «Subir el nombre» en cajaCuadros(). Bajarlo no se permite porque se encimaría con el precio.
 Probado: autoprueba 147 OK; A4 de 10 con el nombre subido 15 % y 30 %.
+
+35. VERSIÓN 5.0: EL RENGLÓN CON MÁS CUADROS VA ABAJO (9/11/2026)
+---------------------------------------------------------------
+ - Miki quiere los renglones completos abajo para ordenar por rubro.
+ - filasGrilla(n, cols, rows, llenasAbajo): con llenasAbajo, los renglones con un cuadro más son los últimos.
+   CUADROS_CFG.filaLlena ('abajo' de fábrica | 'arriba'; en S.cuadros, CUADROS_NORMAL y el estado base).
+   gridCards pasa filaLlena !== 'arriba'. Botones ⬆ Arriba / ⬇ Abajo en cajaCuadros(). Prueba de la autoprueba ampliada.
+ - Las versiones para redes (planDestino/repartir) no cambian: siguen 4, 3, 3 por imagen.
+Probado: autoprueba 147 OK; A4 de 16 con 13 productos → 3, 3, 3 y 4.

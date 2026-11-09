@@ -316,7 +316,7 @@ const notaDe = p => [String(p.nota || '').trim(), porUnidad(p)].filter(Boolean).
 const chipCard = p => { const c = chipProducto(p, S_DIBUJO); return c && LIMPIO && !c.price && (!p.pago || p.pago === c.P.tipo) ? null : c; };
 /** Cuadros de productos (se eligen en "Cuadros de productos"): separación, margen a los costados, fotos, producto estrella
  *  y dónde va el precio adentro de cada cuadro (alinear: 'auto' = como venía; dx y dy en % del cuadro, dy positivo = más arriba). */
-let CUADROS_CFG = { sep: 1, margen: 1, foto: 1, estrella: 1, alinear: 'auto', dx: 0, dy: 0, nombre: 1, nombreDy: 0 };
+let CUADROS_CFG = { sep: 1, margen: 1, foto: 1, estrella: 1, alinear: 'auto', dx: 0, dy: 0, nombre: 1, nombreDy: 0, filaLlena: 'abajo' };
 let CAB_CFG = { logo: 1.35, titulo: 0.85, pie: 0.75 };            // tamaños del logo, el título y el pie (S.cabecera)
 /** ¿El precio va donde se eligió (y no con la diagramación de siempre)? */
 const precioMovido = () => CUADROS_CFG.alinear !== 'auto' || !!CUADROS_CFG.dx || !!CUADROS_CFG.dy;
@@ -1006,11 +1006,12 @@ function drawHeaderStack(ctx, W, S, T, g) {
 const prodAt = (S, i) => (S.productos && S.productos[i]) || {};
 
 /** Renglones de una grilla: cuántos cuadros lleva cada uno. Llena: todos con cols. Con menos productos (folleto
- *  terminado), los reparte parejo con los renglones más llenos arriba (13 en 4 columnas → 4, 3, 3 y 3). */
-function filasGrilla(n, cols, rows) {
+ *  terminado), los reparte parejo; los renglones más llenos van arriba (13 en 4 columnas → 4, 3, 3 y 3) o, con
+ *  llenasAbajo, abajo (→ 3, 3, 3 y 4). */
+function filasGrilla(n, cols, rows, llenasAbajo = false) {
   if (n >= cols * rows) return Array(rows).fill(cols);
   const filas = Math.max(1, Math.ceil(n / cols)), base = Math.floor(n / filas), extra = n % filas;
-  return Array.from({ length: filas }, (_, f) => base + (f < extra ? 1 : 0));
+  return Array.from({ length: filas }, (_, f) => base + ((llenasAbajo ? f >= filas - extra : f < extra) ? 1 : 0));
 }
 
 function gridCards(ctx, S, T, env, items, box, cols, rows, gx, gy) {
@@ -1019,7 +1020,7 @@ function gridCards(ctx, S, T, env, items, box, cols, rows, gx, gy) {
   // En pantalla (con guías) se ve la grilla completa, para poder tocar un casillero vacío y elegir el producto.
   const llenos = env.preview ? items : items.filter(i => !productoVacio(prodAt(S, i)));
   if (llenos.length) items = llenos;
-  const filas = filasGrilla(items.length, cols, rows), ch = (box.h - gy * (filas.length - 1)) / filas.length;
+  const filas = filasGrilla(items.length, cols, rows, CUADROS_CFG.filaLlena !== 'arriba'), ch = (box.h - gy * (filas.length - 1)) / filas.length;
   // un renglón con menos cuadros los ensancha, pero sin cambiarles la forma (vertical, apaisada o angosta): así las
   // fotos salen parejas en toda la imagen. Si no llegan a todo el ancho, el renglón va centrado.
   const ref = ((box.w - gx * (cols - 1)) / cols) / ((box.h - gy * (rows - 1)) / rows), maxProp = ref < 1.75 ? Math.max(ref, 1.7) : ref <= 3.2 ? Math.max(ref, 3.1) : Infinity;
@@ -1139,7 +1140,7 @@ function renderFlyer(canvas, S, opts = {}) {
     porUnidad: PR.porUnidad !== false, fraccion: fraccionDe(PR.fraccion) };
   const CU = S.cuadros || {};
   CUADROS_CFG = { sep: clamp(Number.isFinite(+CU.sep) && CU.sep !== '' && CU.sep != null ? +CU.sep : 1, 0, 3), margen: clamp(+CU.margen || 1, 0.3, 2.5), foto: clamp(+CU.foto || 1, 0.6, 1.5), estrella: clamp(+CU.estrella || 1, 0.6, 1.5),
-    alinear: ['izquierda', 'centro', 'derecha'].includes(CU.alinear) ? CU.alinear : 'auto', dx: clamp(+CU.dx || 0, -40, 40), dy: clamp(+CU.dy || 0, -20, 50), nombre: clamp(+CU.nombre || 1, 0.7, 2), nombreDy: clamp(+CU.nombreDy || 0, 0, 40) };
+    alinear: ['izquierda', 'centro', 'derecha'].includes(CU.alinear) ? CU.alinear : 'auto', dx: clamp(+CU.dx || 0, -40, 40), dy: clamp(+CU.dy || 0, -20, 50), nombre: clamp(+CU.nombre || 1, 0.7, 2), nombreDy: clamp(+CU.nombreDy || 0, 0, 40), filaLlena: CU.filaLlena === 'arriba' ? 'arriba' : 'abajo' };
   const CB = S.cabecera || {};
   CAB_CFG = { logo: clamp(+CB.logo || 1.35, 0.7, 1.7), titulo: clamp(+CB.titulo || 0.85, 0.5, 1.3), pie: clamp(+CB.pie || 0.75, 0.5, 1.2) };
   const PI = typeof promoInfo === 'function' ? promoInfo(S) : null;
