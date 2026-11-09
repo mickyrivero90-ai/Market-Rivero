@@ -135,7 +135,8 @@ function layoutDestacado(ctx, S, T, env, kind) {
   casillero(ctx, env, 'producto', 0, caja);
   // foto alta (botellas, latas, sachets) en un cuadro ancho: va a la izquierda, con el nombre y el precio a la derecha;
   // así la foto sale lo más grande posible. Si no, la foto va arriba y el precio abajo.
-  const p0 = prodAt(S, 0), img0 = env.getImg(p0), alta = img0 && (img0.naturalHeight || img0.height) / (img0.naturalWidth || img0.width) >= 1.25;
+  const p0 = prodAt(S, 0), img0 = env.getImg(p0), imgs0 = img0 ? [img0, ...(p0.fotosExtra || []).map(f => env.getImg(f)).filter(Boolean)] : [];
+  const alta = img0 && 1 / proporcionCombo(imgs0) >= 1.25;      // con combo cuenta el ancho de todas las fotos juntas
   if (alta && caja.w / caja.h >= 0.8) drawHeroH(ctx, caja, p0, T, env, { k: Math.min(caja.h / 560, caja.w / 1000), foto: 0.47, nombre: 62, sticker: false, centrar: true });
   else drawHeroV(ctx, caja, p0, T, env, { big: kind === 'post' ? 0.9 : 1.02, imgFrac: kind === 'post' ? 0.45 : 0.46, sticker: false });
   if (D.mensaje2) drawBadge(ctx, P.M + P.bR * 0.98 + 10, heroY + P.bR * 1.02 + 8, P.bR, { etiqueta: D.mensaje2 }, T, 0, -0.16, 1);

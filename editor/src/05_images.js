@@ -125,7 +125,7 @@ async function analizarFoto(src) {
 /** Prepara (decodifica, reduce y, si hace falta, recorta el fondo) las imágenes que usa el estado. */
 async function prepararImagenes(S, op = {}) {
   const vivos = new Set(), tareas = [];
-  const items = [...(S.productos || []).map(p => [p, 1400, true]), ...((((S.coleccion || {}).fotos) || []).map(p => [p, 2000, false]))];
+  const items = [...(S.productos || []).flatMap(p => [[p, 1400, true], ...(p.fotosExtra || []).map(f => [f, 1400, true])]), ...((((S.coleccion || {}).fotos) || []).map(p => [p, 2000, false]))];
   for (const [p, maxLado, esProducto] of items) {
     const src = srcDe(p);
     if (!src) continue;

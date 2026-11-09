@@ -5,6 +5,15 @@ Desde la 3.0, la herramienta online (https://mickyrivero90-ai.github.io/Market-R
 se actualiza sola. Si usás el programa de la PC y muestra un número menor, bajá el nuevo
 desde la herramienta online (⋯ Más → Programa para usar sin internet).
 
+Versión 5.3 · 9 de noviembre de 2026 · VARIAS FOTOS EN UN MISMO CUADRO (COMBOS)
+- En cada producto (paso 2, abrí el producto) hay una parte nueva: «Combo: varias fotos en este
+  cuadro». Con «＋ Sumar otra foto (armar combo)» elegís otra foto (por ejemplo, Fernet + gaseosa) y
+  hasta 3 por cuadro. Salen una al lado de la otra, del mismo alto, con un «+» en el medio, y nunca se
+  salen del cuadro. «Quitar» saca una foto del combo.
+- Sirve en todos los formatos: el folleto, las imágenes para redes y las de un producto por imagen.
+- El nombre y el precio los escribís como siempre (ej.: «Fernet 750 + Coca-Cola 2,25 L» y el precio
+  del combo). Si querés que el tachado diga «POR SEPARADO», tildá «Es un combo».
+
 Versión 5.2 · 9 de noviembre de 2026 · UN PRODUCTO POR IMAGEN: EL TEXTO YA NO QUEDA DETRÁS DEL PRECIO
 - En las imágenes de un producto por imagen, el nombre y la descripción («Fardo x 12u ($1033,34 c/u)»,
   «A partir de la 2° pieza…») quedaban detrás del precio cuando el precio estaba corrido a mano
