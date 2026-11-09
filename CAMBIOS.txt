@@ -5,6 +5,22 @@ Desde la 3.0, la herramienta online (https://mickyrivero90-ai.github.io/Market-R
 se actualiza sola. Si usás el programa de la PC y muestra un número menor, bajá el nuevo
 desde la herramienta online (⋯ Más → Programa para usar sin internet).
 
+Versión 4.2 · 9 de noviembre de 2026 · FOTOS GRANDES Y SIEMPRE DENTRO DE SU CUADRO
+- Las fotos ya no se salen de su cuadro (antes una botella alta podía pisar el cuadro de arriba).
+  Cada foto se agranda sola hasta el máximo que entra en su cuadro, sin tapar el nombre ni el precio.
+- Se recortan solos los bordes vacíos de las fotos (transparentes o de fondo blanco parejo): el
+  producto se ve más grande.
+- Cuadros con «foto grande» en los posteos, el canal de WhatsApp, Facebook y los A4 de 8, 10 y 12:
+  la foto a la izquierda, ocupando todo el alto, y a la derecha el nombre (más chico) con el precio
+  grande abajo, juntos y centrados. En el A4 de 16 los cuadros son chicos: la foto sigue arriba y el
+  nombre va más chico para que la foto crezca.
+- Imágenes de un producto por imagen: si la foto es alta (botellas, latas, sachets), va a la
+  izquierda ocupando todo el alto, con el nombre y el precio a la derecha. El nombre sale más chico.
+- Si una página queda con menos productos (por ejemplo, 3 en el canal de WhatsApp), el que queda solo
+  en su fila ya no se estira a todo el ancho: mantiene la forma de los demás y va centrado.
+- Unidad: en la lista hay opciones con cantidad («x fardo x 6», «x fardo x 12», «x caja x 12»,
+  «x bulto»). Se puede escribir cualquier otra (hasta 14 letras).
+
 Versión 4.1 · 9 de noviembre de 2026 · LOS CUADROS SE AGRANDAN SI SOBRAN LUGARES
 - Si ponés menos productos que los lugares del formato (por ejemplo, 13 en el A4 de 16), el
   folleto terminado ya no lleva tarjetas «Y muchas ofertas más en el local»: los cuadros con

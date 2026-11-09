@@ -80,6 +80,31 @@ function quitarFondo(src, tol = 40) {
   return out;
 }
 
+/** Saca los bordes vacíos de la foto de un producto (transparentes, o del fondo claro y liso) para que el producto
+ *  se vea lo más grande posible en su cuadro. Si no hay bordes que sacar, devuelve la misma foto. */
+function recortarBordes(c) {
+  const w = c.width, h = c.height; if (w < 16 || h < 16) return c;
+  const d = c.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, w, h).data;
+  const esq = [0, w - 1, (h - 1) * w, h * w - 1].map(q => q * 4), transparente = esq.some(i => d[i + 3] < 250);
+  let vacio;
+  if (transparente) vacio = i => d[i + 3] < 24;
+  else {
+    const bg = [0, 1, 2].map(n => d[esq[0] + n]), dist = i => Math.max(Math.abs(d[i] - bg[0]), Math.abs(d[i + 1] - bg[1]), Math.abs(d[i + 2] - bg[2]));
+    if (Math.min(...bg) < 200 || esq.some(i => dist(i) > 22)) return c;          // solo fondos claros y parejos en las 4 esquinas
+    vacio = i => dist(i) <= 22;
+  }
+  let x0 = w, y0 = h, x1 = -1, y1 = -1;
+  for (let y = 0; y < h; y++) for (let x = 0, i = y * w * 4; x < w; x++, i += 4) if (!vacio(i)) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  if (x1 < 0) return c;
+  const pad = Math.round(Math.max(x1 - x0, y1 - y0) * 0.015);
+  x0 = Math.max(0, x0 - pad); y0 = Math.max(0, y0 - pad); x1 = Math.min(w - 1, x1 + pad); y1 = Math.min(h - 1, y1 + pad);
+  const cw = x1 - x0 + 1, ch = y1 - y0 + 1;
+  if (cw >= w * 0.97 && ch >= h * 0.97) return c;
+  const out = document.createElement('canvas'); out.width = cw; out.height = ch;
+  out.getContext('2d').drawImage(c, x0, y0, cw, ch, 0, 0, cw, ch);
+  return out;
+}
+
 /** Lee un archivo (elegido, pegado o soltado) y devuelve {url, alfa, claro}. Para la página suelta, donde no hay carpeta. */
 async function leerArchivoImagen(file) {
   const src = URL.createObjectURL(file);
@@ -100,13 +125,13 @@ async function analizarFoto(src) {
 /** Prepara (decodifica, reduce y, si hace falta, recorta el fondo) las imágenes que usa el estado. */
 async function prepararImagenes(S, op = {}) {
   const vivos = new Set(), tareas = [];
-  const items = [...(S.productos || []).map(p => [p, 1400]), ...((((S.coleccion || {}).fotos) || []).map(p => [p, 2000]))];
-  for (const [p, maxLado] of items) {
+  const items = [...(S.productos || []).map(p => [p, 1400, true]), ...((((S.coleccion || {}).fotos) || []).map(p => [p, 2000, false]))];
+  for (const [p, maxLado, esProducto] of items) {
     const src = srcDe(p);
     if (!src) continue;
     const k = claveImg(p); vivos.add(k);
     if (IMG.ready.has(k) || (IMG.error.has(k) && !op.reintentar && Date.now() - IMG.error.get(k) < REINTENTO_MS)) continue;
-    tareas.push(cargarImagen(src).then(im => { const c = aCanvas(im, maxLado); IMG.ready.set(k, p.quitarFondo ? quitarFondo(c, p.tol || 40) : c); IMG.error.delete(k); }).catch(() => { IMG.error.set(k, Date.now()); }));
+    tareas.push(cargarImagen(src).then(im => { const c = aCanvas(im, maxLado), f = p.quitarFondo ? quitarFondo(c, p.tol || 40) : c; IMG.ready.set(k, esProducto ? recortarBordes(f) : f); IMG.error.delete(k); }).catch(() => { IMG.error.set(k, Date.now()); }));
   }
   await Promise.all(tareas);
   for (const k of [...IMG.ready.keys()]) if (!vivos.has(k)) IMG.ready.delete(k);

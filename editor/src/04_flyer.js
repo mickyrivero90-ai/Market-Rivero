@@ -176,13 +176,14 @@ function drawProductArt(ctx, p, z, T, env, o = {}) {
     ctx.restore(); return;
   }
   const iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
-  const fg = CUADROS_CFG.foto || 1, base = Math.min(z.w / iw, z.h / ih) * (p.zoom || 1);
-  const floorY = z.y + z.h - z.h * 0.035 + (p.dy || 0) * z.h;
-  let sc = base * fg;
-  if (fg > 1) sc = Math.max(base, Math.min(sc, (floorY - z.y + (o.aire || 0) * 0.8) / ih));   // agrandadas: crecen hasta la separación de arriba, sin meterse en otro cuadro
+  // La foto nunca se sale de su cuadro: lo más grande posible dentro de la zona (alto) y del cuadro (ancho).
+  const lim = o.lim || [z.x, z.x + z.w], piso = z.h * 0.965;
+  const fg = CUADROS_CFG.foto || 1, base = Math.min(z.w / iw, piso / ih) * (p.zoom || 1);
+  const sc = Math.min(base * fg, (lim[1] - lim[0]) / iw, piso / ih);
   const dw = iw * sc, dh = ih * sc;
+  const floorY = clamp(z.y + piso + (p.dy || 0) * z.h, z.y + dh, z.y + z.h);
   let px = cx + (p.dx || 0) * z.w;
-  if (fg > 1 && o.lim) px = dw >= o.lim[1] - o.lim[0] ? (o.lim[0] + o.lim[1]) / 2 : clamp(px, o.lim[0] + dw / 2, o.lim[1] - dw / 2);   // agrandadas: sin salirse del cuadro
+  px = dw >= lim[1] - lim[0] ? (lim[0] + lim[1]) / 2 : clamp(px, lim[0] + dw / 2, lim[1] - dw / 2);
   // sombra de piso (elipse con degradé radial, sin filtros)
   ctx.save(); ctx.translate(px, floorY); ctx.scale(1, 0.17);
   const sg = ctx.createRadialGradient(0, 0, 0, 0, 0, dw * 0.52); sg.addColorStop(0, 'rgba(40,12,0,.50)'); sg.addColorStop(1, 'rgba(40,12,0,0)');
@@ -467,12 +468,12 @@ function drawCard(ctx, r, p, T, env, o = {}) {
   // textura sutil: franja inferior
   ctx.save(); rrPath(ctx, 0, 0, w, h, 26 * k); ctx.clip();
   ctx.fillStyle = 'rgba(255,196,0,.10)'; ctx.fillRect(0, h * 0.74, w, h * 0.26); ctx.restore();
-  const z = { x: 8 * k, y: -16 * k, w: w * 0.40, h: h + 16 * k - 8 * k };
-  drawProductArt(ctx, p, z, T, env, { k, lim: [4 * k, w - 4 * k], aire: o.aire });
-  const tx = w * 0.415, tw = w - tx - 22 * k;
+  const ff = o.foto || 0.40, z = { x: 8 * k, y: 8 * k, w: w * ff, h: h - 16 * k };   // la foto queda dentro del cuadro
+  drawProductArt(ctx, p, z, T, env, { k, lim: [4 * k, 8 * k + w * ff + 6 * k], aire: o.aire });
+  const tx = w * (ff + 0.015) + 8 * k, tw = w - tx - 16 * k;
   // de abajo hacia arriba: promo/nota, placa, precio anterior; arriba el nombre y la descripción en lo que queda
-  const nm = String(p.nombre || '').trim().toUpperCase();
-  let techo;
+  const nm = String(p.nombre || '').trim().toUpperCase(), nMax = (o.foto ? 30 : 42) * k, nMin = (o.foto ? 16 : 20) * k;
+  let techo, lift = 0;                                            // lift (foto grande): nombre y precio juntos, en el medio del alto
   if (precioMovido()) techo = precioMovidoCard(ctx, p, info, T, k, w, h, tx, tw);
   else {
     const nota = notaDe(p), mpV = chipCard(p), mpH = mpV != null ? 33 * k : 0;
@@ -480,18 +481,24 @@ function drawCard(ctx, r, p, T, env, o = {}) {
     const cwChip = mpH ? promoChipAncho(ctx, mpH, mpV.label, mpV.price) : 0;
     ctx.font = nF; const notaAlLado = mpH && nota && tw - cwChip - 14 * k >= measure(ctx, nota, 0) * 0.95;   // si no entra cómoda al lado, va abajo (sin apretar la letra)
     const notaAbajo = nota && !notaAlLado, notaH = notaAbajo ? nFs * 1.3 : 0;
-    const [plateH, pOp] = altoPlaca((mpH ? 58 : 70) * k), plateBottom = h - (mpH || notaAbajo ? 10 : 16) * k - (mpH ? mpH + 5 * k : 0) - notaH;
+    const [plateH, pOp] = altoPlaca((mpH ? 58 : 70) * k * (o.foto ? 1.2 : 1)), bajo = (mpH || notaAbajo ? 10 : 16) * k + (mpH ? mpH + 5 * k : 0) + notaH;
+    if (o.foto) {
+      const nf = fitBlock(ctx, nm || 'NOMBRE DEL PRODUCTO', s => FB(900, s), nMax, nMin, tw, 2, nMax * 2, 0.92, 0.4);
+      const fila = info.R || p.unidad ? 34 * k : 0, bloque = nf.size * 0.92 * nf.lines.length + 12 * k + fila + plateH + bajo;
+      lift = Math.max(0, (h - 17 * k - bloque) / 2);
+    }
+    const plateBottom = h - bajo - lift;
     const price = info.F || { int: '0', dec: '' };
     const plate = drawPlate(ctx, tx - 8 * k, plateBottom, tw + 8 * k, plateH, price, T, pOp);
     if (mpH) {                                                    // fila inferior: "CON MP $…" y, si entra, la nota al lado
       const cw = drawPromoChip(ctx, tx - 4 * k, plateBottom + 5 * k, mpH, mpV.label, mpV.price, mpV.P);
       if (notaAlLado) text(ctx, nota, tx - 4 * k + cw + 10 * k, plateBottom + 5 * k + mpH * 0.5 + nFs * 0.36, { font: nF, fill: T.ink, maxW: tx + tw - (tx - 4 * k + cw) - 10 * k });
     }
-    if (notaAbajo) text(ctx, nota, tx - 4 * k, h - 10 * k - nFs * 0.25, { font: nF, fill: T.ink, maxW: tw + 4 * k });
+    if (notaAbajo) text(ctx, nota, tx - 4 * k, h - 10 * k - nFs * 0.25 - lift, { font: nF, fill: T.ink, maxW: tw + 4 * k });
     techo = filaAntes(ctx, tx, tw, plate, info, p, T, k) - 6 * k;
   }
-  const top = 17 * k, desc = String(p.desc || '').trim(), dSize = 18 * k;
-  const wf = fitBlock(ctx, nm || 'NOMBRE DEL PRODUCTO', s => FB(900, s), 42 * k, 20 * k, tw, 2, Math.max(24 * k, techo - top - (desc ? 0 : 0)), 0.92, 0.4);
+  const top = 17 * k + lift, desc = String(p.desc || '').trim(), dSize = 18 * k;
+  const wf = fitBlock(ctx, nm || 'NOMBRE DEL PRODUCTO', s => FB(900, s), nMax, nMin, tw, 2, Math.max(24 * k, techo - top - (desc ? 0 : 0)), 0.92, 0.4);
   wf.lines.forEach((ln, i) => text(ctx, ln, tx, top + wf.size * 0.82 + i * wf.size * 0.92, { font: FB(900, wf.size), fill: nm ? T.ink : 'rgba(60,25,10,.35)', tracking: 0.4 }));
   const ty = top + wf.size * 0.92 * wf.lines.length + 3 * k;
   if (desc && techo - ty >= dSize * 1.05) {                       // descripción: usa el espacio que quede entre el nombre y el precio anterior
@@ -554,7 +561,7 @@ function drawCardV(ctx, r, p, T, env, o = {}) {
     }
   }
   const nm = String(p.nombre || '').trim().toUpperCase(), [nx, nAl] = a === 'izquierda' ? [pad, 'left'] : a === 'derecha' ? [w - pad, 'right'] : [cx, 'center'];
-  const wf = fitBlock(ctx, nm || 'NOMBRE DEL PRODUCTO', s => FB(900, s), 34 * k, 15 * k, tw, 2, h * 0.24, 0.92, 0.4);
+  const wf = fitBlock(ctx, nm || 'NOMBRE DEL PRODUCTO', s => FB(900, s), 27 * k, 14 * k, tw, 2, h * 0.17, 0.92, 0.4);   // nombre chico: la foto y el precio se ven primero
   const nameTop = yb - wf.size * 0.92 * wf.lines.length;
   wf.lines.forEach((ln, i) => text(ctx, ln, nx, nameTop + wf.size * 0.82 + i * wf.size * 0.92, { font: FB(900, wf.size), fill: nm ? T.ink : 'rgba(60,25,10,.35)', align: nAl, tracking: 0.4 }));
   drawProductArt(ctx, p, { x: pad, y: 6 * k, w: tw, h: Math.max(40 * k, nameTop - 12 * k) }, T, env, { k, glowR: 0.5, lim: [4 * k, w - 4 * k], aire: o.aire });
@@ -570,7 +577,7 @@ function drawCardWide(ctx, r, p, T, env, o = {}) {
   rrPath(ctx, 0, 0, w, h, 24 * k); ctx.fillStyle = T.card; ctx.fill(); noShadow(ctx);
   ctx.save(); rrPath(ctx, 0, 0, w, h, 24 * k); ctx.clip(); ctx.fillStyle = 'rgba(255,196,0,.10)'; ctx.fillRect(0, h * 0.74, w, h * 0.26); ctx.restore();
   const zw = Math.min(w * 0.15, 150 * k);
-  drawProductArt(ctx, p, { x: 10 * k, y: -14 * k, w: zw, h: h + 14 * k - 6 * k }, T, env, { k, lim: [4 * k, w - 4 * k], aire: o.aire });
+  drawProductArt(ctx, p, { x: 10 * k, y: 6 * k, w: zw, h: h - 12 * k }, T, env, { k, lim: [4 * k, w - 4 * k], aire: o.aire });
   const tx = zw + 34 * k, pxr = w - 24 * k, priceW = Math.min(w * 0.36, 400 * k);
   let tw = pxr - priceW - 28 * k - tx;
   const movido = precioMovido();
@@ -678,20 +685,23 @@ function drawHeroH(ctx, r, p, T, env, o = {}) {
   ctx.fillStyle = rg; raysPath(ctx, icx, icy, w * 1.2, 32, 0.2); ctx.fill();
   ctx.restore();
   rrPath(ctx, 6 * k, 6 * k, w - 12 * k, h - 12 * k, 33 * k); ctx.lineWidth = 5 * k; ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.stroke();
-  const pop = Math.min((o.pop ?? 40) * k, o.techo ?? Infinity), z = { x: 20 * k, y: -pop, w: w * 0.40, h: h + pop - 14 * k };
-  drawProductArt(ctx, p, z, T, env, { k, glowColor: 'rgba(255,255,255,.85)', glowR: 0.62, lim: [10 * k, w - 10 * k] });
-  stickerEstrella(ctx, w * 0.43 - 6 * k, 22 * k, k, T);
-  const tx = w * 0.43, tw = w - tx - 34 * k;
+  const ff = o.foto || 0.40, z = { x: 20 * k, y: 16 * k, w: w * ff, h: h - 30 * k };   // la foto queda dentro del cuadro
+  drawProductArt(ctx, p, z, T, env, { k, glowColor: 'rgba(255,255,255,.85)', glowR: 0.62, lim: [10 * k, 26 * k + w * ff] });
+  if (o.sticker !== false) stickerEstrella(ctx, w * 0.43 - 6 * k, 22 * k, k, T);
+  const tx = w * (ff + 0.03), tw = w - tx - 34 * k, nMax = (o.nombre || 98) * k;
+  let extra = 0;                                                   // o.centrar: nombre y precio juntos, en el medio del alto
   let anteTop;
   if (precioMovido()) anteTop = precioMovidoHeroH(ctx, p, info, T, k, w, h, tx, tw);
   else {
     const nota = notaDe(p), mpV = chipCard(p), hasA = PRECIO_CFG.ahorro && info.ahorro > 0 && !p.noAhorro;
     const fila = mpV != null || hasA;                              // fila bajo la placa: "CON MP $…" a la izquierda, "AHORRÁS" a la derecha
     const at = tamAhorro(), hA = hasA ? 42 * k * at : 0, filaH = fila ? Math.max(mpV != null ? 42 * k : 0, hA) + 8 * k : 0;
-    const [plateH, pOp] = altoPlaca((fila ? 128 : 140) * k), plateBottom = h - (fila ? 30 : 38) * k - filaH - (nota ? 24 * k : 0);
+    const [plateH, pOp] = altoPlaca((fila ? 128 : 140) * k);
+    if (o.centrar) extra = Math.max(0, (h - (nMax * 0.92 * 2 + (p.desc ? 40 * k : 0) + 50 * k + plateH + filaH + (nota ? 24 * k : 0) + 70 * k)) / 2);
+    const plateBottom = h - (fila ? 30 : 38) * k - filaH - (nota ? 24 * k : 0) - extra;
     const price = info.F || { int: '0', dec: '' };
     const plate = drawPlate(ctx, tx - 10 * k, plateBottom, tw + 10 * k, plateH, price, T, pOp);
-    if (nota) text(ctx, nota, tx, h - 34 * k, { font: FM(800, 21 * k * Math.min(1.4, PRECIO_CFG.insignia || 1)), fill: T.heroInk, maxW: tw });
+    if (nota) text(ctx, nota, tx, h - 34 * k - extra, { font: FM(800, 21 * k * Math.min(1.4, PRECIO_CFG.insignia || 1)), fill: T.heroInk, maxW: tw });
     let libre = tw;
     if (mpV != null) libre -= drawPromoChip(ctx, tx - 6 * k, plateBottom + 8 * k + (filaH - 8 * k - 42 * k) / 2, 42 * k, mpV.label, mpV.price, mpV.P) + 18 * k;
     if (hasA) {                                                    // si no entra al lado de la condición de pago, se achica
@@ -705,9 +715,9 @@ function drawHeroH(ctx, r, p, T, env, o = {}) {
     if (p.unidad) chip(ctx, tx + tw, plate.y - 54 * k, String(p.unidad).toUpperCase(), { h: 38 * k, font: FB(900, 28 * k), align: 'right', padX: 15 * k, tracking: 1, fill: T.price, ink: T.priceInk || '#fff' });
   }
   // nombre + descripción en el espacio que queda
-  const desc = String(p.desc || '').trim(), nm = String(p.nombre || '').trim().toUpperCase(), top = 86 * k;
+  const desc = String(p.desc || '').trim(), nm = String(p.nombre || '').trim().toUpperCase(), top = o.sticker === false ? 34 * k + extra : 86 * k;
   const dSize = 27 * k, descH = desc ? dSize * 1.3 + 4 * k : 0;
-  const wf = fitBlock(ctx, nm || 'NOMBRE DEL PRODUCTO', s => FB(900, s), 98 * k, 36 * k, tw, 2, anteTop - 4 * k - top - descH, 0.92, 0.5);
+  const wf = fitBlock(ctx, nm || 'NOMBRE DEL PRODUCTO', s => FB(900, s), nMax, Math.min(36 * k, nMax), tw, 2, anteTop - 4 * k - top - descH, 0.92, 0.5);
   wf.lines.forEach((ln, i) => text(ctx, ln, tx, top + wf.size * 0.82 + i * wf.size * 0.92, { font: FB(900, wf.size), fill: nm ? T.heroInk : 'rgba(60,25,10,.35)', tracking: 0.5 }));
   if (desc) { const ty = top + wf.size * 0.92 * wf.lines.length + 4 * k; const df = wrapFit(ctx, desc, s => FM(700, s), dSize, 16 * k, tw, 1, 0); text(ctx, df.lines[0], tx, ty + df.size * 0.95, { font: FM(700, df.size), fill: T.heroSoft }); }
   drawBadge(ctx, 62 * k, 70 * k, 66 * k, p, T, info.pct);
@@ -742,9 +752,9 @@ function drawHeroV(ctx, r, p, T, env, o = {}) {
   ctx.restore();
   rrPath(ctx, 7 * k, 7 * k, w - 14 * k, h - 14 * k, 36 * k); ctx.lineWidth = 6 * k; ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.stroke();
   // reparto vertical (de abajo hacia arriba): nota, "ahorrás", placa, precio anterior, descripción, nombre y foto
-  const cx = w / 2, tw = w - 80 * k, nameTop = h * (o.imgFrac || 0.455);
+  const cx = w / 2, tw = w - 80 * k, nameTop0 = h * (o.imgFrac || 0.455);
   let anteTop, a = 'centro';
-  if (precioMovido()) { a = alinPrecio('centro'); anteTop = precioMovidoHeroV(ctx, p, info, T, k, w, h, big, a, nameTop + 40 * k); }
+  if (precioMovido()) { a = alinPrecio('centro'); anteTop = precioMovidoHeroV(ctx, p, info, T, k, w, h, big, a, nameTop0 + 40 * k); }
   else {
     const nota = notaDe(p), mpV = chipCard(p);
     const [plateH, pOp] = altoPlaca(140 * k * big), hasAhorro = PRECIO_CFG.ahorro && info.ahorro > 0 && !p.noAhorro, unidadV = p.unidad ? String(p.unidad).toUpperCase() : '';
@@ -775,11 +785,12 @@ function drawHeroV(ctx, r, p, T, env, o = {}) {
   }
   const desc = String(p.desc || '').trim(), nm = String(p.nombre || '').trim().toUpperCase();
   const dSize = 30 * k, descH = desc ? dSize * 1.3 + 4 * k : 0, [nx, nAl] = a === 'izquierda' ? [40 * k, 'left'] : a === 'derecha' ? [w - 40 * k, 'right'] : [cx, 'center'];
-  // zona de nombre: entre la foto (≈46 % del alto) y el precio anterior
-  const avail = anteTop - 4 * k - nameTop - descH;
-  const wf = fitBlock(ctx, nm || 'NOMBRE DEL PRODUCTO', s => FB(900, s), 92 * k * big, 34 * k, tw, 2, avail, 0.92, 0.5);
-  const imgBottom = nameTop - 4 * k;
-  const pop = Math.min((o.pop ?? 46) * k, o.techo ?? Infinity), z = { x: w * 0.12, y: -pop, w: w * 0.76, h: imgBottom + pop };   // techo: lo libre hasta la barra de arriba
+  // el nombre, chico y pegado al precio: lo que se ve primero es la foto y el precio (la foto usa todo el resto)
+  let wf, nameTop;
+  if (precioMovido()) { nameTop = nameTop0; wf = fitBlock(ctx, nm || 'NOMBRE DEL PRODUCTO', s => FB(900, s), 92 * k * big, 34 * k, tw, 2, anteTop - 4 * k - nameTop - descH, 0.92, 0.5); }
+  else { wf = fitBlock(ctx, nm || 'NOMBRE DEL PRODUCTO', s => FB(900, s), 56 * k * big, 26 * k, tw, 2, h * 0.15, 0.92, 0.5); nameTop = anteTop - 10 * k - descH - wf.size * 0.92 * wf.lines.length; }
+  const imgBottom = nameTop - 8 * k;
+  const z = { x: w * 0.12, y: 16 * k, w: w * 0.76, h: imgBottom - 16 * k };   // la foto queda dentro del cuadro
   drawProductArt(ctx, p, z, T, env, { k, glowColor: 'rgba(255,255,255,.85)', glowR: 0.5, lim: [10 * k, w - 10 * k] });
   if (o.sticker !== false) stickerEstrella(ctx, 26 * k, 24 * k, k, T, -0.05, 1.1);
   wf.lines.forEach((ln, i) => text(ctx, ln, nx, nameTop + wf.size * 0.82 + i * wf.size * 0.92, { font: FB(900, wf.size), fill: nm ? T.heroInk : 'rgba(60,25,10,.35)', align: nAl, tracking: 0.5 }));
@@ -989,20 +1000,26 @@ function gridCards(ctx, S, T, env, items, box, cols, rows, gx, gy) {
   const llenos = env.preview ? items : items.filter(i => !productoVacio(prodAt(S, i)));
   if (llenos.length) items = llenos;
   const filas = filasGrilla(items.length, cols, rows), ch = (box.h - gy * (filas.length - 1)) / filas.length;
-  const anchoFila = c => (box.w - gx * (c - 1)) / c, esVertical = cw => cw / ch < 1.75;
-  // el mismo tamaño de letra en todo el folleto: el del cuadro más chico de cada tipo
-  let kV = Infinity, kH = Infinity;
-  for (const c of filas) { const cw = anchoFila(c); if (esVertical(cw)) kV = Math.min(kV, cw / 360, ch / 330); else kH = Math.min(kH, ch / 253, cw / 566); }
+  // un renglón con menos cuadros los ensancha, pero sin cambiarles la forma (vertical, apaisada o angosta): así las
+  // fotos salen parejas en toda la imagen. Si no llegan a todo el ancho, el renglón va centrado.
+  const ref = ((box.w - gx * (cols - 1)) / cols) / ((box.h - gy * (rows - 1)) / rows), maxProp = ref < 1.75 ? Math.max(ref, 1.7) : ref <= 3.2 ? Math.max(ref, 3.1) : Infinity;
+  const anchoFila = c => Math.min((box.w - gx * (c - 1)) / c, maxProp * ch);
+  // Un solo estilo de cuadro en toda la imagen, según el cuadro más angosto: chico o más alto que ancho → foto arriba
+  // (vertical); ancho y con lugar para el texto → foto grande a la izquierda con el nombre chico y el precio grande al
+  // lado; muy angosto en alto (historias) → apaisado. Y el mismo tamaño de letra en todos: el del cuadro más chico.
+  const cwMin = anchoFila(Math.max(...filas)), prop = cwMin / ch, estilo = prop > 3.2 ? 'ancho' : prop >= 1 && cwMin >= 300 ? 'foto' : 'vertical';
+  let k = Infinity;
+  for (const c of filas) { const cw = anchoFila(c); k = Math.min(k, estilo === 'vertical' ? Math.min(cw / 360, ch / 330) : Math.min(ch / 253, cw / 520)); }
   let n = 0;
   filas.forEach((c, f) => {
-    const cw = anchoFila(c), vertical = esVertical(cw), k = vertical ? kV : kH;
+    const cw = anchoFila(c), x0 = box.x + (box.w - c * cw - (c - 1) * gx) / 2;
     for (let col = 0; col < c; col++, n++) {
-      const i = items[n], r = { x: box.x + col * (cw + gx), y: box.y + f * (ch + gy), w: cw, h: ch };
+      const i = items[n], r = { x: x0 + col * (cw + gx), y: box.y + f * (ch + gy), w: cw, h: ch };
       const p = prodAt(S, i);
       if (productoVacio(p)) drawEmptyCard(ctx, r, T, env, k);
-      else if (cw / ch > 3.2) drawCardWide(ctx, r, p, T, env, { aire: gy });
-      else if (vertical) drawCardV(ctx, r, p, T, env, { k, aire: gy });
-      else drawCard(ctx, r, p, T, env, { k, aire: gy });
+      else if (estilo === 'ancho' || cw / ch > 3.2) drawCardWide(ctx, r, p, T, env, { aire: gy });
+      else if (estilo === 'vertical') drawCardV(ctx, r, p, T, env, { k, aire: gy });
+      else drawCard(ctx, r, p, T, env, { k, aire: gy, foto: 0.5 });
       casillero(ctx, env, 'producto', i, r);
     }
   });
