@@ -749,13 +749,17 @@ function cajaLeyendaPrecio() {
 }
 /** Cuadros de productos: separación, margen, fotos, producto estrella y dónde va el precio adentro de cada cuadro. */
 let CUADROS_ABIERTO = false;
-const CUADROS_NORMAL = { sep: 1, margen: 1, foto: 1, estrella: 1, alinear: 'auto', dx: 0, dy: 0, nombre: 1, nombreDy: 0 };
+const CUADROS_NORMAL = { sep: 1, margen: 1, foto: 1, estrella: 1, alinear: 'auto', dx: 0, dy: 0, nombre: 1, nombreDy: 0, filaLlena: 'abajo' };
 function cajaCuadros() {
   const C = S.cuadros || (S.cuadros = { ...CUADROS_NORMAL }), L = L_ACTUAL(), conEstrella = ['a4_star4', 'post_star4', 'story_3'].includes(S.formato);
   const alin = h('div', { class: 'quick', role: 'group', 'aria-label': 'Dónde va el precio' });
   const pintarAlin = () => alin.replaceChildren(...[['auto', 'Como venía'], ['izquierda', '⇤ Izquierda'], ['centro', 'Centro'], ['derecha', 'Derecha ⇥']].map(([v, t]) =>
     h('button', { type: 'button', class: 'q' + ((C.alinear || 'auto') === v ? ' on' : ''), 'aria-pressed': String((C.alinear || 'auto') === v), onclick: () => { C.alinear = v; pintarAlin(); cambio(); } }, t)));
   pintarAlin();
+  const llena = h('div', { class: 'quick', role: 'group', 'aria-label': 'Dónde va el renglón con más cuadros' });
+  const pintarLlena = () => llena.replaceChildren(...[['arriba', '⬆ Arriba'], ['abajo', '⬇ Abajo']].map(([v, t]) =>
+    h('button', { type: 'button', class: 'q' + ((C.filaLlena || 'abajo') === v ? ' on' : ''), 'aria-pressed': String((C.filaLlena || 'abajo') === v), onclick: () => { C.filaLlena = v; pintarLlena(); cambio(); } }, t)));
+  pintarLlena();
   const corrimiento = (etq, key, min, max, txt) => {
     const out = h('b', null), pintar = () => { out.textContent = txt(+C[key] || 0); };
     const r = h('input', { type: 'range', min: String(min), max: String(max), step: '1', value: String(+C[key] || 0), 'aria-label': etq, oninput: e => { C[key] = +e.target.value; pintar(); cambio(); } });
@@ -772,6 +776,7 @@ function cajaCuadros() {
       sliderTam('Margen a los costados', C, 'margen', 0.4, 2, 1, { ayuda: L.pdf === 'A4' ? 'para imprimir, no menos de 70 %' : 'más margen = cuadros más angostos' }),
       conEstrella ? sliderTam('Producto estrella (el cuadro grande)', C, 'estrella', 0.7, 1.3, 1, { ayuda: 'los de abajo usan lo que queda' }) : null,
       sliderTam('Fotos de los productos', C, 'foto', 0.7, 1.3, 1, { ayuda: 'todas juntas; nunca se salen de su cuadro' }),
+      h('div', { class: 'fld tam' }, h('span', null, 'Si sobran lugares, el renglón con más cuadros va', h('em', null, ' · ej.: 13 productos en el de 16 → 3, 3, 3 y 4 (abajo) o 4, 3, 3 y 3 (arriba)')), llena),
       h('p', { class: 'lab', style: 'margin:8px 0 0' }, 'Nombre del producto (la descripción, por ejemplo «LECHE ENTERA COSALTA»)'),
       sliderTam('Tamaño del nombre', C, 'nombre', 0.7, 2, 1, { ayuda: 'si un nombre largo no entra, se achica solo' }),
       corrimiento('Subir el nombre', 'nombreDy', 0, 40, v => (v === 0 ? 'pegado arriba del precio (lo más abajo posible)' : `${v} % más arriba`)),
@@ -1361,7 +1366,7 @@ async function autotest() {
     S.formato = bakF;
     t('versión', !!APP_VERSION.v, APP_VERSION.v + ' ' + APP_VERSION.fecha);
     const n = estadoNuevo(S); t('folleto nuevo vacío', n.productos.every(productoVacio) && n.coleccion.fotos.every(f => !srcDe(f)) && n.formato === S.formato);
-    t('cuadros que se agrandan: 13 en 4 columnas → 4, 3, 3, 3', filasGrilla(13, 4, 4).join() === '4,3,3,3' && filasGrilla(16, 4, 4).join() === '4,4,4,4' && filasGrilla(12, 4, 4).join() === '4,4,4' && filasGrilla(7, 2, 5).join() === '2,2,2,1', [filasGrilla(13, 4, 4), filasGrilla(7, 2, 5)].join(' / '));
+    t('cuadros que se agrandan: 13 en 4 columnas → 4, 3, 3, 3', filasGrilla(13, 4, 4).join() === '4,3,3,3' && filasGrilla(13, 4, 4, true).join() === '3,3,3,4' && filasGrilla(16, 4, 4).join() === '4,4,4,4' && filasGrilla(12, 4, 4).join() === '4,4,4' && filasGrilla(7, 2, 5).join() === '2,2,2,1', [filasGrilla(13, 4, 4), filasGrilla(7, 2, 5)].join(' / '));
     const m = normalizarEstado({ productos: [nuevoProducto(), nuevoProducto({ nombre: 'A', final: '1' })] }); t('casilleros vacíos al final', m.productos[0].nombre === 'A' && productoVacio(m.productos[1]));
     const es = estadoParaGuardar(S); t('estado liviano', JSON.stringify(es).length < 400000, Math.round(JSON.stringify(es).length / 1024) + ' KB');
     { // v3.1: tamaños, letra chica, banda y barra
