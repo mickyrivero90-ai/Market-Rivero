@@ -782,12 +782,12 @@ function cajaCuadros() {
 /** Tamaños del logo, del cartel del título y del pie: lo que se achica arriba o abajo lo ganan los cuadros. */
 let CABECERA_ABIERTA = false;
 function cajaCabecera() {
-  const CB = S.cabecera || (S.cabecera = { logo: 1.2, titulo: 0.85, pie: 0.75 });
+  const CB = S.cabecera || (S.cabecera = { logo: 1.35, titulo: 0.85, pie: 0.75 });
   return h('details', { class: 'caja-aparte cuadros', id: 'caja-cabecera', open: CABECERA_ABIERTA, ontoggle: e => { CABECERA_ABIERTA = e.target.open; } },
     h('summary', null, 'Logo, título y pie: tamaños'),
     h('div', { class: 'stack', style: 'margin-top:10px' },
       h('p', { class: 'hint', style: 'margin:0' }, 'Lo que achiques arriba o abajo lo ganan los cuadros de las ofertas. Vale para el folleto y para las imágenes de redes. ↺ vuelve al tamaño recomendado.'),
-      sliderTam('Logo de Rivero Market', CB, 'logo', 0.7, 1.6, 1.2, { ayuda: 'más grande = se nota más la marca' }),
+      sliderTam('Logo de Rivero Market (carrito, RIVERO y MARKET juntos)', CB, 'logo', 0.7, 1.7, 1.35, { ayuda: 'crece todo el logo parejo; si hay sello de promo, el sello se achica un poco' }),
       sliderTam('Cartel del título («Especial Día de la Madre», «Oferta imperdible»…)', CB, 'titulo', 0.5, 1.3, 0.85, { ayuda: 'si el texto no entra a lo ancho, se achica solo' }),
       sliderTam('Pie (dirección, Facebook y QR)', CB, 'pie', 0.5, 1.2, 0.75, { ayuda: 'más chico = cuadros más grandes' })));
 }

@@ -5,6 +5,11 @@ Desde la 3.0, la herramienta online (https://mickyrivero90-ai.github.io/Market-R
 se actualiza sola. Si usás el programa de la PC y muestra un número menor, bajá el nuevo
 desde la herramienta online (⋯ Más → Programa para usar sin internet).
 
+Versión 4.7 · 9 de noviembre de 2026 · LOGO TODAVÍA MÁS GRANDE
+- El logo completo (el carrito con la R, RIVERO y MARKET, que crecen juntos y parejos) sale más
+  grande. Si hay sello de promo («10 % OFF», «¡Súper ofertas!»), el sello se achica un poco para
+  dejarle lugar al logo. Se regula en «Logo, título y pie: tamaños».
+
 Versión 4.6 · 9 de noviembre de 2026 · LOGO GRANDE Y AL CENTRO, PIE MÁS BAJO, SIN BANDA LEGAL
 - El logo de Rivero Market sale más grande y al centro, con el recuadro negro de abajo («Solo en
   efectivo», «Regalale lo mejor»…) también centrado. El sello de la promo queda a la derecha.
