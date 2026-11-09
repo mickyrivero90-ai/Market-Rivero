@@ -5,6 +5,11 @@ Desde la 3.0, la herramienta online (https://mickyrivero90-ai.github.io/Market-R
 se actualiza sola. Si usás el programa de la PC y muestra un número menor, bajá el nuevo
 desde la herramienta online (⋯ Más → Programa para usar sin internet).
 
+Versión 4.5 · 9 de noviembre de 2026 · AVISO EN LOS LUGARES VACÍOS
+- En pantalla, con «Guías» tildado, cada lugar vacío dice «SI QUEDA VACÍO, NO SALE». En el folleto
+  terminado no aparecen: los cuadros con producto se agrandan. Para verlo como va a salir, destildá
+  «Guías» (abajo del folleto).
+
 Versión 4.4 · 9 de noviembre de 2026 · PRECIOS MÁS GRANDES
 - En los cuadros con foto grande el precio sale más grande: la columna del nombre y el precio es un
   poco más ancha y la placa del precio más alta. Si lo querés todavía más grande (o más chico):

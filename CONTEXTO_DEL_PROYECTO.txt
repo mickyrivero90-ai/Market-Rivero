@@ -1074,3 +1074,10 @@ Probado: autoprueba 147 OK; A4 de 12 y post de 4 con fotos chatas de productos/R
 -----------------------------------------------
  - gridCards(): drawCard con o.foto = 0.46 (antes 0.5). drawCard con o.foto: placa x1,4 (antes x1,2).
 Probado: autoprueba 147 OK; canal con 13 productos, A4 de 12 y post de 4.
+
+30. VERSIÓN 4.5: AVISO EN LOS LUGARES VACÍOS (9/11/2026)
+-------------------------------------------------------
+ - Miki volvió a preguntar por qué veía los lugares vacíos (los veía con «Guías» tildado). drawEmptyCard() en
+   pantalla suma «SI QUEDA VACÍO, NO SALE». Se dejó la grilla completa en pantalla para poder tocar un lugar
+   vacío y elegir el producto.
+Probado: autoprueba 147 OK; captura de la pantalla con guías.
