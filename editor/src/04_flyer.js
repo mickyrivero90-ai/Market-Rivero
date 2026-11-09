@@ -181,7 +181,8 @@ function drawProductArt(ctx, p, z, T, env, o = {}) {
   const fg = CUADROS_CFG.foto || 1, base = Math.min(z.w / iw, piso / ih) * (p.zoom || 1);
   const sc = Math.min(base * fg, (lim[1] - lim[0]) / iw, piso / ih);
   const dw = iw * sc, dh = ih * sc;
-  const floorY = clamp(z.y + piso + (p.dy || 0) * z.h, z.y + dh, z.y + z.h);
+  const suelo = dh < piso * 0.8 ? z.y + (z.h + dh) / 2 : z.y + piso;   // una foto chata (pañales, papel, servilletas) va al medio del alto, no abajo
+  const floorY = clamp(suelo + (p.dy || 0) * z.h, z.y + dh, z.y + z.h);
   let px = cx + (p.dx || 0) * z.w;
   px = dw >= lim[1] - lim[0] ? (lim[0] + lim[1]) / 2 : clamp(px, lim[0] + dw / 2, lim[1] - dw / 2);
   // sombra de piso (elipse con degradé radial, sin filtros)
@@ -497,7 +498,7 @@ function drawCard(ctx, r, p, T, env, o = {}) {
     if (notaAbajo) text(ctx, nota, tx - 4 * k, h - 10 * k - nFs * 0.25 - lift, { font: nF, fill: T.ink, maxW: tw + 4 * k });
     techo = filaAntes(ctx, tx, tw, plate, info, p, T, k) - 6 * k;
   }
-  const top = 17 * k + lift, desc = String(p.desc || '').trim(), dSize = 18 * k;
+  const top = Math.max(17 * k + lift, o.foto ? 32 * k : 0), desc = String(p.desc || '').trim(), dSize = 18 * k;   // foto grande: el nombre un poco más abajo de la esquina
   const wf = fitBlock(ctx, nm || 'NOMBRE DEL PRODUCTO', s => FB(900, s), nMax, nMin, tw, 2, Math.max(24 * k, techo - top - (desc ? 0 : 0)), 0.92, 0.4);
   wf.lines.forEach((ln, i) => text(ctx, ln, tx, top + wf.size * 0.82 + i * wf.size * 0.92, { font: FB(900, wf.size), fill: nm ? T.ink : 'rgba(60,25,10,.35)', tracking: 0.4 }));
   const ty = top + wf.size * 0.92 * wf.lines.length + 3 * k;

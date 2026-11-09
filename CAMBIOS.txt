@@ -5,6 +5,13 @@ Desde la 3.0, la herramienta online (https://mickyrivero90-ai.github.io/Market-R
 se actualiza sola. Si usás el programa de la PC y muestra un número menor, bajá el nuevo
 desde la herramienta online (⋯ Más → Programa para usar sin internet).
 
+Versión 4.3 · 9 de noviembre de 2026 · FOTOS CHATAS AL MEDIO Y NOMBRE MÁS ABAJO
+- Las fotos chatas (pañales, papel higiénico, servilletas, cajas) ya no quedan pegadas abajo con
+  espacio vacío arriba: van al medio del alto del cuadro. Las altas (botellas) siguen paradas abajo.
+- En los cuadros con foto grande, el nombre baja un poco: ya no queda pegado a la esquina.
+- Para mover una foto a mano: tocá el producto → «Mover la foto adentro del cuadro» → «Arriba ↕
+  abajo» (o «Izquierda ↔ derecha»). «Centrar» la vuelve a su lugar.
+
 Versión 4.2 · 9 de noviembre de 2026 · FOTOS GRANDES Y SIEMPRE DENTRO DE SU CUADRO
 - Las fotos ya no se salen de su cuadro (antes una botella alta podía pisar el cuadro de arriba).
   Cada foto se agranda sola hasta el máximo que entra en su cuadro, sin tapar el nombre ni el precio.
