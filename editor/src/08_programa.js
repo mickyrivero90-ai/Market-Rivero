@@ -91,7 +91,7 @@ function confirmar(titulo, texto, si = 'Aceptar', no = 'Cancelar') {
 // ── buscador de la carpeta de productos ──
 let CATEGORIAS_CONOCIDAS = [];
 /** Abre el buscador de la carpeta. Devuelve la lista de productos elegidos (o null si se cancela). */
-function abrirSelector({ titulo, multi = false, max = 1 }) {
+function abrirSelector({ titulo, multi = false, max = 1, alUsarPC = null }) {
   return new Promise(resolve => {
     let todos = [], cat = null, q = '', modoMulti = multi, sel = [], resultado = null, cargando = true, carpetaTxt = '', pendientes = [], reloj = null;
     const nuevos = new Set();
@@ -159,7 +159,7 @@ function abrirSelector({ titulo, multi = false, max = 1 }) {
     const abrirLaCarpeta = () => API.abrirCarpeta('productos').then(() => aviso('Abrí la carpeta. Copiá tus fotos ahí y volvé: se actualiza sola.')).catch(e => aviso(e.message));
     /** En la nube sin conectar: subir pide la llave; igual se puede usar una foto de esta PC solo para este folleto. */
     const agregarClic = () => { if (CARPETA.puedeSubir) archivos.click(); else { aviso('Para subir fotos a la nube, primero conectá tu cuenta de GitHub.'); abrirConectar(); } };
-    const usarDeEstaPC = () => { resultado = null; m.cerrar(); DOM.selArchivo.multiple = !!multi; DOM.selArchivo._destino = { tipo: ACTIVO.tipo, i: ACTIVO.i }; DOM.selArchivo.click(); };
+    const usarDeEstaPC = () => { resultado = null; m.cerrar(); if (alUsarPC) { alUsarPC(); return; } DOM.selArchivo.multiple = !!multi; DOM.selArchivo._destino = { tipo: ACTIVO.tipo, i: ACTIVO.i }; DOM.selArchivo.click(); };
 
     const cuerpo = h('div', { class: 'selector' }, h('div', { class: 'sel-barra' }, buscador, cuenta), cats, grilla, archivos);
     const m = abrirModal({ titulo, ancho: 1020, clase: 'selector-modal', cuerpo, alCerrar: () => { removeEventListener('focus', alVolver); clearTimeout(reloj); resolve(resultado); },

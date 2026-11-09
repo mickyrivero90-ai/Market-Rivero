@@ -513,3 +513,5 @@ label.chk.guia.hecho { opacity: .6; }
 .combo-foto { display: flex; align-items: center; gap: 6px; }
 .combo-foto img { width: 44px; height: 44px; object-fit: contain; background: #fff; border-radius: 6px; border: 1px solid rgba(0,0,0,.12); }
 .combo .btn { align-self: flex-start; }
+.pcampos > .combo { margin-top: 6px; border-color: #F2A900; background: rgba(255,210,63,.12); }
+.pcampos > .combo .btn { font-weight: 800; }

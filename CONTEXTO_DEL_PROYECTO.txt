@@ -1177,3 +1177,13 @@ Probado: autoprueba 148 OK (nueva: fotos extra se guardan, máx. 2); A4 de 12, c
    activarCasillero('cabecera') abre y resalta #caja-cabecera. cajaCabecera() pasó al paso 1 (para todos los grupos).
  - layoutMensaje(): logoW × CAB_CFG.logo (máx. 80 % del ancho) y ribH × CAB_CFG.titulo, corriendo kY y ribY.
 Probado: autoprueba 151 OK (más formatos); combo_post con Fernet + lata, mensaje_post, clic en el logo abre los tamaños.
+
+40. VERSIÓN 5.5: COMBO, SUMAR FOTOS DESDE LA PC (9/11/2026)
+----------------------------------------------------------
+ - Causa: en la versión online con catálogo (CARPETA.activa), «＋ Sumar otra foto» abre abrirSelector(); su botón «Usar
+   una foto de esta PC» usaba DOM.selArchivo con destino ACTIVO → cargarArchivos() reemplazaba la foto principal.
+ - abrirSelector({ …, alUsarPC }): si viene, «Usar una foto de esta PC» cierra y llama alUsarPC (sin selArchivo).
+ - cajaCombo(): desdePC() con un input file pegado al body (#sel-combo; uno suelto lo puede descartar el navegador),
+   actual() = S.productos[i] (nunca una copia vieja). En combo_* la caja va visible en la fila del producto 1 (pcampos);
+   controlesFoto no la repite.
+Probado: autoprueba 151 OK; Playwright: dos fotos subidas desde la PC → fotosExtra = 2, la principal no cambia.
