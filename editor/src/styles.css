@@ -498,3 +498,11 @@ label.chk.guia.hecho { opacity: .6; }
 .diseno-barra select { width: 100%; }
 #caja-pie.resalta { box-shadow: 0 0 0 4px var(--pop); border-radius: 12px; transition: box-shadow .2s; }
 .pie-vista { margin: 0; padding: 8px 10px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--line); color: var(--muted); font-size: 12.5px; line-height: 1.45; }
+
+/* arrastrar un producto a otro lugar del folleto */
+.marca-arrastre { position: absolute; z-index: 5; pointer-events: none; border: 4px dashed #FFD23F; border-radius: 12px; background: rgba(255,210,63,.18);
+  display: flex; align-items: center; justify-content: center; font: 800 13px/1.2 system-ui, sans-serif; color: #2b1300; text-shadow: 0 1px 0 #fff; box-sizing: border-box; }
+.marca-arrastre[hidden] { display: none; }
+.mover-a { display: inline-flex; align-items: center; gap: 6px; }
+.mover-a select { padding: 4px 6px; }
+.marca-arrastre span { background: #FFD23F; padding: 5px 10px; border-radius: 999px; box-shadow: 0 2px 6px rgba(0,0,0,.3); text-shadow: none; }

@@ -5,6 +5,13 @@ Desde la 3.0, la herramienta online (https://mickyrivero90-ai.github.io/Market-R
 se actualiza sola. Si usás el programa de la PC y muestra un número menor, bajá el nuevo
 desde la herramienta online (⋯ Más → Programa para usar sin internet).
 
+Versión 5.1 · 9 de noviembre de 2026 · ARRASTRAR PRODUCTOS A OTRO LUGAR
+- En el folleto (con «Guías» tildado) agarrá un producto con el mouse y soltalo sobre otro lugar: va
+  directo ahí y los del medio se corren un lugar. Mientras lo arrastrás, el lugar de destino se marca
+  en amarillo («Soltá: va al lugar 1»). Si te equivocás, ↶ (Deshacer) lo vuelve atrás.
+- En cada producto (paso 2), al lado de «Subir ↑» y «Bajar ↓», está «Mover al lugar»: elegís el
+  número y va directo. Sirve también en el celular.
+
 Versión 5.0 · 9 de noviembre de 2026 · EL RENGLÓN CON MÁS CUADROS VA ABAJO
 - Cuando sobran lugares, el renglón con más cuadros ahora va abajo de todo (13 productos en el de 16
   → 3, 3, 3 y 4), así podés ordenar los productos por rubro desde arriba.
