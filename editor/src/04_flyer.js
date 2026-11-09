@@ -1065,12 +1065,13 @@ function gridCards(ctx, S, T, env, items, box, cols, rows, gx, gy) {
   // fotos salen parejas en toda la imagen. Si no llegan a todo el ancho, el renglón va centrado.
   const ref = ((box.w - gx * (cols - 1)) / cols) / ((box.h - gy * (rows - 1)) / rows), maxProp = ref < 1.75 ? Math.max(ref, 1.7) : ref <= 3.2 ? Math.max(ref, 3.1) : Infinity;
   const anchoFila = c => Math.min((box.w - gx * (c - 1)) / c, maxProp * ch);
-  // Un solo estilo de cuadro en toda la imagen, según el cuadro más angosto: chico o más alto que ancho → foto arriba
-  // (vertical); ancho y con lugar para el texto → foto grande a la izquierda con el nombre chico y el precio grande al
-  // lado; muy angosto en alto (historias) → apaisado. Y el mismo tamaño de letra en todos: el del cuadro más chico.
-  const cwMin = anchoFila(Math.max(...filas)), prop = cwMin / ch, estilo = prop > 3.2 ? 'ancho' : prop >= 1 && cwMin >= 300 ? 'foto' : 'vertical';
+  // Regla de Rivero Market para todos los formatos: la foto del producto a la izquierda, lo más grande posible, y a la
+  // derecha el nombre y el precio. Solo en renglones muy apaisados se usa la tarjeta ancha (también con la foto a la
+  // izquierda). Mismo tamaño de letra en todos los cuadros: el del más chico.
+  const cwMin = anchoFila(Math.max(...filas)), prop = cwMin / ch, estilo = prop > 4.2 ? 'ancho' : 'foto';
+  const fotoDe = cw => Math.min(0.46, Math.max(0.3, 1.25 * ch / cw));   // en cuadros muy anchos la foto no necesita media tarjeta
   let k = Infinity;
-  for (const c of filas) { const cw = anchoFila(c); k = Math.min(k, estilo === 'vertical' ? Math.min(cw / 360, ch / 330) : Math.min(ch / 253, cw / 520)); }
+  for (const c of filas) { const cw = anchoFila(c); k = Math.min(k, Math.min(ch / 253, cw / 520)); }
   let n = 0;
   filas.forEach((c, f) => {
     const cw = anchoFila(c), x0 = box.x + (box.w - c * cw - (c - 1) * gx) / 2;
@@ -1080,7 +1081,7 @@ function gridCards(ctx, S, T, env, items, box, cols, rows, gx, gy) {
       if (productoVacio(p)) drawEmptyCard(ctx, r, T, env, k);
       else if (estilo === 'ancho' || cw / ch > 3.2) drawCardWide(ctx, r, p, T, env, { aire: gy });
       else if (estilo === 'vertical') drawCardV(ctx, r, p, T, env, { k, aire: gy });
-      else drawCard(ctx, r, p, T, env, { k, aire: gy, foto: 0.46 });
+      else drawCard(ctx, r, p, T, env, { k, aire: gy, foto: fotoDe(cw) });
       casillero(ctx, env, 'producto', i, r);
     }
   });
@@ -1142,7 +1143,7 @@ const LAYOUTS = {
       const heroY = hb + 28, bottom = fy - 22;
       const sep = CUADROS_CFG.sep ?? 1, heroH = altoEstrella(Math.min(640, Math.max(430, (bottom - heroY) * 0.6)), bottom - heroY, 22 * sep + 2 * 100);
       const caja = conMargen({ x: M, y: heroY, w: W - 2 * M, h: heroH });
-      drawHeroV(ctx, caja, prodAt(S, 0), T, env, { techo: heroY - hb - 6 }); casillero(ctx, env, 'producto', 0, caja);
+      drawHeroH(ctx, caja, prodAt(S, 0), T, env, { foto: 0.45 }); casillero(ctx, env, 'producto', 0, caja);   // estrella: foto a la izquierda
       const top = heroY + heroH + 22 * sep;
       gridCards(ctx, S, T, env, [1, 2], { x: M, y: top, w: W - 2 * M, h: bottom - top }, 1, 2, 22, 16);
       drawFooter(ctx, S, T, env, { x: 0, y: fy, w: W }, fp, { m: 40 });
@@ -1162,7 +1163,7 @@ const LAYOUTS = {
       drawBackground(ctx, W, H, T, 0.5, 0.06);
       drawHeaderStack(ctx, W, S, T, { M, logoW: 640, logoY: 36, subY: 232, subSize: 25, ribbonY: 262, ribbonH: 124, titleMax: 118, pillY: 402, pillH: 52 });
       const fp = footerPlan(ctx, S, W, H, 'print'), fh = fp.total, bottom = H - fh - 30, top = 520;
-      drawHeroV(ctx, conMargen({ x: M, y: top, w: W - 2 * M, h: bottom - top }), prodAt(S, 0), T, env, { big: 1.12, imgFrac: 0.52, pop: 36 });
+      { const c = conMargen({ x: M, y: top, w: W - 2 * M, h: bottom - top }); drawHeroH(ctx, c, prodAt(S, 0), T, env, { k: Math.min(c.h / 560, c.w / 1000), foto: 0.5, nombre: 62, sticker: false, centrar: true }); }
       drawFooter(ctx, S, T, env, { x: 0, y: H - fh, w: W }, fp);
     },
   },

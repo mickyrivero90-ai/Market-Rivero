@@ -5,6 +5,14 @@ Desde la 3.0, la herramienta online (https://mickyrivero90-ai.github.io/Market-R
 se actualiza sola. Si usás el programa de la PC y muestra un número menor, bajá el nuevo
 desde la herramienta online (⋯ Más → Programa para usar sin internet).
 
+Versión 5.8 · 9 de noviembre de 2026 · FOTO A LA IZQUIERDA EN TODOS LOS FORMATOS
+- Regla nueva para todos los folletos (de 4 a 16 productos, estrella + 4, posteos, historias, un
+  producto, combo) y para todas las versiones que se generan al terminar (A4, Facebook, canal y chats,
+  Estados, un producto por imagen): la foto del producto va a la izquierda, lo más grande posible, y a
+  la derecha el nombre y el precio. Se ve igual mientras armás el folleto.
+- En los cuadros muy anchos (historias de 4) la foto ocupa menos ancho, para que el nombre y el
+  precio tengan lugar.
+
 Versión 5.7 · 9 de noviembre de 2026 · COMBO: FOTOS A LA IZQUIERDA, PRECIO A LA DERECHA
 - En el Combo (y en cualquier producto solo con varias fotos), las fotos van a la izquierda ocupando
   la mitad del cuadro, y el nombre y el precio a la derecha, como en las ofertas de un producto con
