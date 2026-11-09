@@ -3,7 +3,8 @@ const ESTADO_VERSION = 9;
 const LEGALES_VIEJO = 'Imágenes ilustrativas. Precios finales en pesos argentinos.';   // hasta la v3.0 (ahora «precios finales» ya va en la letra chica)
 
 // `archivo` = ruta de la foto dentro de la carpeta "productos" (programa local); `img` = foto incrustada (página suelta).
-const nuevoProducto = (o = {}) => ({ id: uid(), nombre: '', desc: '', regular: '', pct: '', final: '', unidad: '', etiqueta: '', nota: '', pago: '', img: null, imgV: 0, archivo: null, mtime: null, demo: null, recordado: false, alfa: false, quitarFondo: false, tol: 40, zoom: 1, dx: 0, dy: 0, ...o });
+const nuevoProducto = (o = {}) => ({ id: uid(), nombre: '', desc: '', regular: '', pct: '', final: '', unidad: '', etiqueta: '', nota: '', pago: '', img: null, imgV: 0, archivo: null, mtime: null, demo: null, recordado: false, alfa: false, quitarFondo: false, tol: 40, zoom: 1, dx: 0, dy: 0, fotosExtra: [], ...o });   // fotosExtra: otras fotos en el mismo cuadro (Fernet + gaseosa). combo: true = el de Marketing
+const MAX_COMBO = 2;                                             // fotos extra por cuadro (el combo: 3 fotos en total)
 const nuevaFoto = (o = {}) => ({ id: uid(), img: null, imgV: 0, archivo: null, mtime: null, demo: null, alfa: false, quitarFondo: false, tol: 40, titulo: '', ...o });
 
 /** Los 8 productos del folleto original (precios del local), con botellas de muestra en vez de fotos reales, y 2 inventados para completar 10. */
@@ -145,7 +146,7 @@ function normalizarEstado(S, op = {}) {
   if (!LAYOUTS[out.formato]) out.formato = 'a4_10';
   if (!THEMES[out.tema]) out.tema = 'naranja';
   out.avisoEjemplo = S.avisoEjemplo !== false;
-  const prods = (S.productos || []).map(p => recuperar(nuevoProducto(p), A.productos));
+  const prods = (S.productos || []).map(p => { const q = recuperar(nuevoProducto(p), A.productos); q.fotosExtra = (Array.isArray(q.fotosExtra) ? q.fotosExtra : []).slice(0, MAX_COMBO).map(f => nuevaFoto(f)); return q; });
   out.productos = op.compactar === false ? prods : [...prods.filter(p => !productoVacio(p)), ...prods.filter(p => productoVacio(p))];   // los casilleros vacíos van al final
   while (out.productos.length < MAX_SLOTS) out.productos.push(nuevoProducto());
   out.v = ESTADO_VERSION;

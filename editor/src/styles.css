@@ -506,3 +506,10 @@ label.chk.guia.hecho { opacity: .6; }
 .mover-a { display: inline-flex; align-items: center; gap: 6px; }
 .mover-a select { padding: 4px 6px; }
 .marca-arrastre span { background: #FFD23F; padding: 5px 10px; border-radius: 999px; box-shadow: 0 2px 6px rgba(0,0,0,.3); text-shadow: none; }
+
+/* combo: varias fotos en un mismo cuadro */
+.combo { display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; border: 1px dashed rgba(0,0,0,.2); border-radius: 10px; }
+.combo-fotos { display: flex; flex-wrap: wrap; gap: 8px; }
+.combo-foto { display: flex; align-items: center; gap: 6px; }
+.combo-foto img { width: 44px; height: 44px; object-fit: contain; background: #fff; border-radius: 6px; border: 1px solid rgba(0,0,0,.12); }
+.combo .btn { align-self: flex-start; }

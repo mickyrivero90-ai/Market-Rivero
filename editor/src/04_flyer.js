@@ -175,6 +175,8 @@ function drawProductArt(ctx, p, z, T, env, o = {}) {
     if (env.preview) text(ctx, 'SUBÍ LA FOTO', cx, cy + s * 0.78, { font: FM(800, Math.max(12, s * 0.12)), fill: 'rgba(60,25,10,.55)', align: 'center', tracking: 2 });
     ctx.restore(); return;
   }
+  const extras = (p.fotosExtra || []).map(f => env.getImg(f)).filter(Boolean);
+  if (extras.length) { drawComboArt(ctx, p, [img, ...extras], z, T, o); return; }
   const iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
   // La foto nunca se sale de su cuadro: lo más grande posible dentro de la zona (alto) y del cuadro (ancho).
   const lim = o.lim || [z.x, z.x + z.w], piso = z.h * 0.965;
@@ -192,6 +194,40 @@ function drawProductArt(ctx, p, z, T, env, o = {}) {
   shadow(ctx, 'rgba(50,15,0,.30)', 14 * k, 0, 8 * k);
   ctx.drawImage(img, px - dw / 2, floorY - dh, dw, dh);
   noShadow(ctx);
+}
+
+/** Combo: varias fotos una al lado de la otra, todas del mismo alto, con un «+» en el medio, sin salirse del cuadro. */
+function proporcionCombo(imgs) {                                   // ancho total / alto, con el lugar de los «+»
+  const ar = imgs.map(im => (im.naturalWidth || im.width) / (im.naturalHeight || im.height));
+  return ar.reduce((a, b) => a + b, 0) + 0.22 * (imgs.length - 1);
+}
+function drawComboArt(ctx, p, imgs, z, T, o = {}) {
+  const k = o.k || 1, lim = o.lim || [z.x, z.x + z.w], piso = z.h * 0.965, n = imgs.length;
+  const ar = imgs.map(im => (im.naturalWidth || im.width) / (im.naturalHeight || im.height)), suma = ar.reduce((a, b) => a + b, 0);
+  const anchoMax = Math.max(z.w, Math.min(lim[1] - lim[0], z.w * 1.15));
+  let H = piso * (p.zoom || 1) * (CUADROS_CFG.foto || 1);
+  H = Math.min(H, piso, anchoMax / (suma + 0.22 * (n - 1)));        // todo entra: alto y ancho
+  const gap = H * 0.22, ws = ar.map(a => a * H), total = ws.reduce((a, b) => a + b, 0) + gap * (n - 1);
+  let x = clamp(z.x + (z.w - total) / 2 + (p.dx || 0) * z.w, lim[0], Math.max(lim[0], lim[1] - total));
+  const suelo = H < piso * 0.8 ? z.y + (z.h + H) / 2 : z.y + piso;
+  const floorY = clamp(suelo + (p.dy || 0) * z.h, z.y + H, z.y + z.h);
+  imgs.forEach((im, i) => {
+    const w = ws[i];
+    ctx.save(); ctx.translate(x + w / 2, floorY); ctx.scale(1, 0.17);
+    const sg = ctx.createRadialGradient(0, 0, 0, 0, 0, w * 0.52); sg.addColorStop(0, 'rgba(40,12,0,.50)'); sg.addColorStop(1, 'rgba(40,12,0,0)');
+    ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(0, 0, w * 0.52, 0, TAU); ctx.fill(); ctx.restore();
+    shadow(ctx, 'rgba(50,15,0,.30)', 14 * k, 0, 8 * k); ctx.drawImage(im, x, floorY - H, w, H); noShadow(ctx);
+    x += w;
+    if (i < n - 1) {                                                // el «+» del combo
+      const r = Math.min(gap * 0.5, H * 0.13), cxp = x + gap / 2, cyp = floorY - H * 0.48;
+      shadow(ctx, 'rgba(0,0,0,.35)', r * 0.5, 0, r * 0.15);
+      ctx.beginPath(); ctx.arc(cxp, cyp, r, 0, TAU); ctx.fillStyle = vGrad(ctx, cyp - r, cyp + r, T.price || ['#E8267F', '#A80F5C']); ctx.fill(); noShadow(ctx);
+      ctx.lineWidth = Math.max(2, r * 0.12); ctx.strokeStyle = '#fff'; ctx.stroke();
+      const t = r * 0.95, b = Math.max(2, r * 0.26);
+      ctx.fillStyle = T.priceInk || '#fff'; ctx.fillRect(cxp - t / 2, cyp - b / 2, t, b); ctx.fillRect(cxp - b / 2, cyp - t / 2, b, t);
+      x += gap;
+    }
+  });
 }
 
 // ───────── insignia de descuento / etiqueta ─────────

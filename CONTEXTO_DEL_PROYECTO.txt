@@ -1150,3 +1150,18 @@ Probado: autoprueba 147 OK; arrastre con Playwright del lugar 5 al 1 (queda prim
    foto tiene como mínimo 40k de alto. drawHeroH con o.centrar: el nombre arranca en max(top, anteTop − 10k − desc −
    alto del nombre).
 Probado: autoprueba 147 OK; uno por imagen (post) con el precio en su lugar y subido 15 % y 35 %, alineado al centro.
+
+38. VERSIÓN 5.3: VARIAS FOTOS EN UN MISMO CUADRO (9/11/2026)
+-----------------------------------------------------------
+ - Pedido de Miki: folleto de combo con varias imágenes (Fernet + gaseosa).
+ - OJO: p.combo ya existía (true = combo de Marketing → «Armar un combo», tachado «POR SEPARADO», foto armada con
+   imagenCombo()). Lo nuevo se llama p.fotosExtra: lista de nuevaFoto() (máx. MAX_COMBO = 2) en el mismo cuadro.
+ - 06_state.js: nuevoProducto() con fotosExtra: []; normalizarEstado() las limpia (nuevaFoto, máx. 2).
+   05_images.js prepararImagenes(): carga también las fotosExtra (con recortarBordes).
+ - 04_flyer.js: drawProductArt() → si hay fotos extra cargadas, drawComboArt(): todas del mismo alto H (lo más grande que
+   entra en alto y ancho; ancho máx. = zona o hasta 115 % dentro de o.lim), separadas por un «+» (círculo con T.price,
+   ancho 0,22 × H), sombra de piso por foto, centradas, zoom/dx/dy del producto y foto chata al medio como las demás.
+   proporcionCombo(imgs) (ancho/alto del conjunto) la usa layoutDestacado() para decidir foto a la izquierda o arriba.
+ - 07_app.js: cajaCombo(p, i) dentro de controlesFoto (solo productos): fichas con miniatura y «Quitar», botón
+   «＋ Sumar otra foto» (con carpeta/nube: abrirSelector; sin carpeta: input file → leerArchivoImagen).
+Probado: autoprueba 148 OK (nueva: fotos extra se guardan, máx. 2); A4 de 12, canal y uno por imagen con 2 y 3 fotos.

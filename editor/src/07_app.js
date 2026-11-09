@@ -393,7 +393,37 @@ function controlesFoto(p, i, tipo) {
   const reset = h('button', { class: 'btn small ghost', type: 'button', onclick: () => { p.zoom = 1; p.dx = 0; p.dy = 0; construirListaCasilleros(tipo, i); cambio(); } }, 'Centrar');
   const ajustes = tipo === 'producto' ? h('details', { class: 'more' }, h('summary', null, 'Mover la foto adentro del cuadro'),
     h('div', { class: 'stack', style: 'margin-top:8px' }, h('div', { class: 'grid2' }, campo('Izquierda ↔ derecha', dx), campo('Arriba ↕ abajo', dy)), reset)) : null;
-  return h('div', { class: 'stack' }, chkFondo, fondoBox, botIA ? h('div', { class: 'row-actions' }, botIA, h('small', { class: 'hint' }, CARPETA.nube ? 'GitHub crea una copia sin fondo y la foto se cambia sola en el folleto.' : 'Crea una copia sin fondo en la carpeta de productos.')) : null, ajustes);
+  return h('div', { class: 'stack' }, tipo === 'producto' ? cajaCombo(p, i) : null, chkFondo, fondoBox, botIA ? h('div', { class: 'row-actions' }, botIA, h('small', { class: 'hint' }, CARPETA.nube ? 'GitHub crea una copia sin fondo y la foto se cambia sola en el folleto.' : 'Crea una copia sin fondo en la carpeta de productos.')) : null, ajustes);
+}
+/** Combo: otras fotos en el mismo cuadro (por ejemplo Fernet + gaseosa), con un «+» en el medio. */
+function cajaCombo(p, i) {
+  const combo = p.fotosExtra || (p.fotosExtra = []);
+  const listo = () => { construirListaCasilleros('producto', i); cambio(); };
+  const sumar = async () => {
+    if (combo.length >= MAX_COMBO) return;
+    if (CARPETA.activa) {
+      const el = await abrirSelector({ titulo: `Combo · elegí la foto ${combo.length + 2}`, multi: false, max: 1 });
+      if (!el || !el.length) return;
+      const it = el[0]; let info = { alfa: false, claro: false };
+      try { info = await analizarFoto(urlImagen(it.ruta, it.mtime)); } catch (e) { /* se marca como faltante al dibujar */ }
+      combo.push(nuevaFoto({ archivo: it.ruta, mtime: it.mtime, alfa: info.alfa, quitarFondo: !info.alfa && info.claro, imgV: 1 })); listo();
+    } else {
+      const inp = h('input', { type: 'file', accept: 'image/*' });
+      inp.addEventListener('change', async () => {
+        const f = inp.files && inp.files[0]; if (!f) return;
+        try { const r = await leerArchivoImagen(f); combo.push(nuevaFoto({ img: r.url, alfa: r.alfa, quitarFondo: !!r.claro, imgV: 1 })); listo(); }
+        catch (e) { aviso('No pude leer esa imagen. Probá con un archivo JPG o PNG.'); }
+      });
+      inp.click();
+    }
+  };
+  const fichas = combo.map((f, k) => { const mini = srcMini(f);
+    return h('div', { class: 'combo-foto' }, mini ? h('img', { src: mini, alt: 'Foto ' + (k + 2) + ' del combo' }) : h('span', null, 'foto ' + (k + 2)),
+      h('button', { class: 'btn small danger ghost', type: 'button', title: 'Sacar esta foto del combo', onclick: () => { combo.splice(k, 1); listo(); } }, 'Quitar')); });
+  return h('div', { class: 'combo' },
+    h('p', { class: 'lab', style: 'margin:0' }, 'Combo: varias fotos en este cuadro', h('em', null, ' · ej.: Fernet + gaseosa. Salen una al lado de la otra con un «+»')),
+    fichas.length ? h('div', { class: 'combo-fotos' }, ...fichas) : null,
+    combo.length < MAX_COMBO ? h('button', { class: 'btn small', type: 'button', onclick: sumar }, combo.length ? '＋ Sumar otra foto más' : '＋ Sumar otra foto (armar combo)') : h('small', { class: 'hint' }, 'Hasta 3 fotos por cuadro.'));
 }
 async function recortarConIA(p, i, tipo, btn) {
   const orig = btn.textContent; btn.disabled = true; btn.textContent = CARPETA.nube ? 'Pidiendo el recorte…' : 'Recortando… (unos segundos)';
@@ -1403,6 +1433,8 @@ async function autotest() {
     S.formato = bakF;
     t('versión', !!APP_VERSION.v, APP_VERSION.v + ' ' + APP_VERSION.fecha);
     const n = estadoNuevo(S); t('folleto nuevo vacío', n.productos.every(productoVacio) && n.coleccion.fotos.every(f => !srcDe(f)) && n.formato === S.formato);
+    { const m2 = normalizarEstado({ productos: [nuevoProducto({ nombre: 'Fernet', final: '1', fotosExtra: [{ img: 'data:x' }, { img: 'data:y' }, { img: 'data:z' }] })] });
+      t('varias fotos en un cuadro: se guardan y como mucho 2 extra', m2.productos[0].fotosExtra.length === 2 && !!m2.productos[0].fotosExtra[0].id && m2.productos[1].fotosExtra.length === 0); }
     t('cuadros que se agrandan: 13 en 4 columnas → 4, 3, 3, 3', filasGrilla(13, 4, 4).join() === '4,3,3,3' && filasGrilla(13, 4, 4, true).join() === '3,3,3,4' && filasGrilla(16, 4, 4).join() === '4,4,4,4' && filasGrilla(12, 4, 4).join() === '4,4,4' && filasGrilla(7, 2, 5).join() === '2,2,2,1', [filasGrilla(13, 4, 4), filasGrilla(7, 2, 5)].join(' / '));
     const m = normalizarEstado({ productos: [nuevoProducto(), nuevoProducto({ nombre: 'A', final: '1' })] }); t('casilleros vacíos al final', m.productos[0].nombre === 'A' && productoVacio(m.productos[1]));
     const es = estadoParaGuardar(S); t('estado liviano', JSON.stringify(es).length < 400000, Math.round(JSON.stringify(es).length / 1024) + ' KB');
