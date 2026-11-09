@@ -974,18 +974,37 @@ function drawHeaderStack(ctx, W, S, T, g) {
 // ───────── formatos ─────────
 const prodAt = (S, i) => (S.productos && S.productos[i]) || {};
 
+/** Renglones de una grilla: cuántos cuadros lleva cada uno. Llena: todos con cols. Con menos productos (folleto
+ *  terminado), los reparte parejo con los renglones más llenos arriba (13 en 4 columnas → 4, 3, 3 y 3). */
+function filasGrilla(n, cols, rows) {
+  if (n >= cols * rows) return Array(rows).fill(cols);
+  const filas = Math.max(1, Math.ceil(n / cols)), base = Math.floor(n / filas), extra = n % filas;
+  return Array.from({ length: filas }, (_, f) => base + (f < extra ? 1 : 0));
+}
+
 function gridCards(ctx, S, T, env, items, box, cols, rows, gx, gy) {
   const sep = CUADROS_CFG.sep ?? 1; box = conMargen(box); gx *= sep; gy *= sep;   // separación y margen elegidos en "Cuadros de productos"
-  const cw = (box.w - gx * (cols - 1)) / cols, ch = (box.h - gy * (rows - 1)) / rows, vertical = cw / ch < 1.75;
-  const k = vertical ? Math.min(cw / 360, ch / 330) : Math.min(ch / 253, cw / 566);
-  items.forEach((i, n) => {
-    const r = { x: box.x + (n % cols) * (cw + gx), y: box.y + Math.floor(n / cols) * (ch + gy), w: cw, h: ch };
-    const p = prodAt(S, i);
-    if (productoVacio(p)) drawEmptyCard(ctx, r, T, env, k);
-    else if (cw / ch > 3.2) drawCardWide(ctx, r, p, T, env, { aire: gy });
-    else if (vertical) drawCardV(ctx, r, p, T, env, { k, aire: gy });
-    else drawCard(ctx, r, p, T, env, { k, aire: gy });
-    casillero(ctx, env, 'producto', i, r);
+  // En el folleto terminado no quedan casilleros vacíos: los cuadros con producto se agrandan y ocupan todo el lugar.
+  // En pantalla (con guías) se ve la grilla completa, para poder tocar un casillero vacío y elegir el producto.
+  const llenos = env.preview ? items : items.filter(i => !productoVacio(prodAt(S, i)));
+  if (llenos.length) items = llenos;
+  const filas = filasGrilla(items.length, cols, rows), ch = (box.h - gy * (filas.length - 1)) / filas.length;
+  const anchoFila = c => (box.w - gx * (c - 1)) / c, esVertical = cw => cw / ch < 1.75;
+  // el mismo tamaño de letra en todo el folleto: el del cuadro más chico de cada tipo
+  let kV = Infinity, kH = Infinity;
+  for (const c of filas) { const cw = anchoFila(c); if (esVertical(cw)) kV = Math.min(kV, cw / 360, ch / 330); else kH = Math.min(kH, ch / 253, cw / 566); }
+  let n = 0;
+  filas.forEach((c, f) => {
+    const cw = anchoFila(c), vertical = esVertical(cw), k = vertical ? kV : kH;
+    for (let col = 0; col < c; col++, n++) {
+      const i = items[n], r = { x: box.x + col * (cw + gx), y: box.y + f * (ch + gy), w: cw, h: ch };
+      const p = prodAt(S, i);
+      if (productoVacio(p)) drawEmptyCard(ctx, r, T, env, k);
+      else if (cw / ch > 3.2) drawCardWide(ctx, r, p, T, env, { aire: gy });
+      else if (vertical) drawCardV(ctx, r, p, T, env, { k, aire: gy });
+      else drawCard(ctx, r, p, T, env, { k, aire: gy });
+      casillero(ctx, env, 'producto', i, r);
+    }
   });
 }
 

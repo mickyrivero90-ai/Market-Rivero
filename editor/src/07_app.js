@@ -572,7 +572,7 @@ function calcularRevision() {
     if (contra) warn('El sello dice «efectivo» y la promo es ' + P.nombre, 'Se contradicen: corregí el sello en el paso 2 o cambiá la promo de pago en el paso 3.');
     if (P && P.cuotas) ok('Cuotas sin interés: leyenda del CFT incluida', 'Res. 4/2025: con cuotas se informa precio de contado, cantidad de cuotas y CFT. Va al pie: “CFT 0,00 %”.');
     if (!usados.length && g !== 'mensaje') warn('Todavía no hay productos', 'Tocá un casillero del folleto (o el botón +) para elegir un producto de la carpeta.');
-    if (vacios && usados.length) warn(vacios + (vacios === 1 ? ' casillero vacío' : ' casilleros vacíos'), 'En el folleto terminado se completan con una tarjeta de Rivero Market («Y muchas ofertas más en el local»). Si preferís otro formato con menos productos, cambialo en el paso 1.');
+    if (vacios && usados.length) warn(vacios + (vacios === 1 ? ' casillero vacío' : ' casilleros vacíos'), 'En el folleto terminado no quedan huecos: los cuadros con producto se agrandan y ocupan todo el lugar (para verlo así, destildá «Guías»). Si preferís otro formato con menos productos, cambialo en el paso 1.');
     if (sinPrecio) warn(sinPrecio + (sinPrecio === 1 ? ' producto sin precio' : ' productos sin precio'), 'Un precio vacío se imprime como $0.');
     if (sinFoto) warn(sinFoto + (sinFoto === 1 ? ' producto sin foto' : ' productos sin foto'), 'Sin foto se ve el logo en su lugar.');
     const sinDesc = usados.filter(p => { const I = infoProducto(p); return I.R && I.F && I.R.num <= I.F.num; }).length;
@@ -1346,6 +1346,7 @@ async function autotest() {
     S.formato = bakF;
     t('versión', !!APP_VERSION.v, APP_VERSION.v + ' ' + APP_VERSION.fecha);
     const n = estadoNuevo(S); t('folleto nuevo vacío', n.productos.every(productoVacio) && n.coleccion.fotos.every(f => !srcDe(f)) && n.formato === S.formato);
+    t('cuadros que se agrandan: 13 en 4 columnas → 4, 3, 3, 3', filasGrilla(13, 4, 4).join() === '4,3,3,3' && filasGrilla(16, 4, 4).join() === '4,4,4,4' && filasGrilla(12, 4, 4).join() === '4,4,4' && filasGrilla(7, 2, 5).join() === '2,2,2,1', [filasGrilla(13, 4, 4), filasGrilla(7, 2, 5)].join(' / '));
     const m = normalizarEstado({ productos: [nuevoProducto(), nuevoProducto({ nombre: 'A', final: '1' })] }); t('casilleros vacíos al final', m.productos[0].nombre === 'A' && productoVacio(m.productos[1]));
     const es = estadoParaGuardar(S); t('estado liviano', JSON.stringify(es).length < 400000, Math.round(JSON.stringify(es).length / 1024) + ' KB');
     { // v3.1: tamaños, letra chica, banda y barra
