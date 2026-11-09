@@ -188,7 +188,7 @@ function elegirFormato(id) {
   construirPanel(); cambio();
 }
 function elegirTema(id) { S.tema = id; aplicarTextosDeTema(id);
-  if (THEMES[id].grupo === 'comida' && (!S.comida || S.comida.auto)) { S.comida = comboComida(id); if (L_ACTUAL().grupo === 'comida') { construirPanel(); cambio(); return; } }   /* mientras no lo cambies, trae el combo de ese fondo */
+  if (THEMES[id].grupo === 'comida' && (!S.comida || S.comida.auto)) { const v = S.comida || {}; S.comida = { ...comboComida(id), ...Object.fromEntries(['estilo', 'opac', 'tamTexto', 'tamPrecio', 'alinear'].filter(c => v[c] != null).map(c => [c, v[c]])) }; if (L_ACTUAL().grupo === 'comida') { construirPanel(); cambio(); return; } }   /* mientras no lo cambies, trae el combo de ese fondo */
   pintarTemas(); if (DOM.sugerencias) DOM.sugerencias.replaceChildren(...chipsSugerencias()); cambio(); }
 /** Miniatura del fondo de cada temática (con su decoración), para elegir viéndolo. Se dibuja una sola vez. */
 const _miniTemas = new Map();
@@ -1100,6 +1100,8 @@ function seccionComida() {
   const inCartel = t('cartel', '¡SÚPER OFERTA!', 28);
   const estilo = h('div', { class: 'quick', role: 'group', 'aria-label': 'Cómo va la lista' }, ...[['flotante', 'Texto sobre la foto'], ['tarjeta', 'En tarjeta blanca']].map(([v, tx]) =>
     h('button', { type: 'button', class: 'q' + ((C.estilo || 'flotante') === v ? ' on' : ''), 'aria-pressed': String((C.estilo || 'flotante') === v), onclick: () => { C.estilo = v; construirPanel(); cambio(); const b = $('#caja-comida', DOM.panel); if (b) b.scrollIntoView({ block: 'end' }); } }, tx)));
+  const lado = h('div', { class: 'quick', role: 'group', 'aria-label': 'Lado del texto' }, ...[['izquierda', '⇤ Izquierda'], ['centro', 'Centro'], ['derecha', 'Derecha ⇥']].map(([v, tx]) =>
+    h('button', { type: 'button', class: 'q' + ((C.alinear || 'centro') === v ? ' on' : ''), 'aria-pressed': String((C.alinear || 'centro') === v), onclick: e => { C.alinear = v; [...e.currentTarget.parentNode.children].forEach(b => { b.classList.toggle('on', b === e.currentTarget); b.setAttribute('aria-pressed', String(b === e.currentTarget)); }); C.auto = false; cambio(); } }, tx)));
   return h('section', { class: 'sec', id: 'caja-comida' }, h('h2', null, ...paso(2, 'Tu combo'), h('small', null, 'lo que trae y el precio')),
     h('div', { class: 'stack' },
       h('p', { class: 'hint', style: 'margin:0' }, 'Elegí el fondo en el paso 1 (pizza, panchos o hamburguesas): trae cargado el combo de ese fondo y lo cambiás acá. Tocá la tarjeta del folleto para volver a esta parte.'),
@@ -1109,6 +1111,9 @@ function seccionComida() {
       h('div', { class: 'grid2' }, campo('Precio del combo', t('precio', '10.500', 14)), campo('Precio por separado', t('antes', 'opcional', 14), 'opcional: sale «POR SEPARADO $…» tachado')),
       campo('Nota chica abajo del precio', t('nota', 'Ej.: Hasta agotar stock', 50), 'opcional'),
       h('div', { class: 'fld tam' }, h('span', null, 'Cómo va la lista'), estilo),
+      h('div', { class: 'fld tam' }, h('span', null, 'Texto y precio a la'), lado),
+      sliderTam('Tamaño del nombre y de la lista', C, 'tamTexto', 0.6, 2, 1.25, { ayuda: 'si no entra, se achica solo' }),
+      sliderTam('Tamaño del precio', C, 'tamPrecio', 0.6, 1.8, 1),
       sliderTam(C.estilo === 'tarjeta' ? 'Tarjeta blanca: qué tan sólida' : 'Sombra detrás del texto', C, 'opac', 0.4, 1, 0.82, { ayuda: C.estilo === 'tarjeta' ? 'menos = se ve más la foto; más = se lee mejor' : 'menos = se ve más la foto; más = se lee mejor el texto' })));
 }
 /** Folleto de mensaje: textos del anuncio. */

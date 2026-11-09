@@ -170,19 +170,20 @@ function layoutComida(ctx, S, T, env, kind) {
   const ribY = P.logoY + logoH + 18, infoY = ribY + ribH + 18, hb = infoY + P.infoH;
   const SAFE = kind === 'story' ? 176 : 0, fp = footerPlan(ctx, S, W, H, P.foot), fy = H - SAFE - fp.total;
   // ── tarjeta: se mide primero para dejarle a la foto todo el lugar que sobre
+  const TT = clamp(+C.tamTexto || 1.25, 0.6, 2), PT = clamp(+C.tamPrecio || 1, 0.6, 1.8), al = ['izquierda', 'derecha'].includes(C.alinear) ? C.alinear : 'centro';   // tamaños y lado elegidos en «Tu combo»
   const items = (C.items || []).filter(x => String(x.texto || x.cant || '').trim()), cwMax = W - 2 * P.M - 20;
   let cw = cwMax, cx = (W - cw) / 2;
   const I = infoProducto(nuevoProducto({ final: C.precio || '', regular: C.antes || '', combo: true })), price = I.F || { int: '0', dec: '' };
   const minVentana = H * (kind === 'story' ? 0.3 : 0.3), maxCard = fy - 24 - hb - minVentana;
   let e = 1, alto = 0, g = null;
   const medir = esc => {
-    const k = W / 1080 * esc, pad = 30 * k, nombreS = 64 * k, filaS = 34 * k, filaH = filaS * 1.62, plateH = altoPlaca(120 * k)[0];
-    const antesS = 30 * k, notaS = 22 * k, conAntes = !!(I.R && I.F && I.R.num > I.F.num), nota = String(C.nota || '').trim();
+    const k = W / 1080 * esc, pad = 30 * k, nombreS = 64 * k * TT, filaS = 34 * k * TT, filaH = filaS * 1.62, plateH = altoPlaca(120 * k * PT)[0];
+    const antesS = 30 * k * Math.min(TT, 1.4), notaS = 22 * k * Math.min(TT, 1.4), conAntes = !!(I.R && I.F && I.R.num > I.F.num), nota = String(C.nota || '').trim();
     const h = pad + nombreS * 1.05 + 16 * k + items.length * filaH + 22 * k + (conAntes ? antesS * 1.2 : 0) + plateH + (nota ? notaS * 1.6 : 0) + pad;
     return { k, pad, nombreS, filaS, filaH, plateH, antesS, notaS, conAntes, nota, h };
   };
   const flota = (C.estilo || 'flotante') !== 'tarjeta';           // flotante: la lista va sobre la foto, sin tarjeta
-  const tope0 = flota ? (fy - 24 - hb) * 0.6 : maxCard;
+  const tope0 = flota ? (fy - 24 - hb) * 0.72 : maxCard;
   for (; e > 0.55; e -= 0.05) { g = medir(e); if (g.h <= tope0) break; }
   alto = Math.min(g.h, tope0);
   const cardY = fy - 24 - alto, ventana = flota ? { cy: hb + (fy - hb) * 0.4, alto: (fy - hb) * 0.76 } : { cy: (hb + cardY) / 2, alto: cardY - hb };
@@ -198,9 +199,12 @@ function layoutComida(ctx, S, T, env, kind) {
   {                                                               // la tarjeta, del ancho de lo que lleva (el renglón más largo, el nombre o el precio)
     const nmW = (ctx.font = FB(900, g.nombreS), measure(ctx, String(C.nombre || 'Combo').trim().toUpperCase(), 0.5));
     const filasW = Math.max(0, ...items.map(x => { ctx.font = FB(900, g.filaS); const a = String(x.cant || '').trim() ? measure(ctx, String(x.cant).trim().toUpperCase() + '  ', 0.3) : 0; ctx.font = FB(800, g.filaS); return a + measure(ctx, String(x.texto || '').trim().toUpperCase(), 0.3); }));
-    const pwM = drawPlateMeasure(ctx, cwMax, altoPlaca(120 * k)[0], price, altoPlaca(120 * k)[1]);
-    cw = clamp(Math.max(nmW, filasW + 50 * k, pwM) + 2 * pad + 30 * k, Math.min(cwMax, W * 0.56), cwMax); cx = (W - cw) / 2;
+    const pwM = drawPlateMeasure(ctx, cwMax, altoPlaca(120 * k * PT)[0], price, altoPlaca(120 * k * PT)[1]);
+    cw = clamp(Math.max(nmW, filasW + 50 * k, pwM) + 2 * pad + 30 * k, Math.min(cwMax, W * 0.56), cwMax);
+    cx = al === 'izquierda' ? P.M + 10 : al === 'derecha' ? W - P.M - 10 - cw : (W - cw) / 2;
   }
+  const ix0 = cx + pad, ix1 = cx + cw - pad, ax = w => (al === 'izquierda' ? ix0 : al === 'derecha' ? ix1 - w : (ix0 + ix1) / 2 - w / 2);
+  const tX = al === 'izquierda' ? ix0 : al === 'derecha' ? ix1 : (ix0 + ix1) / 2, tA = al === 'izquierda' ? 'left' : al === 'derecha' ? 'right' : 'center';
   const opac = clamp(+C.opac || 0.82, 0.4, 1);                    // tarjeta: qué tan sólida · flotante: qué tan oscuro detrás del texto
   const inkC = flota ? '#FFFFFF' : T.ink || '#2B1208', accC = flota ? (T.accent || ['#FFE066'])[0] : (T.price || ['#E5202F'])[0], sepC = flota ? 'rgba(255,255,255,.28)' : 'rgba(0,0,0,.14)';
   const sh = flota ? ['rgba(0,0,0,.95)', 12 * k, 0, 3 * k] : null, stk = flota ? 'rgba(0,0,0,.55)' : null;
@@ -215,12 +219,12 @@ function layoutComida(ctx, S, T, env, kind) {
   let y = cardY + pad;
   const nm = String(C.nombre || 'Combo').trim().toUpperCase(), tw = cw - 2 * pad;
   const ns = fitSize(ctx, nm, s => FB(900, s), g.nombreS, g.nombreS * 0.5, tw, 0.5);
-  text(ctx, nm, W / 2, y + ns * 0.85, { font: FB(900, ns), fill: flota ? accC : inkC, align: 'center', tracking: 0.5, shadow: sh, stroke: stk, strokeW: stk ? ns * 0.06 : 0 }); y += g.nombreS * 1.05 + 16 * k;
+  text(ctx, nm, tX, y + ns * 0.85, { font: FB(900, ns), fill: flota ? accC : inkC, align: tA, tracking: 0.5, shadow: sh, stroke: stk, strokeW: stk ? ns * 0.06 : 0 }); y += g.nombreS * 1.05 + 16 * k;
   // lista: la cantidad resaltada y el producto; el bloque va centrado y cada renglón alineado a la izquierda
   const filas = items.map(x => ({ cant: String(x.cant || '').trim().toUpperCase(), txt: String(x.texto || '').trim().toUpperCase() }));
   let fs = g.filaS; const anchoFila = f => { ctx.font = FB(900, fs); const a = f.cant ? measure(ctx, f.cant + '  ', 0.3) : 0; ctx.font = FB(800, fs); return a + measure(ctx, f.txt, 0.3); };
   const tope = tw - 50 * k; let maxW = Math.max(1, ...filas.map(anchoFila)); if (maxW > tope) { fs *= tope / maxW; maxW = tope; }
-  const lx = W / 2 - maxW / 2, acc = accC;
+  const lx = ax(maxW), acc = accC;
   filas.forEach((f, i) => {
     if (i) { ctx.fillStyle = sepC; ctx.fillRect(cx + pad, y, cw - 2 * pad, Math.max(1.5, 2 * k)); }
     const base = y + g.filaH * 0.5 + fs * 0.36;
@@ -231,10 +235,10 @@ function layoutComida(ctx, S, T, env, kind) {
   });
   // precio: «POR SEPARADO $…» (si se cargó) y la placa grande, centrados
   y += 22 * k;
-  if (g.conAntes) { const aw = measureAntes(ctx, I.R, g.antesS); drawAntes(ctx, W / 2 - aw / 2, y + g.antesS * 0.85, I.R, g.antesS, T, flota ? { maxW: tw, color: 'rgba(255,255,255,.85)', priceColor: '#FFFFFF' } : { maxW: tw, priceColor: T.ink }); y += g.antesS * 1.2; }
-  const [plateH, pOp] = altoPlaca(120 * k), pw = drawPlateMeasure(ctx, tw, plateH, price, pOp);
-  drawPlate(ctx, W / 2 - pw / 2 + plateH * 0.04, Math.min(y + plateH, cardY + alto - pad - (g.nota ? g.notaS * 1.6 : 0)), tw, plateH, price, T, pOp);
-  if (g.nota) text(ctx, g.nota, W / 2, cardY + alto - pad - g.notaS * 0.3, { font: FM(800, g.notaS), fill: flota ? 'rgba(255,255,255,.9)' : T.soft || '#7B5A48', align: 'center', maxW: tw, shadow: sh });
+  if (g.conAntes) { const aw = measureAntes(ctx, I.R, g.antesS); drawAntes(ctx, ax(aw), y + g.antesS * 0.85, I.R, g.antesS, T, flota ? { maxW: tw, color: 'rgba(255,255,255,.85)', priceColor: '#FFFFFF' } : { maxW: tw, priceColor: T.ink }); y += g.antesS * 1.2; }
+  const [plateH, pOp] = altoPlaca(120 * k * PT), pw = drawPlateMeasure(ctx, tw, plateH, price, pOp);
+  drawPlate(ctx, ax(pw) + plateH * 0.04, Math.min(y + plateH, cardY + alto - pad - (g.nota ? g.notaS * 1.6 : 0)), tw, plateH, price, T, pOp);
+  if (g.nota) text(ctx, g.nota, tX, cardY + alto - pad - g.notaS * 0.3, { font: FM(800, g.notaS), fill: flota ? 'rgba(255,255,255,.9)' : T.soft || '#7B5A48', align: tA, maxW: tw, shadow: sh });
   if (T.decorTop) T.decorTop(ctx, W, H, ribY + ribH, { footerY: fy });
   drawFooter(ctx, S, T, env, { x: 0, y: fy, w: W }, fp, { m: P.M });
   if (SAFE && env.preview) zonasApp(ctx, W, H, SAFE);

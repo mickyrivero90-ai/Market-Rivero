@@ -5,6 +5,13 @@ Desde la 3.0, la herramienta online (https://mickyrivero90-ai.github.io/Market-R
 se actualiza sola. Si usás el programa de la PC y muestra un número menor, bajá el nuevo
 desde la herramienta online (⋯ Más → Programa para usar sin internet).
 
+Versión 6.5 · 9 de noviembre de 2026 · COMBO DE COMIDA: TAMAÑO Y LADO DEL TEXTO
+- En «Tu combo»: «Tamaño del nombre y de la lista» y «Tamaño del precio», para agrandarlos o
+  achicarlos a gusto (si no entran, se achican solos). De fábrica, la lista sale más grande.
+- «Texto y precio a la»: ⇤ Izquierda, Centro o Derecha ⇥.
+- El fondo de Panchos está dado vuelta (el pancho mira para el otro lado).
+- Al cambiar de fondo se mantienen los tamaños, el lado y el estilo que elegiste.
+
 Versión 6.4 · 9 de noviembre de 2026 · COMBO DE COMIDA: TEXTO FLOTANDO SOBRE LA FOTO
 - De fábrica ya no hay tarjeta blanca: el nombre del combo (en amarillo), la lista (letra blanca, la
   cantidad en amarillo) y el precio van flotando sobre la foto, con sombra y un oscurecido suave

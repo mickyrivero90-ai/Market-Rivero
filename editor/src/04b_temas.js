@@ -445,7 +445,7 @@ Object.assign(THEMES, {
   pizza: { ..._base, grupo: 'comida', nombre: 'Pizza', swatch: '#C8331E', bg: ['#5A1A0E', '#2E0C06', '#140402'], bgFn: bgFotoTema, foto: ['pizza', 0.14, 0.36, 1.0, 0.98], footer: '#1E0703',
     ribbon: ['#FFD23F', '#F5A300'], ribbonTail: '#B36E00', ribbonFold: '#7A4A00', ribbonInk: '#7A1405', ribbonStroke: '#FFFFFF', accent: ['#FFE38A', '#FFC23D'], accentInk: '#3A0A02', accentDeep: '#C8331E',
     sello: ['#E8331E', '#A81E0C'], price: ['#D7301B', '#9E1B0B'], priceShadow: 'rgba(60,8,0,.55)', ink: '#2A0D05', soft: '#7A3A22', titulo: 'Combo Pizzas', subtitulo: '' },
-  panchos: { ..._base, grupo: 'comida', nombre: 'Panchos', swatch: '#E8A317', bg: ['#6B3A10', '#3A1E06', '#1A0C02'], bgFn: bgFotoTema, foto: ['panchos', 0.08, 0.39, 0.84, 0.74], footer: '#2A1505',
+  panchos: { ..._base, grupo: 'comida', nombre: 'Panchos', swatch: '#E8A317', bg: ['#6B3A10', '#3A1E06', '#1A0C02'], bgFn: bgFotoTema, foto: ['panchos', 0.16, 0.39, 0.92, 0.74], footer: '#2A1505',
     ribbon: ['#E5202F', '#B3101C'], ribbonTail: '#6E0A12', ribbonFold: '#3A0509', ribbonInk: '#FFFFFF', ribbonStroke: '#4A0509', accent: ['#FFE24A', '#FFC400'], accentInk: '#3A1E06', accentDeep: '#C8101E',
     sello: ['#E5202F', '#B3101C'], price: ['#E5202F', '#A80F1A'], priceShadow: 'rgba(60,5,0,.55)', ink: '#2B1208', soft: '#7B5A30', titulo: 'Combo Panchos', subtitulo: '' },
   hamburguesa: { ..._base, grupo: 'comida', nombre: 'Hamburguesas', swatch: '#F29A1E', bg: ['#3A2418', '#1E120A', '#0A0603'], bgFn: bgFotoTema, foto: ['hamburguesa', 0.15, 0.06, 0.84, 0.96], footer: '#140B05',
