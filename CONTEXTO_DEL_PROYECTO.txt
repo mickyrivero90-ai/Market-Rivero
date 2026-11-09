@@ -1196,3 +1196,9 @@ Probado: autoprueba 151 OK; Playwright: dos fotos subidas desde la PC → fotosE
    siguen valiendo).
  - porUnidad(p): vacío si p.combo o p.fotosExtra (un combo no tiene precio por litro/kilo).
 Probado: autoprueba 151 OK; combo_post Fernet + botella con el precio subido 25 % y sin subir: iguales, foto grande.
+
+42. VERSIÓN 5.7: COMBO CON FOTOS A LA IZQUIERDA (9/11/2026)
+----------------------------------------------------------
+ - layoutDestacado(): si el producto tiene fotos extra cargadas (imgs0.length > 1) usa drawHeroH (foto 0,5), aunque el
+   conjunto no sea «alto» (antes elegía drawHeroV con foto arriba). Mismo límite de proporción de la caja (≥ 0,8).
+Probado: autoprueba 151 OK; combo_post, combo_story y combo_a4 con Fernet + botella.

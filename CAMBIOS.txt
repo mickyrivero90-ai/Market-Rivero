@@ -5,6 +5,11 @@ Desde la 3.0, la herramienta online (https://mickyrivero90-ai.github.io/Market-R
 se actualiza sola. Si usás el programa de la PC y muestra un número menor, bajá el nuevo
 desde la herramienta online (⋯ Más → Programa para usar sin internet).
 
+Versión 5.7 · 9 de noviembre de 2026 · COMBO: FOTOS A LA IZQUIERDA, PRECIO A LA DERECHA
+- En el Combo (y en cualquier producto solo con varias fotos), las fotos van a la izquierda ocupando
+  la mitad del cuadro, y el nombre y el precio a la derecha, como en las ofertas de un producto con
+  foto alta (el azúcar, el Fernet solo). Vale para Post, Historia y A4.
+
 Versión 5.6 · 9 de noviembre de 2026 · COMBO Y UN PRODUCTO: FOTO MÁS GRANDE, PRECIO ABAJO
 - En las imágenes de un solo producto y en el Combo, el precio queda siempre abajo del cuadro y la
   foto usa todo el espacio de arriba: sale mucho más grande y sin huecos vacíos. Antes, si habías
