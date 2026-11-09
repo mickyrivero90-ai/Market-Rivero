@@ -5,6 +5,12 @@ Desde la 3.0, la herramienta online (https://mickyrivero90-ai.github.io/Market-R
 se actualiza sola. Si usás el programa de la PC y muestra un número menor, bajá el nuevo
 desde la herramienta online (⋯ Más → Programa para usar sin internet).
 
+Versión 5.2 · 9 de noviembre de 2026 · UN PRODUCTO POR IMAGEN: EL TEXTO YA NO QUEDA DETRÁS DEL PRECIO
+- En las imágenes de un producto por imagen, el nombre y la descripción («Fardo x 12u ($1033,34 c/u)»,
+  «A partir de la 2° pieza…») quedaban detrás del precio cuando el precio estaba corrido a mano
+  («Cuadros de productos» → «Subir o bajar» o la alineación). Ahora van siempre pegados arriba del
+  precio, esté donde esté.
+
 Versión 5.1 · 9 de noviembre de 2026 · ARRASTRAR PRODUCTOS A OTRO LUGAR
 - En el folleto (con «Guías» tildado) agarrá un producto con el mouse y soltalo sobre otro lugar: va
   directo ahí y los del medio se corren un lugar. Mientras lo arrastrás, el lugar de destino se marca

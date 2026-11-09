@@ -725,8 +725,9 @@ function drawHeroH(ctx, r, p, T, env, o = {}) {
   const desc = String(p.desc || '').trim(), nm = String(p.nombre || '').trim().toUpperCase(), top = o.sticker === false ? 34 * k + extra : 86 * k;
   const dSize = 27 * k, descH = desc ? dSize * 1.3 + 4 * k : 0;
   const wf = fitBlock(ctx, nm || 'NOMBRE DEL PRODUCTO', s => FB(900, s), nMax, Math.min(36 * k, nMax), tw, 2, anteTop - 4 * k - top - descH, 0.92, 0.5);
-  wf.lines.forEach((ln, i) => text(ctx, ln, tx, top + wf.size * 0.82 + i * wf.size * 0.92, { font: FB(900, wf.size), fill: nm ? T.heroInk : 'rgba(60,25,10,.35)', tracking: 0.5 }));
-  if (desc) { const ty = top + wf.size * 0.92 * wf.lines.length + 4 * k; const df = wrapFit(ctx, desc, s => FM(700, s), dSize, 16 * k, tw, 1, 0); text(ctx, df.lines[0], tx, ty + df.size * 0.95, { font: FM(700, df.size), fill: T.heroSoft }); }
+  const y0 = o.centrar ? Math.max(top, anteTop - 10 * k - descH - wf.size * 0.92 * wf.lines.length) : top;   // un producto por imagen: el nombre pegado arriba del precio
+  wf.lines.forEach((ln, i) => text(ctx, ln, tx, y0 + wf.size * 0.82 + i * wf.size * 0.92, { font: FB(900, wf.size), fill: nm ? T.heroInk : 'rgba(60,25,10,.35)', tracking: 0.5 }));
+  if (desc) { const ty = y0 + wf.size * 0.92 * wf.lines.length + 4 * k; const df = wrapFit(ctx, desc, s => FM(700, s), dSize, 16 * k, tw, 1, 0); text(ctx, df.lines[0], tx, ty + df.size * 0.95, { font: FM(700, df.size), fill: T.heroSoft }); }
   drawBadge(ctx, 62 * k, 70 * k, 66 * k, p, T, info.pct);
   ctx.restore();
 }
@@ -794,10 +795,10 @@ function drawHeroV(ctx, r, p, T, env, o = {}) {
   const dSize = 30 * k, descH = desc ? dSize * 1.3 + 4 * k : 0, [nx, nAl] = a === 'izquierda' ? [40 * k, 'left'] : a === 'derecha' ? [w - 40 * k, 'right'] : [cx, 'center'];
   // el nombre, chico y pegado al precio: lo que se ve primero es la foto y el precio (la foto usa todo el resto)
   let wf, nameTop;
-  if (precioMovido()) { nameTop = nameTop0; wf = fitBlock(ctx, nm || 'NOMBRE DEL PRODUCTO', s => FB(900, s), 92 * k * big, 34 * k, tw, 2, anteTop - 4 * k - nameTop - descH, 0.92, 0.5); }
-  else { wf = fitBlock(ctx, nm || 'NOMBRE DEL PRODUCTO', s => FB(900, s), 56 * k * big * (CUADROS_CFG.nombre || 1), 26 * k, tw, 2, h * 0.15 * (CUADROS_CFG.nombre || 1), 0.92, 0.5); nameTop = anteTop - 10 * k - descH - wf.size * 0.92 * wf.lines.length; }
+  {                                                               // con el precio corrido a mano también: el nombre va arriba del precio, nunca detrás
+    wf = fitBlock(ctx, nm || 'NOMBRE DEL PRODUCTO', s => FB(900, s), 56 * k * big * (CUADROS_CFG.nombre || 1), 26 * k, tw, 2, h * 0.15 * (CUADROS_CFG.nombre || 1), 0.92, 0.5); nameTop = anteTop - 10 * k - descH - wf.size * 0.92 * wf.lines.length; }
   const imgBottom = nameTop - 8 * k;
-  const z = { x: w * 0.12, y: 16 * k, w: w * 0.76, h: imgBottom - 16 * k };   // la foto queda dentro del cuadro
+  const z = { x: w * 0.12, y: 16 * k, w: w * 0.76, h: Math.max(40 * k, imgBottom - 16 * k) };   // la foto queda dentro del cuadro
   drawProductArt(ctx, p, z, T, env, { k, glowColor: 'rgba(255,255,255,.85)', glowR: 0.5, lim: [10 * k, w - 10 * k] });
   if (o.sticker !== false) stickerEstrella(ctx, 26 * k, 24 * k, k, T, -0.05, 1.1);
   wf.lines.forEach((ln, i) => text(ctx, ln, nx, nameTop + wf.size * 0.82 + i * wf.size * 0.92, { font: FB(900, wf.size), fill: nm ? T.heroInk : 'rgba(60,25,10,.35)', align: nAl, tracking: 0.5 }));
