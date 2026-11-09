@@ -7,19 +7,21 @@ const DOM = {};
 const GRUPOS_FORMATO = [
   ['Folletos de ofertas', 'A4 para imprimir; al terminar elegís también la versión para redes', ['a4_10', 'a4_12', 'a4_16', 'a4_8', 'a4_star4']],
   ['Redes sociales', 'Facebook, Instagram, WhatsApp', ['post_4', 'post_star4', 'story_3', 'story_4']],
+  ['Combo', 'varias fotos en un solo cuadro, con «+» (ej.: Fernet + gaseosa)', ['combo_post', 'combo_story', 'combo_a4']],
   ['Mensaje o anuncio', 'sin productos: promos de pago, descuentos, avisos', ['mensaje_a4', 'mensaje_post', 'mensaje_story']],
   ['Un solo producto', 'liquidación, fardos, solo efectivo', ['destacado_a4', 'destacado_post', 'destacado_story']],
   ['Mostrar productos', 'sin precios: para dar a conocer lo que tenés', ['coleccion_a4', 'coleccion_post', 'coleccion_story']],
 ];
 const DESC_FORMATO = { a4_10: '2 columnas', a4_12: '3 columnas', a4_16: '4 columnas', a4_8: 'Cartas grandes', a4_star4: '1 estrella + 4', post_4: 'Más legible', post_star4: 'Estrella + 4', story_3: 'Estados · Historias', story_4: 'Estados · sin estrella',
   mensaje_a4: 'Para imprimir', mensaje_post: 'Facebook · canal WA', mensaje_story: 'Estados · Historias',
+  combo_post: 'Facebook · canal WA', combo_story: 'Estados · Historias', combo_a4: 'Para imprimir',
   destacado_a4: 'Para imprimir', destacado_post: 'Facebook · Instagram', destacado_story: 'WhatsApp · Instagram', coleccion_a4: 'Para imprimir', coleccion_post: 'Facebook · Instagram', coleccion_story: 'WhatsApp · Instagram' };
 const NOMBRE_GRUPO_TEMA = { marca: 'Colores de la marca', fecha: 'Fechas especiales y promos', impacto: 'Estilos de impacto' };
 const INSIGNIAS = ['2x1', '3x2', '2DA AL 50%', '2DA AL 70%', 'LLEVÁ 3', 'NUEVO', 'EXCLUSIVO'];
 const MENSAJES_KICKER = ['¡Aprovechá!', 'Promo del mes', 'Solo por esta semana', '¡Atención!', 'Nuevo en el local'];
 const MENSAJES_TITULO = ['Descuento en todos los productos', 'Pagá con QR y ahorrá', 'Cuotas sin interés en todo el local', 'Ahorrá pagando en efectivo', 'Nuevo horario de atención'];
 const UNIDADES = ['c/u', 'x kg', 'x 100 g', 'x 200 g', 'x pack', 'x docena', 'x litro', 'x fardo', 'x fardo x 6', 'x fardo x 12', 'x caja', 'x caja x 12', 'x bulto'];
-const MENSAJES1 = ['OFERTA IMPERDIBLE', 'LIQUIDACIÓN TOTAL', 'ÚLTIMOS FARDOS', 'PRECIO DE REMATE', 'SOLO HOY'];
+const MENSAJES1 = ['OFERTA IMPERDIBLE', '¡SÚPER COMBO!', 'LIQUIDACIÓN TOTAL', 'ÚLTIMOS FARDOS', 'PRECIO DE REMATE', 'SOLO HOY'];
 const MENSAJES2 = ['SOLO EN EFECTIVO', 'HASTA AGOTAR STOCK', 'FARDO CERRADO', 'ÚLTIMAS UNIDADES'];
 const MENSAJES_COLECCION = ['Aquí tenemos todos los productos para tus recetas', 'Todo para tu torta y tus postres', 'Tu repostería empieza acá', 'Encontrá todo lo que necesitás para endulzar el día'];
 const MAX_FOTOS = 4;
@@ -139,6 +141,11 @@ function miniatura(id) {
   else if (id === 'post_star4') { R(3, 3, 54, 14, 'ac'); R(3, 19, 54, 20, 'pp'); grid(41, 2, 9.4, 1.6); R(0, 65, 60, 10, 'pp', 0); }
   else if (id === 'story_4') { R(3, 12, 54, 18, 'ac'); for (let r = 0; r < 4; r++) R(3, 33 + r * 13.5, 54, 11.5, 'wh'); R(0, 90, 60, 7, 'pp', 0); }
   else if (id === 'story_3') { R(3, 12, 54, 18, 'ac'); R(3, 32, 54, 34, 'pp'); R(3, 69, 54, 8, 'wh'); R(3, 79, 54, 8, 'wh'); R(0, 90, 60, 7, 'pp', 0); }
+  else if (id.startsWith('combo_')) {                              // dos fotos con un «+» en el medio
+    const y0 = vh * 0.26, hh = vh * 0.5; R(0, vh * 0.12, 60, vh * 0.1, 'ac', 0); R(4, y0, 52, hh, 'pp');
+    R(10, y0 + hh * 0.18, 13, hh * 0.64, 'wh', 2); R(37, y0 + hh * 0.18, 13, hh * 0.64, 'wh', 2);
+    svg.append(svgEl('circle', { cx: 30, cy: y0 + hh / 2, r: 4.2, class: 'ac' })); R(0, vh - 8, 60, 8, 'pp', 0);
+  }
   else if (id === 'destacado_a4') { R(0, 14, 60, 12, 'ac', 0); R(4, 31, 52, 42, 'pp'); R(0, 77, 60, 8, 'pp', 0); svg.append(svgEl('circle', { cx: 12, cy: 38, r: 5, class: 'wh' })); }
   else if (id === 'destacado_post') { R(0, 12, 60, 11, 'ac', 0); R(4, 27, 52, 34, 'pp'); R(0, 66, 60, 9, 'pp', 0); svg.append(svgEl('circle', { cx: 12, cy: 34, r: 5, class: 'wh' })); }
   else if (id === 'destacado_story') { R(0, 22, 60, 14, 'ac', 0); R(4, 40, 52, 46, 'pp'); R(0, 90, 60, 7, 'pp', 0); svg.append(svgEl('circle', { cx: 12, cy: 48, r: 5, class: 'wh' })); }
@@ -165,6 +172,10 @@ function aplicarTextosDeTema(id) {
 }
 function elegirFormato(id) {
   const L = LAYOUTS[id]; S.formato = id;
+  if (id.startsWith('combo_')) {                                  // combo: el cartel dice «¡SÚPER COMBO!» y el tachado «POR SEPARADO»
+    if (!S.destacado.mensaje || MENSAJES1.includes(S.destacado.mensaje)) S.destacado.mensaje = '¡SÚPER COMBO!';
+    if (S.productos[0]) S.productos[0].combo = true;
+  }
   if (!L.temas.includes(THEMES[S.tema].grupo)) { S.tema = temaPorDefecto(L); aplicarTextosDeTema(S.tema); }
   ACTIVO = { tipo: L.grupo === 'coleccion' ? 'foto' : 'producto', i: 0 };
   construirPanel(); cambio();
@@ -227,6 +238,7 @@ function textoCasillero(h_) {
   if (h_.tipo === 'barra') return 'Barra de la promo y fechas · clic para editar';
   if (h_.tipo === 'sello') return 'Sello · clic para cambiar lo que dice';
   if (h_.tipo === 'pie') return 'Pie del folleto · clic para cambiar la letra chica o la banda';
+  if (h_.tipo === 'cabecera') return (h_.i === 0 ? 'Logo' : 'Título') + ' · clic para cambiar su tamaño';
   const vacio = casilleroVacio(h_.tipo, h_.i), que = h_.tipo === 'foto' ? 'foto' : 'casillero';
   return `${que[0].toUpperCase() + que.slice(1)} ${h_.i + 1} · clic para ${vacio ? 'elegir ' + (h_.tipo === 'foto' ? 'la foto' : 'el producto') : 'editarlo'}`;
 }
@@ -238,6 +250,7 @@ function hitEn(e) {
 }
 function activarCasillero(tipo, i) {
   if (tipo === 'sello') { const b = $('#caja-sello', DOM.panel); if (b) { b.scrollIntoView({ block: 'center', behavior: 'smooth' }); b.classList.add('resalta'); setTimeout(() => b.classList.remove('resalta'), 1600); const inp = $('input[type=text]', b); if (inp && !inp.closest('[hidden]')) inp.focus({ preventScroll: true }); } return; }
+  if (tipo === 'cabecera') { CABECERA_ABIERTA = true; const b = $('#caja-cabecera', DOM.panel); if (b) { b.open = true; b.scrollIntoView({ block: 'center', behavior: 'smooth' }); b.classList.add('resalta'); setTimeout(() => b.classList.remove('resalta'), 1600); } return; }
   if (tipo === 'pie') { const b = $('#caja-pie', DOM.panel); if (b) { b.scrollIntoView({ block: 'center', behavior: 'smooth' }); b.classList.add('resalta'); setTimeout(() => b.classList.remove('resalta'), 1600); } return; }
   if (tipo === 'barra') { const b = $('#caja-barra', DOM.panel); if (b) { b.scrollIntoView({ block: 'center', behavior: 'smooth' }); b.classList.add('resalta'); setTimeout(() => b.classList.remove('resalta'), 1600); const inp = $('input[type=text]', b); if (inp) inp.focus({ preventScroll: true }); } return; }
   setActivo(tipo, i);
@@ -689,9 +702,14 @@ function seccionProductos() {
   const ayudaFotos = CARPETA.hayIA
     ? h('p', { class: 'hint' }, CARPETA.nube ? 'Sacá las fotos de tus productos como quieras (con el celular, sobre cualquier fondo), tocá «✂ Fotos nuevas» y poneles nombre: GitHub les quita el fondo con IA y en unos minutos quedan en la nube, listas para los folletos en cualquier computadora.' : 'Sacá las fotos de tus productos como quieras (sobre cualquier fondo), tocá «✂ Fotos nuevas», poneles nombre y el programa les quita el fondo con IA y las deja guardadas y bien presentadas para los folletos.')
     : null;
-  return seccion(paso(2, 'Productos y precios'), `${L.slots} ${L.slots === 1 ? 'casillero' : 'casilleros'}`,
+  const ayudaCombo = S.formato.startsWith('combo_') ? h('div', { class: 'caja-aparte stack combo-ayuda' }, h('p', { class: 'lab', style: 'margin:0' }, '🎁 Cómo armar el combo'),
+    h('ol', { style: 'margin:0;padding-left:20px' }, h('li', null, 'Tocá el cuadro del folleto (o «Elegir producto») y elegí la primera foto, por ejemplo el Fernet.'),
+      h('li', null, 'Abajo, en el producto, tocá «＋ Sumar otra foto (armar combo)» y elegí la segunda (la gaseosa). Podés sumar una tercera.'),
+      h('li', null, 'Escribí el nombre del combo (ej.: «Fernet 750 + Coca-Cola 2,25 L») y el precio.'),
+      h('li', null, 'El cartel de arriba («¡SÚPER COMBO!») se cambia en «Cartel principal» (más abajo), y su tamaño tocándolo en el folleto.'))) : null;
+  return seccion(paso(2, 'Productos y precios'), `${L.slots} ${L.slots === 1 ? 'casillero' : 'casilleros'}`, ayudaCombo,
     h('p', { class: 'hint' }, CARPETA.activa ? `Tocá un casillero del folleto, o la foto de la lista, para elegir el producto ${CARPETA.nube ? 'de tus fotos en la nube' : 'de tu carpeta'}. El nombre y el último precio se cargan solos.` : 'Tocá un casillero para subir su foto. Podés pegar una imagen con Ctrl+V.'),
-    cajaLeyendaPrecio(), cajaCuadros(), cajaCabecera(), acc, ayudaFotos, DOM.prods, h('datalist', { id: 'lista-unidades' }, ...UNIDADES.map(u => h('option', { value: u }))));
+    cajaLeyendaPrecio(), cajaCuadros(), acc, ayudaFotos, DOM.prods, h('datalist', { id: 'lista-unidades' }, ...UNIDADES.map(u => h('option', { value: u }))));
 }
 // ── pegar precios desde una planilla (Excel, Google Sheets o texto) ──
 const esNumeroPrecio = c => /^\$?\s*[\d.,]+\s*$/.test(String(c).trim()) && /\d/.test(c);
@@ -856,9 +874,9 @@ let CABECERA_ABIERTA = false;
 function cajaCabecera() {
   const CB = S.cabecera || (S.cabecera = { logo: 1.35, titulo: 0.85, pie: 0.75 });
   return h('details', { class: 'caja-aparte cuadros', id: 'caja-cabecera', open: CABECERA_ABIERTA, ontoggle: e => { CABECERA_ABIERTA = e.target.open; } },
-    h('summary', null, 'Logo, título y pie: tamaños'),
+    h('summary', null, '🔠 Tamaño del logo, del título y del pie'),
     h('div', { class: 'stack', style: 'margin-top:10px' },
-      h('p', { class: 'hint', style: 'margin:0' }, 'Lo que achiques arriba o abajo lo ganan los cuadros de las ofertas. Vale para el folleto y para las imágenes de redes. ↺ vuelve al tamaño recomendado.'),
+      h('p', { class: 'hint', style: 'margin:0' }, 'Atajo: tocá el logo o el título en el folleto y se abre acá. Lo que achiques arriba o abajo lo ganan los cuadros de las ofertas. Vale para el folleto y para las imágenes de redes. ↺ vuelve al tamaño recomendado.'),
       sliderTam('Logo de Rivero Market (carrito, RIVERO y MARKET juntos)', CB, 'logo', 0.7, 1.7, 1.35, { ayuda: 'crece todo el logo parejo; si hay sello de promo, el sello se achica un poco' }),
       sliderTam('Cartel del título («Especial Día de la Madre», «Oferta imperdible»…)', CB, 'titulo', 0.5, 1.3, 0.85, { ayuda: 'si el texto no entra a lo ancho, se achica solo' }),
       sliderTam('Pie (dirección, Facebook y QR)', CB, 'pie', 0.5, 1.2, 0.75, { ayuda: 'más chico = cuadros más grandes' })));
@@ -1173,7 +1191,7 @@ function seccionProyecto() {
 function construirPanel() {
   const st = DOM.panel.scrollTop, g = L_ACTUAL().grupo;
   DOM.fmts = h('div'); DOM.temas = h('div');
-  const secs = [seccion(paso(1, 'Tipo de folleto y temática'), 'dónde lo vas a usar', ejemploNota(), DOM.fmts, h('div', { style: 'height:14px' }), DOM.temas)];
+  const secs = [seccion(paso(1, 'Tipo de folleto y temática'), 'dónde lo vas a usar', ejemploNota(), DOM.fmts, h('div', { style: 'height:14px' }), DOM.temas, h('div', { style: 'height:10px' }), cajaCabecera())];
   if (g === 'coleccion') secs.push(seccionFotos(), seccionMensajes());
   else if (g === 'mensaje') secs.push(seccionMensaje(), seccionFechasPromo());
   else secs.push(seccionProductos(), seccionFechasPromo());

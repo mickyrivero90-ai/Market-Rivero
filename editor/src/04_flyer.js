@@ -1018,23 +1018,25 @@ function drawHeaderWide(ctx, W, S, T, g) {
   const lx = (W - g.logoW) / 2;
   adornos(ctx, [zonaLogo(lx, g.logoY, g.logoW)]);
   const L = RES.logoH;
-  if (L) { const lw = g.logoW, lh = lw * (L.naturalHeight || L.height) / (L.naturalWidth || L.width); shadow(ctx, 'rgba(90,25,0,.40)', 18, 0, 8); ctx.drawImage(L, lx, g.logoY, lw, lh); noShadow(ctx); }
+  if (L) { const lw = g.logoW, lh = lw * (L.naturalHeight || L.height) / (L.naturalWidth || L.width); shadow(ctx, 'rgba(90,25,0,.40)', 18, 0, 8); ctx.drawImage(L, lx, g.logoY, lw, lh); noShadow(ctx); HITS.push({ tipo: 'cabecera', i: 0, x: lx, y: g.logoY, w: lw, h: lh }); }
   const sub = String(S.subtitulo || '').trim().toUpperCase();
   if (sub) chip(ctx, W / 2, g.subY - g.subSize * 0.35 - g.subSize * 0.86, sub, { h: g.subSize * 1.72, font: FM(800, g.subSize), fill: 'rgba(50,15,3,.92)', ink: T.accent[0], padX: g.subSize * 0.8, tracking: g.subSize * 0.1, align: 'center' });
   const st = selloTexto(S);
   if (st && g.selloR) drawSello(ctx, W - g.M - g.selloR - 6, g.selloCy, g.selloR, st, T);
   if (g.selloR) HITS.push({ tipo: 'sello', i: 0, x: W - g.M - g.selloR * 2 - 6, y: g.selloCy - g.selloR, w: g.selloR * 2, h: g.selloR * 2 });   // clic: editar el sello
   drawRibbon(ctx, g.M, g.ribbonY, W - 2 * g.M, g.ribbonH, S.titulo, T, { max: g.titleMax });
+  HITS.push({ tipo: 'cabecera', i: 1, x: g.M, y: g.ribbonY, w: W - 2 * g.M, h: g.ribbonH });   // clic en el título: su tamaño
   return drawInfoRow(ctx, W, S, T, { M: g.M, y: g.pillY, h: g.pillH });
 }
 function drawHeaderStack(ctx, W, S, T, g) {
   g = ajustarCabecera(g, W, W - 2 * g.M - 2 * Math.min(W * 0.1, 130) - 20);
   adornos(ctx, [zonaLogo((W - g.logoW) / 2, g.logoY, g.logoW)]);
   const L = RES.logoH;
-  if (L) { const lw = g.logoW, lh = lw * (L.naturalHeight || L.height) / (L.naturalWidth || L.width); shadow(ctx, 'rgba(90,25,0,.40)', 18, 0, 8); ctx.drawImage(L, (W - lw) / 2, g.logoY, lw, lh); noShadow(ctx); }
+  if (L) { const lw = g.logoW, lh = lw * (L.naturalHeight || L.height) / (L.naturalWidth || L.width); shadow(ctx, 'rgba(90,25,0,.40)', 18, 0, 8); ctx.drawImage(L, (W - lw) / 2, g.logoY, lw, lh); noShadow(ctx); HITS.push({ tipo: 'cabecera', i: 0, x: (W - lw) / 2, y: g.logoY, w: lw, h: lh }); }
   const sub = String(S.subtitulo || '').trim().toUpperCase();
   if (sub) chip(ctx, W / 2, g.subY - g.subSize * 0.35 - g.subSize * 0.86, sub, { h: g.subSize * 1.72, font: FM(800, g.subSize), fill: 'rgba(50,15,3,.92)', ink: T.accent[0], padX: g.subSize * 0.8, tracking: g.subSize * 0.1, align: 'center' });
   drawRibbon(ctx, g.M, g.ribbonY, W - 2 * g.M, g.ribbonH, S.titulo, T, { max: g.titleMax });
+  HITS.push({ tipo: 'cabecera', i: 1, x: g.M, y: g.ribbonY, w: W - 2 * g.M, h: g.ribbonH });
   const rU = Math.min(W * 0.1, 130); stickerUrgencia(ctx, S, T, W - g.M - rU * 0.9, g.logoY + rU * 0.85, rU);
   return drawInfoRow(ctx, W, S, T, { M: g.M, y: g.pillY, h: g.pillH });
 }
