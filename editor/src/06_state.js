@@ -1,5 +1,5 @@
 // ───────────────────────── estado y datos de ejemplo ─────────────────────────
-const ESTADO_VERSION = 9;
+const ESTADO_VERSION = 10;
 const LEGALES_VIEJO = 'Imágenes ilustrativas. Precios finales en pesos argentinos.';   // hasta la v3.0 (ahora «precios finales» ya va en la letra chica)
 
 // `archivo` = ruta de la foto dentro de la carpeta "productos" (programa local); `img` = foto incrustada (página suelta).
@@ -51,7 +51,7 @@ function estadoDemo() {
     pagos: { ver: false, lista: ['efectivo', 'debito', 'credito', 'mp', 'transferencia'], textos: {} },
     mensaje: { kicker: '¡Aprovechá!', titulo: 'Descuento en todos los productos', grande: '', grande2: '', condicion: '', texto: 'Válido para todas tus compras en el local.' },
     destacado: { mensaje: 'OFERTA IMPERDIBLE', mensaje2: '' },
-    legal: { banda: false, bandaTam: 1, letraChica: true, alcohol: 'no', stock: '' },
+    legal: { banda: false, bandaTam: 1, letraChica: true, alcohol: 'auto', stock: '' },
     cabecera: { logo: 1.35, titulo: 0.85, pie: 0.75 },
     comida: comboComida('panchos'),                                  // folleto «Combo de comida» (lista + precio, foto de fondo)                // tamaños del logo, el título (cartel) y el pie
     cuadros: { sep: 1, margen: 1, foto: 1, estrella: 1, alinear: 'auto', dx: 0, dy: 0, nombre: 1, nombreDy: 0, filaLlena: 'abajo' },
@@ -72,13 +72,14 @@ function estadoDemo() {
     comercio: {
       nombre: 'Rivero Market',
       direccion: 'Barrio San José, Avenida Solís Pizarro 1430',
-      facebook: 'Fiambrería Rivero',
+      facebook: 'Rivero Market',
+      instagram: '@marketrivero',
       telefono: '',
       whatsapp: '',                                               // para pedidos: sale como QR «Pedí por WhatsApp» en el impreso
       horario: '',
       waCanal: WA_CANAL,
       qrUrl: '',
-      consulta: 'Facebook: Fiambrería Rivero',
+      consulta: 'Facebook: Rivero Market',
       razon: '', cuit: '',
       legales: 'Imágenes ilustrativas.',
     },
@@ -111,7 +112,7 @@ function estadoParaGuardar(S) {
 /** Los datos del local son de todos los folletos: al abrir uno guardado se quedan los que se cambiaron último,
  *  así un folleto viejo no vuelve a poner la dirección o el teléfono de antes. Si en esta computadora nunca se
  *  tocaron (y no hay fechas para comparar), valen los del folleto que se abre. */
-const CAMPOS_LOCAL = ['nombre', 'direccion', 'horario', 'facebook', 'telefono', 'whatsapp', 'waCanal', 'canalNombre', 'qrUrl', 'mapa', 'razon', 'cuit', 'legales', 'consulta'];
+const CAMPOS_LOCAL = ['nombre', 'direccion', 'horario', 'facebook', 'instagram', 'telefono', 'whatsapp', 'waCanal', 'canalNombre', 'qrUrl', 'mapa', 'razon', 'cuit', 'legales', 'consulta'];
 function comercioAlAbrir(abierto, actual) {
   if (!abierto) return actual; if (!actual) return abierto;
   const ta = +abierto.ts || 0, tc = +actual.ts || 0;
@@ -149,6 +150,12 @@ function normalizarEstado(S, op = {}) {
   out.comercio = { ...base.comercio, ...(S.comercio || {}) };
   if (!(S.v >= 7) && out.comercio.legales === LEGALES_VIEJO) out.comercio.legales = base.comercio.legales;   // v3.1: sin repetir «precios finales» en la letra chica
   if (/facebook\.com\/search/.test(out.comercio.qrUrl || '')) out.comercio.qrUrl = '';   // era un marcador de posición
+  if (!(S.v >= 10)) {                                                // v6.6: el negocio ahora se llama Rivero Market (antes «Fiambrería Rivero»)
+    const viejo = /fiambrer[ií]a\s+rivero/gi;
+    ['facebook', 'consulta', 'canalNombre'].forEach(k => { if (viejo.test(out.comercio[k] || '')) out.comercio[k] = String(out.comercio[k]).replace(viejo, 'Rivero Market'); viejo.lastIndex = 0; });
+    if (out.comercio.instagram === undefined || out.comercio.instagram === '') out.comercio.instagram = base.comercio.instagram;
+    if (out.legal.alcohol === 'no' || out.legal.alcohol === false) out.legal.alcohol = 'auto';   // Miki pidió la leyenda de alcohol (Ley 24.788): vuelve a «automática»
+  }
   if (!out.comercio.waCanal) out.comercio.waCanal = WA_CANAL;
   if (out.formato === 'cartel_1') out.formato = 'destacado_a4';
   if (out.formato === 'a4_10_tema') out.formato = 'a4_10';             // el "temático" ahora es el mismo de 10: cualquier fondo sirve en cualquier formato

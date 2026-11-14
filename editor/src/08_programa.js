@@ -528,7 +528,7 @@ function ofertasPublicas(S) {
     v: 1, publicado: new Date().toISOString(), titulo: String(S.titulo || 'Ofertas de la semana').trim(), subtitulo: String(S.subtitulo || '').trim(),
     vigencia: { desde: V.desde || '', hasta: V.hasta || '', agotar: !!V.agotar, texto: rangoLargo(V.desde, V.hasta), hastaTexto: hasta ? fechaLinda(hasta) : '' },
     promo: P ? ((P.pct ? (P.extra ? '+' : '') + P.pctTxt + '% OFF ' : '') + P.texto).trim() : '',
-    comercio: { nombre: C.nombre || 'Rivero Market', direccion: C.direccion || '', horario: C.horario || '', whatsapp: waNumero(C.whatsapp), whatsappTexto: String(C.whatsapp || '').trim(), canal: C.waCanal || '', facebook: C.facebook || '', facebookUrl: C.qrUrl || '', mapa: C.mapa || '', razon: C.razon || '', cuit: C.cuit || '' },
+    comercio: { nombre: C.nombre || 'Rivero Market', direccion: C.direccion || '', horario: C.horario || '', whatsapp: waNumero(C.whatsapp), whatsappTexto: String(C.whatsapp || '').trim(), canal: C.waCanal || '', facebook: C.facebook || '', facebookUrl: C.qrUrl || '', instagram: String(C.instagram || '').trim(), mapa: C.mapa || '', razon: C.razon || '', cuit: C.cuit || '' },
     legal: { letraChica: letraChica(S) || '', stock: String((S.legal || {}).stock || '').trim() },
     alcohol: alcoholActivo(S),
     productos: prods.map(p => { const I = infoProducto(p), cp = chipProducto(p, S); return { nombre: String(p.nombre || '').trim(), desc: String(p.desc || '').trim(), final: p.final, regular: I.R && I.F && I.R.num > I.F.num ? p.regular : '', pct: I.pct || 0,

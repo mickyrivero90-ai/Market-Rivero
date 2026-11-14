@@ -94,6 +94,8 @@ function textoPublicacion(S, destino = 'canal', tono = 'clasico', op = {}) {
     if (pedir) c.push(`💬 Pedí por WhatsApp: ${pedir}`);                              // el link abre el chat (desde el celular el QR no sirve)
     else if (D.C.telefono && destino !== 'facebook') c.push(`💬 Consultas y pedidos: ${D.C.telefono}`);
     if (destino === 'facebook') {
+      const ig = String(D.C.instagram || '').trim();
+      if (ig) c.push(`📸 Seguinos en Instagram: ${ig.startsWith('@') ? ig : '@' + ig}`);
       if (D.C.telefono && !pedir) c.push(`💬 Consultas y pedidos por WhatsApp: ${D.C.telefono}`);
       if (op.hashtags !== false) c.push('\n' + ['#' + D.nombre.replace(/\s+/g, ''), D.barrio ? '#' + D.barrio.replace(/\s+/g, '') : '', '#Ofertas', HASHTAG_TEMA[S.tema] || ''].filter(Boolean).join(' '));
     }

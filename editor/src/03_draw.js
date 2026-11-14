@@ -169,6 +169,19 @@ function iconFacebook(ctx, cx, cy, r) {
   ctx.fillText('f', cx + r * 0.1, cy + r * 1.12);
   ctx.restore();
 }
+/** Ícono de Instagram: círculo con el degradé de la marca y la cámara en blanco. */
+function iconInstagram(ctx, cx, cy, r) {
+  ctx.save();
+  const g = ctx.createLinearGradient(cx - r, cy + r, cx + r, cy - r);
+  g.addColorStop(0, '#FEDA75'); g.addColorStop(0.3, '#FA7E1E'); g.addColorStop(0.6, '#D62976'); g.addColorStop(0.85, '#962FBF'); g.addColorStop(1, '#4F5BD5');
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU); ctx.fillStyle = g; ctx.fill();
+  const s = r * 1.08, lw = r * 0.15;
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = lw;
+  rrPath(ctx, cx - s / 2, cy - s / 2, s, s, s * 0.3); ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx, cy, s * 0.24, 0, TAU); ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx + s * 0.27, cy - s * 0.27, lw * 0.7, 0, TAU); ctx.fillStyle = '#fff'; ctx.fill();
+  ctx.restore();
+}
 function iconWhatsApp(ctx, cx, cy, r) {
   ctx.save();
   ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU); ctx.fillStyle = '#25D366'; ctx.fill();

@@ -192,6 +192,9 @@ def pagina_ofertas(d, fotos, base_url):
     if C.get("facebook"):
         fb = C.get("facebookUrl") or ""
         contacto.append(f'<li><b>Facebook</b> ' + (f'<a href="{_e(fb)}" target="_blank" rel="noopener">{_e(C.get("facebook"))}</a>' if fb else _e(C.get("facebook"))) + "</li>")
+    if C.get("instagram"):
+        ig = str(C.get("instagram")).strip().lstrip("@")
+        contacto.append(f'<li><b>Instagram</b> <a href="https://www.instagram.com/{_e(ig)}/" target="_blank" rel="noopener">@{_e(ig)}</a></li>')
     desc_meta = f"{len(prods)} ofertas {vig} en {nombre}" + (f", {C.get('direccion')}" if C.get("direccion") else "") + "."
     hasta = str(V.get("hasta") or "")
     return f"""<!doctype html>

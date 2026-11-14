@@ -914,6 +914,7 @@ function letraChica(S) {
   if (colec) partes.push(String((S.coleccion || {}).pie || '').trim());
   else if (vig) partes.push(`Válido ${vig}${V.agotar ? ' o hasta agotar stock' + (stock ? ' (' + stock + ')' : '') : ''}.`);
   else if (V.agotar) partes.push('Válido hasta agotar stock' + (stock ? ' (' + stock + ')' : '') + '.');
+  if (!L.banda && alcoholActivo(S)) partes.unshift('Beber con moderación. Prohibida su venta a menores de 18 años.');   // Ley 24.788 (con la banda prendida va ahí, más grande)
   const PF = !colec && typeof promoInfo === 'function' ? promoInfo(S) : null;
   if (PF) partes.push(promoLetraChica(PF, S));
   else if (!colec) partes.push('Precios finales en pesos argentinos.');
@@ -985,18 +986,25 @@ function drawFooter(ctx, S, T, env, r, plan, o = {}) {
     text(ctx, addr, lx + 38 * k, cy + 3 * k + fs * 1.18, { font: FM(800, fs), fill: T.footerInk });
     cy += 3 * k + fs * 1.18;
   }
+  // renglón de redes: Facebook, Instagram y teléfono, cada uno con su ícono (con Instagram, el nombre va sin «Facebook:»: lo dice el ícono)
   const fb = String(C.facebook || '').trim(), tel = String(C.telefono || '').trim() || (waNumero(C.whatsapp) ? String(C.whatsapp).trim() : '');
-  const ry = cy + 40 * k; let rx = lx;
-  if (fb) {
-    iconFacebook(ctx, rx + 16 * k, ry - 9.5 * k, 16 * k);
-    const lab = 'Facebook: ' + fb, fs = fitSize(ctx, lab, s => FM(800, s), 27 * k, 14 * k, (tel ? lw * 0.58 : lw) - 44 * k, 0);
-    const tw = text(ctx, lab, rx + 42 * k, ry, { font: FM(800, fs), fill: T.footerInk });
-    rx += 42 * k + tw + 30 * k;
-  }
-  if (tel) {
-    iconWhatsApp(ctx, rx + 16 * k, ry - 9.5 * k, 16 * k);
-    const fs = fitSize(ctx, tel, s => FM(800, s), 27 * k, 14 * k, lx + lw - rx - 44 * k, 0);
-    text(ctx, tel, rx + 42 * k, ry, { font: FM(800, fs), fill: T.footerInk });
+  let ig = String(C.instagram || '').trim(); if (ig && !ig.startsWith('@')) ig = '@' + ig.replace(/^.*instagram\.com\//i, '').replace(/\/.*$/, '');
+  const red = [];
+  if (fb) red.push({ icon: iconFacebook, lab: ig ? fb : 'Facebook: ' + fb });
+  if (ig) red.push({ icon: iconInstagram, lab: ig });
+  if (tel) red.push({ icon: iconWhatsApp, lab: tel });
+  const ry = cy + 40 * k, icoW = 42 * k, gapR = 26 * k;
+  if (red.length) {
+    // un solo tamaño de letra para todo el renglón, el más grande que entre
+    let fsR = 27 * k;
+    const ancho = f => red.reduce((a, it) => { ctx.font = FM(800, f); return a + icoW + measure(ctx, it.lab, 0); }, 0) + gapR * (red.length - 1);
+    while (fsR > 13 * k && ancho(fsR) > lw) fsR -= 0.5 * k;
+    let rx = lx;
+    red.forEach(it => {
+      it.icon(ctx, rx + 16 * k, ry - 9.5 * k, 16 * k);
+      const tw = text(ctx, it.lab, rx + icoW, ry, { font: FM(800, fsR), fill: T.footerInk, maxW: lx + lw - rx - icoW });
+      rx += icoW + tw + gapR;
+    });
   }
   const legal = letraChica(S);
   if (legal) {

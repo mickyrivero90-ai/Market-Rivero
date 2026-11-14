@@ -30,7 +30,7 @@ datos = {
     "v": 1, "titulo": "Ofertas de la semana", "promo": "10% OFF PAGANDO CON QR DE MERCADO PAGO",
     "vigencia": {"desde": "2026-10-08", "hasta": "2026-10-18", "agotar": True, "texto": "del 8 al 18 de octubre de 2026", "hastaTexto": "domingo 18 de octubre"},
     "comercio": {"nombre": "Rivero Market", "direccion": "Barrio San José, Avenida Solís Pizarro 1430", "horario": "Lun a sáb 8 a 21", "whatsapp": "5493875123456",
-                 "whatsappTexto": "387 512-3456", "canal": "https://whatsapp.com/channel/0029Vau", "facebook": "Fiambrería Rivero", "mapa": "https://maps.app.goo.gl/x", "razon": "Rivero SRL", "cuit": "30-12345678-9"},
+                 "whatsappTexto": "387 512-3456", "canal": "https://whatsapp.com/channel/0029Vau", "facebook": "Rivero Market", "instagram": "@marketrivero", "mapa": "https://maps.app.goo.gl/x", "razon": "Rivero SRL", "cuit": "30-12345678-9"},
     "legal": {"letraChica": "Precios finales en pesos.", "stock": "20 u. por producto"},
     "alcohol": True,
     "productos": [
@@ -54,6 +54,7 @@ ok("«Pedir por WhatsApp» con el mensaje ya escrito", m and "Fernet%20Branca%20
 ok("foto desde la copia de la página", 'src="../fotos/abc.png"' in pagina)
 ok("rubros con filtro", 'data-rubro="Bebidas"' in pagina and 'data-rubro="Fiambres y quesos"' in pagina and 'class="chip"' in pagina)
 ok("legales: vigencia, stock y CUIT", "Ofertas válidas del 8 al 18 de octubre de 2026 o hasta agotar stock (20 u. por producto)." in pagina and "CUIT 30-12345678-9" in pagina)
+ok("redes: Facebook «Rivero Market» e Instagram con link", ">Rivero Market<" in pagina.replace("<b>Facebook</b> ", ">") and 'href="https://www.instagram.com/marketrivero/"' in pagina and "Fiambrería" not in pagina)
 ok("leyenda de alcohol (hay fernet)", "Beber con moderación. Prohibida su venta a menores de 18 años." in pagina)
 ok("vista previa al compartir el link", 'property="og:image" content="https://ejemplo.github.io/tienda/fotos/abc.png"' in pagina)
 ok("aviso de ofertas vencidas", 'const hasta = "2026-10-18"' in pagina and "Estas ofertas terminaron el domingo 18 de octubre" in pagina)
