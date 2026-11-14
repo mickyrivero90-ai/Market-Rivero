@@ -5,6 +5,17 @@ Desde la 3.0, la herramienta online (https://mickyrivero90-ai.github.io/Market-R
 se actualiza sola. Si usás el programa de la PC y muestra un número menor, bajá el nuevo
 desde la herramienta online (⋯ Más → Programa para usar sin internet).
 
+Versión 6.6 · 13 de noviembre de 2026 · AHORA NOS LLAMAMOS RIVERO MARKET
+- El pie de todos los folletos dice «Rivero Market» (antes «Fiambrería Rivero») y suma el
+  Instagram @marketrivero con su ícono, al lado de Facebook. Los folletos y datos guardados se
+  corrigen solos al abrirlos.
+- En «Datos del local» hay un campo nuevo: «Instagram».
+- Leyenda de alcohol (Ley 24.788): vuelve a «automática». Si el folleto tiene vino, fernet,
+  cerveza, etc., agrega «Beber con moderación. Prohibida su venta a menores de 18 años.» en la
+  letra chica del pie (o en la banda legal, si está prendida). Se puede apagar en «Legales».
+- Los textos para Facebook / Instagram terminan con «Seguinos en Instagram: @marketrivero».
+- La página pública de ofertas muestra el Instagram con su link.
+
 Versión 6.5 · 9 de noviembre de 2026 · COMBO DE COMIDA: TAMAÑO Y LADO DEL TEXTO
 - En «Tu combo»: «Tamaño del nombre y de la lista» y «Tamaño del precio», para agrandarlos o
   achicarlos a gusto (si no entran, se achican solos). De fábrica, la lista sale más grande.

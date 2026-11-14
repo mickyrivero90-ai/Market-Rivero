@@ -894,7 +894,7 @@ function cajaCabecera() {
       h('p', { class: 'hint', style: 'margin:0' }, 'Atajo: tocá el logo o el título en el folleto y se abre acá. Lo que achiques arriba o abajo lo ganan los cuadros de las ofertas. Vale para el folleto y para las imágenes de redes. ↺ vuelve al tamaño recomendado.'),
       sliderTam('Logo de Rivero Market (carrito, RIVERO y MARKET juntos)', CB, 'logo', 0.7, 1.7, 1.35, { ayuda: 'crece todo el logo parejo; si hay sello de promo, el sello se achica un poco' }),
       sliderTam('Cartel del título («Especial Día de la Madre», «Oferta imperdible»…)', CB, 'titulo', 0.5, 1.3, 0.85, { ayuda: 'si el texto no entra a lo ancho, se achica solo' }),
-      sliderTam('Pie (dirección, Facebook y QR)', CB, 'pie', 0.5, 1.2, 0.75, { ayuda: 'más chico = cuadros más grandes' })));
+      sliderTam('Pie (dirección, redes y QR)', CB, 'pie', 0.5, 1.2, 0.75, { ayuda: 'más chico = cuadros más grandes' })));
 }
 function seccionFotos() {
   DOM.prods = h('div', { class: 'prods' });
@@ -1137,7 +1137,7 @@ function seccionPie() {
   const cajaChica = h('div', { class: 'stack', hidden: L.letraChica === false || null }, DOM.pieVista,
     campo('Agregar al final', textoLocal(C, 'legales', { ph: 'Imágenes ilustrativas.', max: 140 }), 'opcional'));
   const cajaBanda = h('div', { class: 'stack', hidden: !L.banda || null },
-    campo('Dónde consultar', textoLocal(C, 'consulta', { ph: 'Facebook: Fiambrería Rivero', max: 70 }), 'web, WhatsApp o 0800'),
+    campo('Dónde consultar', textoLocal(C, 'consulta', { ph: 'Facebook: Rivero Market', max: 70 }), 'web, WhatsApp o 0800'),
     sliderTam('Tamaño de la letra de la banda', L, 'bandaTam', 0.6, 1.8, 1, { ayuda: 'en A4, con menos de 100 % queda más chica que los 4 mm que pide la norma' }));
   setTimeout(pintarPieVista, 0);
   return h('section', { class: 'sec', id: 'caja-pie' }, h('h2', null, 'Pie del folleto', h('small', null, 'letra chica y banda de abajo')),
@@ -1187,6 +1187,7 @@ function seccionLocalYLegales() {
       campo('Dirección', textoLocal(C, 'direccion', { ph: 'Barrio, calle y número', max: 70 })),
       campo('Horario', textoLocal(C, 'horario', { ph: 'Ej.: Lun a sáb 8 a 13 y 17 a 21:30', max: 60 }), 'opcional · sale al lado de la dirección'),
       campo('Facebook', textoLocal(C, 'facebook', { ph: 'Nombre de tu página', max: 40 })),
+      campo('Instagram', textoLocal(C, 'instagram', { ph: 'Ej.: @marketrivero', max: 40 }), 'sale en el pie, al lado de Facebook'),
       campo('WhatsApp o teléfono', textoLocal(C, 'telefono', { ph: 'Ej.: 11 5555-5555', mode: 'tel', max: 30 }), 'opcional'),
       campoWhatsApp(C),
       campo('Link del canal de WhatsApp', textoLocal(C, 'waCanal', { ph: 'https://whatsapp.com/channel/…', mode: 'url', max: 200 }), 'sale como QR'),
