@@ -1319,3 +1319,12 @@ estrella + 4 con «2x $3.100» en Chromium. prueba_nube.py no se corrió (necesi
    de la placa usa el mismo color (antes era invisible en blackfriday).
 Probado: autoprueba 168 OK (1 nueva: el «2» se distingue de la placa en los 24 fondos); A4 10, post 4, naranja y
 blackfriday mirados en Chromium.
+
+53. VERSIÓN 6.9: PLACA DEL PRECIO AMARILLA, A ELECCIÓN (16/11/2026)
+-----------------------------------------------------------------
+ - El dueño: los números negros sobre la placa amarilla (como en Black Friday) resaltan más; eligió «que se pueda
+   elegir». S.precio.colorPlaca: 'tema' (de fábrica) | 'amarilla' (todas) | 'cantidad' (solo con p.cant).
+ - drawPlate(): T = temaPlaca(T, price) → con amarilla pisa price/priceInk/priceShadow con PLACA_AMARILLA (los de
+   blackfriday: #FFE24A→#FFC400, tinta #0A0A0A). colorCant() ya elige la tinta negra para el «2x» y «FINAL».
+   Selector en cajaLeyendaPrecio() (#ley-color) y la placa de ejemplo se pinta amarilla.
+Probado: autoprueba 169 OK (1 nueva); post 4 naranja con «amarilla» y «cantidad» mirados en Chromium.

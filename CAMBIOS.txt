@@ -5,6 +5,12 @@ Desde la 3.0, la herramienta online (https://mickyrivero90-ai.github.io/Market-R
 se actualiza sola. Si usás el programa de la PC y muestra un número menor, bajá el nuevo
 desde la herramienta online (⋯ Más → Programa para usar sin internet).
 
+Versión 6.9 · 16 de noviembre de 2026 · PLACA DEL PRECIO AMARILLA (A ELECCIÓN)
+- Paso 2 → «Leyenda del precio» → «Color de la placa del precio»:
+  · Roja (la del fondo elegido): como siempre.
+  · Amarilla con números negros, en todos los productos.
+  · Amarilla solo en las promos «2 x $…»: así resaltan entre los demás precios, que siguen rojos.
+
 Versión 6.8 · 16 de noviembre de 2026 · EL «2» DE «2 x $3.100» SE VE GRANDE
 - En las promos por cantidad, el número de la cantidad sale tan grande como el precio y en
   amarillo (la «x» chica): «2x $3.100» se lee de un vistazo y no parece $3.100 cada uno.

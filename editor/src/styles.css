@@ -318,6 +318,8 @@ textarea:focus { border-color: var(--pop); outline: none; }
 .ley-antes s { color: #2B1208; font-size: 18px; text-decoration-color: #D50F25; text-decoration-thickness: 3px; }
 .ley-placa { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 8px; background: linear-gradient(#EE2238, #B80B1E); color: #fff; font: 900 italic 26px var(--f-disp); transform: skewX(-8deg); }
 .ley-placa small { font: 900 10px var(--f-disp); color: #FFE066; writing-mode: vertical-rl; transform: rotate(180deg); }
+.ley-placa.amarilla { background: linear-gradient(#FFE24A, #FFC400); color: #0A0A0A; }
+.ley-placa.amarilla small { color: #0A0A0A; }
 .ley-ahorro { padding: 4px 10px; border-radius: 99px; background: #1A1A1A; color: #FFE066; font: 900 italic 15px var(--f-disp); }
 .todos { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-weight: 800; font-size: 13.5px; }
 .todos .pct { width: 84px; }
