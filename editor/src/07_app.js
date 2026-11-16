@@ -819,7 +819,7 @@ function cajaLeyendaPrecio() {
   const pintarEjemplo = () => {
     const [pre, post] = ANTES_ESTILOS[PR.antes] || ANTES_ESTILOS.antes;
     llenar(ejemplo, h('span', { class: 'ley-antes' }, pre ? pre + ' ' : '', h('s', null, '$20.600'), post ? ' ' + post : ''),
-      h('span', { class: 'ley-placa', style: `font-size:${Math.round(26 * (+PR.placa || 1))}px` }, '$18.540', PR.etiqueta ? h('small', null, PR.etiqueta) : null),
+      h('span', { class: 'ley-placa' + (PR.colorPlaca === 'amarilla' ? ' amarilla' : ''), style: `font-size:${Math.round(26 * (+PR.placa || 1))}px` }, '$18.540', PR.etiqueta ? h('small', null, PR.etiqueta) : null),
       PR.ahorro ? h('span', { class: 'ley-ahorro', style: `font-size:${Math.round(15 * (+PR.ahorroTam || 1))}px` }, 'AHORRÁS $2.060') : null);
   };
   pintarEjemplo();
@@ -841,6 +841,8 @@ function cajaLeyendaPrecio() {
       h('div', { class: 'grid2' },
         campo('Precio anterior', sel('ley-antes', [['antes', 'ANTES $20.600'], ['normal', 'PRECIO NORMAL $20.600'], ['lista', 'PRECIO DE LISTA $20.600'], ['de_a', 'DE $20.600 A'], ['solo', 'Solo tachado']], PR.antes, v => { PR.antes = v; upd(); })),
         campo('Palabra en la placa', sel('ley-etq', [['FINAL', 'FINAL'], ['AHORA', 'AHORA'], ['OFERTA', 'OFERTA'], ['', '(ninguna)']], PR.etiqueta, v => { PR.etiqueta = v; upd(); }))),
+      campo('Color de la placa del precio', sel('ley-color', [['tema', 'Roja (la del fondo elegido)'], ['amarilla', 'Amarilla con números negros, en todos'], ['cantidad', 'Amarilla solo en las promos «2 x $…»']],
+        COLORES_PLACA.includes(PR.colorPlaca) ? PR.colorPlaca : 'tema', v => { PR.colorPlaca = v; upd(); })),
       check('Mostrar “AHORRÁS $…”', 'Hace la cuenta por el cliente: atrae más que el porcentaje solo.', PR.ahorro, v => { PR.ahorro = v; upd(); }),
       check('Precio anterior grande', 'Más fácil de leer en el celular.', PR.grande, v => { PR.grande = v; upd(); }),
       check('Precio por kilo o litro, en letra chica', 'Lo pide la Res. 4/2025. Lo calculo con el contenido del nombre: «Aceite 850 ml» → «$2.964,71 x litro». Si el nombre no dice el contenido, no sale.', PR.porUnidad !== false, v => { PR.porUnidad = v; upd(); }),
@@ -1737,6 +1739,11 @@ async function autotest() {
       t('cantidad: x litro de 1 unidad', porUnidad(nuevoProducto({ nombre: 'Aceite 900 ml', final: '3.600', cant: '2' })) === '$2.000 x litro', porUnidad(nuevoProducto({ nombre: 'Aceite 900 ml', final: '3.600', cant: '2' })));
       { const cx = document.createElement('canvas').getContext('2d'), a = plateGeom(cx, 2000, 70, parsePrecio('3.100')), b = plateGeom(cx, 2000, 70, { ...parsePrecio('3.100'), cant: 2 });
         t('cantidad: la placa hace lugar al «2x»', b.w > a.w && b.ds === a.ds, a.w.toFixed(0) + ' → ' + b.w.toFixed(0)); }
+      { const bak = PRECIO_CFG.colorPlaca, N = THEMES.naranja, uno = parsePrecio('3.100'), dos = { ...uno, cant: 2 };
+        PRECIO_CFG.colorPlaca = 'tema'; const a = temaPlaca(N, dos) === N;
+        PRECIO_CFG.colorPlaca = 'amarilla'; const b = temaPlaca(N, uno).price[0] === '#FFE24A' && colorCant(temaPlaca(N, uno)) === '#0A0A0A';
+        PRECIO_CFG.colorPlaca = 'cantidad'; const c = temaPlaca(N, uno) === N && temaPlaca(N, dos).priceInk === '#0A0A0A';
+        PRECIO_CFG.colorPlaca = bak; t('placa amarilla: roja / todas / solo «2 x $…»', a && b && c, [a, b, c].join(' ')); }
       { const malos = Object.keys(THEMES).filter(k => { const T = THEMES[k], c = colorCant(T); return Math.min(...T.price.map(p => contraste(c, p) ?? 99)) < 2; });
         t('cantidad: el «2» se distingue de la placa en todos los fondos', !malos.length && colorCant(THEMES.naranja) === THEMES.naranja.accent[0], malos.join(', ')); }
       const O = ofertasPublicas({ ...S, formato: 'a4_10', productos: [q, ...Array.from({ length: 15 }, () => nuevoProducto())] });

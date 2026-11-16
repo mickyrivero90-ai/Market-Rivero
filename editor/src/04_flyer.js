@@ -305,8 +305,17 @@ function plateGeom(ctx, maxW, H0, price, o = {}) {
 /** Alto de la placa según el tamaño elegido en «Leyenda del precio» → [alto, opciones para drawPlate]. */
 const altoPlaca = h0 => { const k = PRECIO_CFG.placa || 1; return [h0 * k, k > 1 ? { min: h0 } : {}]; };
 const tamAhorro = () => PRECIO_CFG.ahorroTam || 1;
+/** Color de la placa (se elige en «Leyenda del precio»): 'tema' = la del fondo (roja), 'amarilla' = amarilla con números
+ *  negros en todos los productos, 'cantidad' = amarilla solo en las promos «2 x $…». */
+const COLORES_PLACA = ['tema', 'amarilla', 'cantidad'];
+const PLACA_AMARILLA = { price: ['#FFE24A', '#FFC400'], priceInk: '#0A0A0A', priceShadow: 'rgba(255,255,255,0)' };   // la de Black Friday
+function temaPlaca(T, price) {
+  const m = PRECIO_CFG.colorPlaca;
+  return m === 'amarilla' || (m === 'cantidad' && price && price.cant) ? { ...T, ...PLACA_AMARILLA } : T;
+}
 /** Dibuja "$ 18.540" sobre una placa roja inclinada. Devuelve el rectángulo ocupado. */
 function drawPlate(ctx, x, yBottom, maxW, H0, price, T, o = {}) {
+  T = temaPlaca(T, price);
   const g = plateGeom(ctx, maxW, H0, price, o), { H, ds, m, gap, padX, finalW, skew, dollar } = g;
   const w = g.w, y = yBottom - H;
   ctx.save();
@@ -341,7 +350,7 @@ function drawPlate(ctx, x, yBottom, maxW, H0, price, T, o = {}) {
   return { x, y, w, h: H, right: x + w, ds };
 }
 /** Cómo se muestra el precio anterior y la palabra de la placa (se elige en "Leyenda del precio"). */
-let PRECIO_CFG = { antes: 'antes', ahorro: true, grande: true, insignia: 1.3, placa: 1, ahorroTam: 1, porUnidad: true, fraccion: '100g' };
+let PRECIO_CFG = { antes: 'antes', ahorro: true, grande: true, insignia: 1.3, placa: 1, ahorroTam: 1, porUnidad: true, fraccion: '100g', colorPlaca: 'tema' };
 /** Modo limpio: si todos los productos tienen el % de la promo, el «-10 %» y «pagando con…» no se repiten en cada cuadro
  *  (ya están en la barra y en el sello) y la foto usa ese lugar. Se apaga en «Leyenda del precio». */
 let LIMPIO = false;
@@ -1258,7 +1267,7 @@ function renderFlyer(canvas, S, opts = {}) {
   const T = THEMES[S.tema] || THEMES.naranja;
   const PR = S.precio || {};
   PRECIO_CFG = { antes: PR.antes || 'antes', ahorro: PR.ahorro !== false, grande: PR.grande !== false, insignia: clamp(+PR.insignia || 1.3, 0.8, 2), placa: clamp(+PR.placa || 1, 0.7, 1.6), ahorroTam: clamp(+PR.ahorroTam || 1, 0.6, 2),
-    porUnidad: PR.porUnidad !== false, fraccion: fraccionDe(PR.fraccion) };
+    porUnidad: PR.porUnidad !== false, fraccion: fraccionDe(PR.fraccion), colorPlaca: COLORES_PLACA.includes(PR.colorPlaca) ? PR.colorPlaca : 'tema' };
   const CU = S.cuadros || {};
   CUADROS_CFG = { sep: clamp(Number.isFinite(+CU.sep) && CU.sep !== '' && CU.sep != null ? +CU.sep : 1, 0, 3), margen: clamp(+CU.margen || 1, 0.3, 2.5), foto: clamp(+CU.foto || 1, 0.6, 1.5), estrella: clamp(+CU.estrella || 1, 0.6, 1.5),
     alinear: ['izquierda', 'centro', 'derecha'].includes(CU.alinear) ? CU.alinear : 'auto', dx: clamp(+CU.dx || 0, -40, 40), dy: clamp(+CU.dy || 0, -20, 50), nombre: clamp(+CU.nombre || 1, 0.7, 2), nombreDy: clamp(+CU.nombreDy || 0, 0, 40), filaLlena: CU.filaLlena === 'arriba' ? 'arriba' : 'abajo' };

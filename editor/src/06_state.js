@@ -47,7 +47,7 @@ function estadoDemo() {
     sello: { modo: 'auto', l1: '', l2: '', l3: '' },
     vigencia: { desde: '', hasta: '2026-10-18', agotar: true },
     promo: { tipo: 'mp', pct: '10', cuotas: '', texto: '', textoBarra: '', verBarra: true, etiqueta: '', logo: '', modo: 'incluido', verPrecio: true, barra: { tam: 1, letra: 'mont', alinear: 'centro', dy: 0 } },
-    precio: { antes: 'antes', etiqueta: 'FINAL', ahorro: true, grande: true, insignia: 1.3, placa: 1, ahorroTam: 1, limpio: true, porUnidad: true, fraccion: '100g' },
+    precio: { antes: 'antes', etiqueta: 'FINAL', ahorro: true, grande: true, insignia: 1.3, placa: 1, ahorroTam: 1, limpio: true, porUnidad: true, fraccion: '100g', colorPlaca: 'tema' },
     pagos: { ver: false, lista: ['efectivo', 'debito', 'credito', 'mp', 'transferencia'], textos: {} },
     mensaje: { kicker: '¡Aprovechá!', titulo: 'Descuento en todos los productos', grande: '', grande2: '', condicion: '', texto: 'Válido para todas tus compras en el local.' },
     destacado: { mensaje: 'OFERTA IMPERDIBLE', mensaje2: '' },
