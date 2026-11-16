@@ -319,7 +319,7 @@ async function asignarProducto(p, it) {
   try { info = await analizarFoto(urlImagen(it.ruta, it.mtime)); } catch (e) { /* se marca como faltante al dibujar */ }
   const m = recordadoDe(it.ruta);
   Object.assign(p, { archivo: it.ruta, mtime: it.mtime, img: null, demo: null, imgV: (p.imgV || 0) + 1, alfa: info.alfa, quitarFondo: !info.alfa && info.claro, zoom: 1, dx: 0, dy: 0, tol: 40,
-    nombre: (m && m.nombre) || it.nombre, desc: (m && m.desc) || '', regular: (m && m.regular) || '', final: (m && m.final) || '', unidad: (m && m.unidad) || '', etiqueta: (m && m.etiqueta) || '', nota: (m && m.nota) || '', pct: '', pago: '', recordado: !!(m && m.final) });
+    nombre: (m && m.nombre) || it.nombre, desc: (m && m.desc) || '', regular: (m && m.regular) || '', final: (m && m.final) || '', cant: (m && m.cant) || '', unidad: (m && m.unidad) || '', etiqueta: (m && m.etiqueta) || '', nota: (m && m.nota) || '', pct: '', pago: '', recordado: !!(m && m.final) });
 }
 async function asignarFoto(f, it) {
   let info = { alfa: false, claro: false };
@@ -347,7 +347,7 @@ const esNombreDeCamara = s => /^(img|dsc|pxl|mvimg|vid|wa|screenshot|captura|wha
 const nombreLindo = s => s.replace(/[_]+/g, ' ').replace(/\s+/g, ' ').trim();
 
 // ── filas de casilleros ──
-const resumenPrecio = p => { const F = parsePrecio(p.final); return F ? '$' + F.int + (F.dec ? ',' + F.dec : '') : ''; };
+const resumenPrecio = p => { const F = parsePrecio(p.final); return F ? (cantDe(p) ? cantDe(p) + ' x ' : '') + '$' + F.int + (F.dec ? ',' + F.dec : '') : ''; };
 function campoMini(etq, input) { return h('label', { class: 'mini' }, h('span', null, etq), h('span', { class: 'peso' }, input)); }
 function irAlPrecio(i) {
   const sig = $(`.prow[data-tipo="producto"][data-i="${i}"] .in-foco`, DOM.panel);
@@ -530,17 +530,26 @@ function filaProducto(p, i) {
   // Antes · % · Oferta: con el precio anterior y el %, la oferta se calcula sola (con centavos, sin redondear)
   const sinRecordado = () => { if (p.recordado) { p.recordado = false; fila.classList.remove('recordado'); } };
   const pctPh = () => { const I = infoProducto(p); return I.pct ? String(I.pct) : ''; };
-  const recalcular = () => { const v = ofertaDesde(p.regular, p.pct); if (v != null) { p.final = precioATexto(v); oferta.value = p.final; sinRecordado(); } };
+  const recalcular = () => { const v = ofertaDesde(p.regular, p.pct, cantDe(p)); if (v != null) { p.final = precioATexto(v); oferta.value = p.final; sinRecordado(); } };
   const antes = texto(p, 'regular', { ph: 'ej. 20.000', mode: 'decimal', max: 14, after: () => { if (p.pct) recalcular(); pct.placeholder = pctPh(); cambio(); } });
   const pct = h('input', { type: 'text', value: p.pct || '', placeholder: pctPh(), inputmode: 'decimal', autocomplete: 'off', maxlength: 5, 'aria-label': 'Porcentaje de descuento',
     oninput: e => { p.pct = e.target.value.replace(/[^\d.,]/g, ''); if (p.pct && !parsePrecio(p.regular)) { refrescarLecturas(); return; } recalcular(); cambio(); } });
-  const oferta = texto(p, 'final', { ph: 'ej. 18.000', mode: 'decimal', max: 14, after: () => { sinRecordado(); if (p.pct) { p.pct = ''; pct.value = ''; } pct.placeholder = pctPh(); cambio(); } });
+  const oferta = texto(p, 'final', { ph: 'ej. 18.000', mode: 'decimal', max: 14, after: () => {
+    const sc = separarCantidad(p.final);                            // escribió «2x3100» en el precio: la cantidad va a su casillero
+    if (sc) { p.cant = sc.cant; cant.value = sc.cant; p.final = sc.final; oferta.value = sc.final; }
+    sinRecordado(); if (p.pct) { p.pct = ''; pct.value = ''; } pct.placeholder = pctPh(); cambio(); } });
+  // promo por cantidad: «2 x $3.100» (el precio final es por las 2). Vacío o 1 = el precio de 1 sola unidad.
+  const cant = h('input', { type: 'text', value: p.cant || '', placeholder: '1', inputmode: 'numeric', autocomplete: 'off', maxlength: 2, 'aria-label': 'Cantidad (para promos como 2 x $3.100)',
+    title: 'Para promos como «2 x $3.100»: poné 2 y el precio de las 2 juntas. Vacío = precio de 1.',
+    oninput: e => { const v = e.target.value.replace(/\D/g, ''); if (v !== e.target.value) e.target.value = v; p.cant = v; if (p.pct && parsePrecio(p.regular)) recalcular(); cambio(); } });
+  cant.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); oferta.focus(); oferta.select(); } });
   oferta.classList.add('in-foco');
   oferta.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); irAlPrecio(i + 1); } });
   pct.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); irAlPrecio(i + 1); } });
   fila.append(h('span', { class: 'pnum' }, String(i + 1)), thumb,
     h('div', { class: 'pcampos' }, nombre,
-      h('div', { class: 'pprecios' }, campoMini('Precio normal', antes), h('label', { class: 'mini' }, h('span', null, '% desc.'), h('span', { class: 'pct' }, pct)), campoMini('Precio final', oferta)),
+      h('div', { class: 'pprecios' }, campoMini('Precio normal', antes), h('label', { class: 'mini' }, h('span', null, '% desc.'), h('span', { class: 'pct' }, pct)),
+        h('label', { class: 'mini' }, h('span', null, 'Cantidad'), h('span', { class: 'cantx' }, cant)), campoMini('Precio final', oferta)),
       selectorCondicion(p),
       h('div', { class: 'pextra' }, h('label', { class: 'mini' }, h('span', null, 'Unidad'), texto(p, 'unidad', { ph: 'x kg, c/u, x fardo…', list: 'lista-unidades', max: 14 })), tamFoto(p)),
       h('div', { class: 'calc', 'data-calc': String(i) }), S.formato.startsWith('combo_') && i === 0 ? cajaCombo(p, i) : null),
@@ -607,9 +616,9 @@ function refrescarLecturas() {
     if (p.pct && !(pv > 0 && pv < 100)) { c.classList.add('bad'); c.textContent = 'El % de descuento tiene que ser mayor que 0 y menor que 100.'; return; }
     if (p.pct && !I.R) { c.classList.add('bad'); c.textContent = 'Para calcular con el %, escribí primero el precio normal.'; }
     else if (I.F && I.R) {
-      if (I.R.num > I.F.num) c.replaceChildren(tx('Normal '), h('s', null, txtPrecio(I.R)), tx(p.pct ? ` − ${p.pct}% = final ` : ' → final '), h('b', null, txtPrecio(I.F)), tx(p.pct ? '' : ` (${I.pct}% OFF)`), tx(' · ahorra '), h('b', null, pesos(I.ahorro)), ...conPromo);
+      if (I.R.num > I.F.num) c.replaceChildren(tx('Normal '), h('s', null, txtPrecio(I.R)), tx(p.pct ? ` − ${p.pct}% = final ` : ' → final '), h('b', null, txtPrecio(I.F)), tx(p.pct ? '' : ` (${I.pct}% OFF)`), tx(' · ahorra '), h('b', null, pesos(I.ahorro)), ...(cadaUno(p) ? [tx(' · sale ' + cadaUno(p))] : []), ...conPromo);
       else { c.classList.add('bad'); c.textContent = 'El precio anterior es menor o igual al de oferta: no se muestra descuento.'; }
-    } else if (I.F) { if (p.recordado) c.textContent = 'Es el precio de la última vez: revisalo.'; else c.replaceChildren(...(conPromo.length ? [tx('Final '), h('b', null, txtPrecio(I.F)), ...conPromo] : [])); }
+    } else if (I.F) { if (p.recordado) c.textContent = 'Es el precio de la última vez: revisalo.'; else c.replaceChildren(...(conPromo.length || cadaUno(p) ? [tx('Final '), h('b', null, txtPrecio(I.F)), ...(cadaUno(p) ? [tx(' · sale ' + cadaUno(p))] : []), ...conPromo] : [])); }
     else c.textContent = productoVacio(p) ? '' : 'Escribí el precio normal y el % (o directamente el precio final).';
   });
   $$('.prow[data-tipo="foto"]', DOM.panel).forEach(f => {
@@ -822,7 +831,7 @@ function cajaLeyendaPrecio() {
     const pv = parseFloat(pct.replace(',', '.'));
     if (!(pv > 0 && pv < 100)) { aviso('Escribí un % de descuento entre 1 y 99 (por ejemplo 10).'); pctTodos.focus(); pctTodos.select(); return; }
     let n = 0, sinAntes = 0;
-    S.productos.slice(0, L_ACTUAL().slots).forEach(p => { if (productoVacio(p)) return; const v = ofertaDesde(p.regular, pct); if (v == null) { sinAntes++; return; } p.pct = pct; p.final = precioATexto(v); p.recordado = false; n++; });
+    S.productos.slice(0, L_ACTUAL().slots).forEach(p => { if (productoVacio(p)) return; const v = ofertaDesde(p.regular, pct, cantDe(p)); if (v == null) { sinAntes++; return; } p.pct = pct; p.final = precioATexto(v); p.recordado = false; n++; });
     construirListaCasilleros('producto'); cambio();
     aviso(n ? `Listo: precio final de ${n} ${n === 1 ? 'producto' : 'productos'} = precio normal − ${pct}%.` + (sinAntes ? ` ${sinAntes} no tienen precio normal.` : '') : 'Ningún producto tiene “precio normal”. Escribilo primero.');
   };
@@ -998,7 +1007,7 @@ function pctBarra() {
     S.productos.slice(0, L_ACTUAL().slots).forEach(p => {
       if (productoVacio(p) || (p.pago && p.pago !== S.promo.tipo) || !parsePrecio(p.regular)) return;
       if (String(p.pct || '') !== viejo && p.pct) return;                   // tenía un % propio distinto: se respeta
-      p.pct = nuevo; p.final = precioATexto(ofertaDesde(p.regular, nuevo)); p.recordado = false; n++;
+      p.pct = nuevo; p.final = precioATexto(ofertaDesde(p.regular, nuevo, cantDe(p))); p.recordado = false; n++;
     });
     viejo = nuevo;
     if (n) { construirListaCasilleros('producto'); cambio(); aviso(`Actualicé ${n} ${n === 1 ? 'producto' : 'productos'} al ${nuevo}% (precio normal − ${nuevo}% = precio final).`); }
@@ -1714,6 +1723,22 @@ async function autotest() {
       t('palabra clave por canal', textoPublicacion(S, 'canal', 'clasico', { clave: true }).includes('«CANAL»') && textosEstados(S, { clave: true }).general.includes('«ESTADO»'));
       t('¿cómo te fue?: resumen', resumenResultados({ ventas: '1.250.000', claves: { canal: 7, estado: 3 } }) === 'Vendiste $1.250.000 · 10 dijeron la palabra (canal 7, estado 3)', resumenResultados({ ventas: '1.250.000', claves: { canal: 7, estado: 3 } }));
       t('duplicar: sin los resultados de la semana anterior', paraLaSemanaQueViene(normalizarEstado({ ...estadoParaGuardar(S), resultados: { ventas: '1' } })).resultados === null);
+    }
+    {                                                               // promo por cantidad: «2 x $3.100»
+      const sc = separarCantidad('2x3100'), sc2 = separarCantidad('2 x $3.100'), sc3 = separarCantidad('3×2.500,50');
+      t('cantidad: «2x3100» se separa', sc && sc.cant === '2' && sc.final === '3100' && sc2 && sc2.cant === '2' && sc2.final === '3.100' && sc3 && sc3.cant === '3' && sc3.final === '2.500,50', JSON.stringify([sc, sc2, sc3]));
+      t('cantidad: un precio común no se toca', separarCantidad('3100') === null && separarCantidad('3.100,50') === null && separarCantidad('1x500') === null);
+      const q = nuevoProducto({ nombre: 'Atún Cascabel', regular: '2.000', final: '3.100', cant: '2' }), I = infoProducto(q);
+      t('cantidad: placa «2 x $3.100»', I.F.cant === 2 && txtPrecio(I.F) === '2 x $3.100' && resumenPrecio(q) === '2 x $3.100', txtPrecio(I.F));
+      t('cantidad: el normal se compara por las 2', I.R.num === 4000 && txtPrecio(I.R) === '2 x $4.000' && I.pct === 22 && I.ahorro === 900, [I.R.num, I.pct, I.ahorro].join(' '));
+      t('cantidad: precio de cada uno', notaDe(q).startsWith('$1.550 c/u') && cadaUno(nuevoProducto({ final: '1.000', cant: '3' })) === '$333,34 c/u', notaDe(q));
+      t('cantidad: vacío o 1 = precio de 1', !infoProducto(nuevoProducto({ final: '900', cant: '1' })).F.cant && !infoProducto(nuevoProducto({ final: '900' })).F.cant && cadaUno(nuevoProducto({ final: '900' })) === '');
+      t('cantidad: % sobre las 2', ofertaDesde('2.000', '10', 2) === 3600 && ofertaDesde('2.000', '10') === 1800);
+      t('cantidad: x litro de 1 unidad', porUnidad(nuevoProducto({ nombre: 'Aceite 900 ml', final: '3.600', cant: '2' })) === '$2.000 x litro', porUnidad(nuevoProducto({ nombre: 'Aceite 900 ml', final: '3.600', cant: '2' })));
+      { const cx = document.createElement('canvas').getContext('2d'), a = plateGeom(cx, 2000, 70, parsePrecio('3.100')), b = plateGeom(cx, 2000, 70, { ...parsePrecio('3.100'), cant: 2 });
+        t('cantidad: la placa hace lugar al «2x»', b.w > a.w && b.ds === a.ds, a.w.toFixed(0) + ' → ' + b.w.toFixed(0)); }
+      const O = ofertasPublicas({ ...S, formato: 'a4_10', productos: [q, ...Array.from({ length: 15 }, () => nuevoProducto())] });
+      t('cantidad: va a la página de ofertas', O.productos[0].cant === 2 && O.productos[0].regular === '4.000' && O.productos[0].porUnidad.includes('$1.550 c/u'), JSON.stringify(O.productos[0]));
     }
   } catch (e) { t('excepción', false, e.message + ' ' + (e.stack || '').split('\n')[1]); }
   const pre = document.createElement('pre'); pre.id = 'autotest'; pre.textContent = out.join('\n'); pre.style.cssText = 'position:fixed;left:0;top:0;z-index:99;background:#111;color:#9f9;padding:10px;margin:0;font:13px monospace;max-width:100vw;overflow:auto;max-height:100vh'; document.body.append(pre);

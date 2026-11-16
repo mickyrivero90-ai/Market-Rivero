@@ -300,7 +300,11 @@ textarea:focus { border-color: var(--pop); outline: none; }
 .prox { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
 .prox em { color: var(--muted); font-style: normal; }
 
-.pprecios { grid-template-columns: minmax(0, 1fr) 68px minmax(0, 1fr); }
+.pprecios { grid-template-columns: minmax(0, 1fr) 58px 54px minmax(0, 1fr); gap: 6px; }
+.cantx { position: relative; display: block; }
+.cantx input { width: 100%; min-width: 0; background: var(--surface-2); border: 1.5px solid var(--line); border-radius: 10px; padding: 10px 22px 10px 8px; font-weight: 800; font-size: 15px; min-height: 42px; text-align: right; }
+.cantx::after { content: 'x'; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-weight: 800; color: var(--muted); pointer-events: none; }
+.cantx input:focus { border-color: var(--pop); outline: none; }
 .pct { position: relative; display: block; }
 .pct input { width: 100%; min-width: 0; background: var(--surface-2); border: 1.5px solid var(--line); border-radius: 10px; padding: 10px 20px 10px 10px; font-weight: 800; font-size: 15px; min-height: 42px; text-align: right; }
 .pct::after { content: '%'; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-weight: 800; color: var(--muted); pointer-events: none; }
@@ -362,7 +366,7 @@ textarea.planilla { font: 600 13.5px/1.45 ui-monospace, Menlo, Consolas, monospa
   .top { flex-wrap: wrap; row-gap: 8px; }                              /* en el celular: la marca arriba y los botones abajo, sin taparse */
   .brand { flex: 1 1 100%; }
   .top .actions { flex: 1 1 100%; flex-wrap: wrap; justify-content: flex-end; }
-  .pprecios { grid-template-columns: 1fr 64px 1fr; gap: 6px; }
+  .pprecios { grid-template-columns: 1fr 1fr; gap: 6px; }
 }
 
 .cond-fila { display: flex; align-items: center; gap: 8px; font: 800 11px var(--f-body); letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }

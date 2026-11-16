@@ -453,9 +453,10 @@ function mktCalc() {
     elegido = prods[+e.target.value] || null;
     if (elegido) {                                                 // sin «precio normal», el precio de hoy es el normal: se prueba con un %
       const conAntes = !!parsePrecio(elegido.regular);
-      inNormal.value = conAntes ? elegido.regular : elegido.final || ''; inOferta.value = conAntes ? elegido.final || '' : ''; inPct.value = ''; inCosto.value = costos[clave(elegido)] || '';
+      const F = parsePrecio(elegido.final), fin1 = F && cantDe(elegido) ? precioATexto(F.num / cantDe(elegido)) : elegido.final || '';   // «2 x $3.100»: la cuenta es por unidad
+      inNormal.value = conAntes ? elegido.regular : fin1; inOferta.value = conAntes ? fin1 : ''; inPct.value = ''; inCosto.value = costos[clave(elegido)] || '';
     }
-    calcular(); } }, h('option', { value: '' }, prods.length ? 'Elegí un producto del folleto (o escribí los precios)' : 'Escribí los precios'), ...prods.map((p, i) => h('option', { value: String(i) }, `${p.nombre} · $${p.final}`)));
+    calcular(); } }, h('option', { value: '' }, prods.length ? 'Elegí un producto del folleto (o escribí los precios)' : 'Escribí los precios'), ...prods.map((p, i) => h('option', { value: String(i) }, `${p.nombre} · ${resumenPrecio(p)}`)));
   function calcular() {
     const c = numDe(inCosto.value), n = numDe(inNormal.value); let o = numDe(inOferta.value);
     const pv = parseFloat(String(inPct.value || '').replace(',', '.'));
@@ -508,7 +509,7 @@ function mktCombo() {
   const inPrecio = h('input', { type: 'text', inputmode: 'decimal', placeholder: 'precio del combo', autocomplete: 'off' });
   const inPct = h('input', { type: 'text', inputmode: 'decimal', placeholder: '15', maxlength: 5, autocomplete: 'off' });
   const res = h('div', { class: 'calc-res', 'aria-live': 'polite' });
-  const suma = () => [...elegidos.entries()].reduce((t, [i, n]) => t + parsePrecio(S.productos[i].final).num * n, 0);
+  const suma = () => [...elegidos.entries()].reduce((t, [i, n]) => t + parsePrecio(S.productos[i].final).num / (cantDe(S.productos[i]) || 1) * n, 0);
   const calcular = () => {
     const tot = aCentavos(suma()), pv = parseFloat(String(inPct.value || '').replace(',', '.'));
     if (pv > 0 && pv < 100 && tot) inPrecio.value = precioATexto(conDescuento(tot, pv));
@@ -522,7 +523,7 @@ function mktCombo() {
   const filas = prods.map(({ p, i }) => {
     const cant = h('input', { type: 'number', min: '1', max: '9', value: '1', class: 'cant', 'aria-label': 'Cantidad de ' + p.nombre, oninput: () => { if (elegidos.has(i)) { elegidos.set(i, Math.max(1, Math.min(9, +cant.value || 1))); calcular(); } } });
     return h('label', { class: 'combo-fila' }, h('input', { type: 'checkbox', onchange: e => { if (e.target.checked) elegidos.set(i, Math.max(1, +cant.value || 1)); else elegidos.delete(i); if (!inNombre.value && elegidos.size) inNombre.placeholder = 'Ej.: Combo ' + (S.titulo || 'de la semana'); calcular(); } }),
-      h('span', null, p.nombre, h('small', null, ' $' + p.final + (p.unidad ? ' ' + p.unidad : ''))), cant);
+      h('span', null, p.nombre, h('small', null, ' ' + resumenPrecio(p) + (p.unidad ? ' ' + p.unidad : ''))), cant);
   });
   inPrecio.addEventListener('input', () => { inPct.value = ''; calcular(); });
   inPct.addEventListener('input', calcular);

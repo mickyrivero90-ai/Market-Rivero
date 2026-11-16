@@ -142,26 +142,28 @@ def pagina_ofertas(d, fotos, base_url):
 
     def tarjeta(p):
         F, R = _num(p.get("final")), _num(p.get("regular"))
+        n = p.get("cant") if isinstance(p.get("cant"), int) and 2 <= p.get("cant") <= 99 else 0
+        cx = f"{n} x " if n else ""  # promo por cantidad: «2 x $3.100» (el precio es por las n unidades)
         foto = fotos.get(p.get("foto"))
         img = (f'<img src="../{_e(foto)}" alt="{_e(p.get("nombre"))}" loading="lazy" decoding="async">' if foto
                else '<img src="../icono-512.png" alt="" class="sin-foto" loading="lazy">')
         antes = ""
         if R and F and R > F:
             etq = "Por separado" if p.get("combo") else "Antes"
-            antes = f'<p class="antes">{etq} <s>{_e(_pesos(R))}</s> <span class="ahorro">Ahorrás {_e(_pesos(R - F))}</span></p>'
+            antes = f'<p class="antes">{etq} <s>{_e(cx + _pesos(R))}</s> <span class="ahorro">Ahorrás {_e(_pesos(R - F))}</span></p>'
         unidad = f' <span class="unidad">{_e(str(p.get("unidad")).upper())}</span>' if p.get("unidad") else ""
         extra = " · ".join(x for x in (str(p.get("porUnidad") or "").strip(), str(p.get("nota") or "").strip()) if x)
         cond = f'<p class="cond">{_e(p.get("condicion"))}</p>' if p.get("condicion") else ""
         insig = f'<span class="insignia">{_e(p.get("etiqueta"))}</span>' if p.get("etiqueta") else (f'<span class="insignia pct">-{int(p.get("pct"))}%</span>' if p.get("pct") else "")
         pedir = ""
         if wa:
-            msg = f"¡Hola {nombre}! Quiero pedir: {p.get('nombre')} a {_pesos(F)}"
+            msg = f"¡Hola {nombre}! Quiero pedir: {p.get('nombre')} a {cx}{_pesos(F)}"
             pedir = f'<a class="pedir" href="https://wa.me/{wa}?text={urllib.parse.quote(msg)}" target="_blank" rel="noopener">Pedir por WhatsApp</a>'
         desc = f'<p class="desc">{_e(p.get("desc"))}</p>' if p.get("desc") else ""
         busca = _e(" ".join(str(p.get(k) or "") for k in ("nombre", "desc", "categoria")).lower())
         return (f'<article class="oferta" data-busca="{busca}">{insig}<div class="foto">{img}</div>'
                 f'<div class="datos"><h3>{_e(p.get("nombre"))}</h3>{desc}{antes}'
-                f'<p class="precio"><span class="placa">{_e(_pesos(F))}</span>{unidad}</p>'
+                f'<p class="precio"><span class="placa">{_e(cx + _pesos(F))}</span>{unidad}</p>'
                 + (f'<p class="extra">{_e(extra)}</p>' if extra else "") + f'{cond}{pedir}</div></article>')
 
     secciones = []

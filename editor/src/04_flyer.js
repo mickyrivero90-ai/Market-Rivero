@@ -40,7 +40,10 @@ const THEMES = {
 
 // ── datos derivados de un producto ──
 function infoProducto(p) {
-  const F = parsePrecio(p.final), R = parsePrecio(p.regular);
+  const n = cantDe(p), F = parsePrecio(p.final), R1 = parsePrecio(p.regular);
+  // «2 x $3.100»: el precio final es por las n unidades; el normal se escribe de 1 y se compara por n («ANTES 2 x $4.000»)
+  const R = n && R1 ? { ...parsePrecio(precioATexto(R1.num * n)), cant: n } : R1;
+  if (n && F) F.cant = n;
   const pct = F && R ? pctReal(R.num, F.num) : 0;                 // hacia abajo: nunca se anuncia más descuento que el real
   if (R && p.combo) R.separado = true;                            // combo: el precio tachado es la suma de los productos, no un «antes»
   return { F, R, pct, ahorro: pct ? R.num - F.num : 0 };
@@ -267,13 +270,15 @@ function drawBadge(ctx, cx, cy, R, p, T, pct, rot = -0.17, escala = null) {
 }
 
 // ───────── placa de precio ─────────
+const CANT_TAM = 0.62;                                           // tamaño del «2x» de las promos por cantidad, respecto de la cifra
 /** Medidas de la placa: alto, tamaño de la cifra y ancho. Con o.min (cuando se agranda), crece solo hasta donde la cifra entra entera a su tamaño. */
 function plateGeom(ctx, maxW, H0, price, o = {}) {
   const skew = 0.16, dollar = 0.44, kFinal = o.final === false || !ETQ_PRECIO ? 0 : 0.27;
   const medir = (h, ds) => {
     const gap = h * 0.05; ctx.font = FB(900, ds); const wi = measure(ctx, price.int, 0);
     ctx.font = FB(900, ds * dollar); const wd = measure(ctx, '$', 0), wc = price.dec ? measure(ctx, price.dec, 0) : 0;
-    return { gap, wi, wd, wc, total: wd + gap + wi + (price.dec ? gap * 0.6 + wc : 0) };
+    ctx.font = FB(900, ds * CANT_TAM); const wq = price.cant ? measure(ctx, price.cant + 'x', 0) + gap * 1.6 : 0;   // «2x» antes del $ (promo por cantidad)
+    return { gap, wi, wd, wc, wq, total: wq + wd + gap + wi + (price.dec ? gap * 0.6 + wc : 0) };
   };
   let H = H0;
   if (o.min && H0 > o.min) { const a = medir(100, 98).total / 100; H = Math.max(o.min, Math.min(H0, maxW / (a + 0.52 + skew + kFinal))); }
@@ -304,6 +309,7 @@ function drawPlate(ctx, x, yBottom, maxW, H0, price, T, o = {}) {
   let tx = x + padX + H * skew * 0.1;
   const shd = [T.priceShadow, 2, 0, 3];
   const dsz = ds * dollar;
+  if (price.cant) { text(ctx, price.cant + 'x', tx, baseY, { font: FB(900, ds * CANT_TAM), fill: T.priceInk, shadow: shd }); tx += m.wq; }
   text(ctx, '$', tx, topY + dsz * capH, { font: FB(900, dsz), fill: T.priceInk, shadow: shd }); tx += m.wd + gap;
   text(ctx, price.int, tx, baseY, { font: FB(900, ds), fill: T.priceInk, shadow: shd }); tx += m.wi;
   if (price.dec) text(ctx, price.dec, tx + gap * 0.6, topY + dsz * capH, { font: FB(900, dsz), fill: T.priceInk, shadow: shd });
@@ -330,7 +336,8 @@ function modoLimpio(S) {
  *  Lo que se vende por kilo dice cuánto salen 100 g («$783 los 100 g»). '' si no corresponde. */
 function porUnidad(p) {
   if (p.combo || (p.fotosExtra || []).length) return '';           // un combo junta varios productos: no hay un precio por litro o kilo
-  const F = parsePrecio(p.final); if (!F || !(F.num > 0)) return '';
+  const F0 = parsePrecio(p.final); if (!F0 || !(F0.num > 0)) return '';
+  const F = { num: F0.num / (cantDe(p) || 1) };                    // «2 x $3.100»: el precio por kilo o litro es el de 1 unidad
   const u = String(p.unidad || '').toLowerCase().trim();
   if (/kg|kilo/.test(u)) {                                        // fiambres y quesos: 100 g, ¼ kg o los dos
     const fr = PRECIO_CFG.fraccion, cien = '$' + precioATexto(aCentavos(F.num / 10)), cuarto = '$' + precioATexto(aCentavos(F.num / 4));
@@ -348,7 +355,12 @@ function porUnidad(p) {
 /** Cómo se muestra lo que se vende por kilo: '100g', 'cuarto', 'ambos' o 'no' (en la 3.5 era true / false). */
 const fraccionDe = v => (v === false || v === 'no' ? 'no' : ['cuarto', 'ambos'].includes(v) ? v : '100g');
 /** Nota debajo del precio: la que escribió la persona y el precio por kilo o litro. */
-const notaDe = p => [String(p.nota || '').trim(), porUnidad(p)].filter(Boolean).join(' · ');
+const notaDe = p => [cadaUno(p), String(p.nota || '').trim(), porUnidad(p)].filter(Boolean).join(' · ');
+/** «2 x $3.100» → «$1.550 c/u» (hacia arriba: nunca menos de lo que se cobra). '' si no es promo por cantidad. */
+function cadaUno(p) {
+  const n = cantDe(p), F = n && parsePrecio(p.final); if (!F || !(F.num > 0) || p.combo) return '';
+  return '$' + precioATexto(Math.ceil(F.num * 100 / n) / 100) + ' c/u';
+}
 /** Condición de pago debajo del precio de un cuadro (en modo limpio no se repite la de la barra). */
 const chipCard = p => { const c = chipProducto(p, S_DIBUJO); return c && LIMPIO && !c.price && (!p.pago || p.pago === c.P.tipo) ? null : c; };
 /** Cuadros de productos (se eligen en "Cuadros de productos"): separación, margen a los costados, fotos, producto estrella
@@ -366,7 +378,7 @@ const altoEstrella = (h0, total, minResto) => { const e = CUADROS_CFG.estrella |
 const notaTam = k => 15 * k * Math.min(1.5, PRECIO_CFG.insignia || 1);
 const ANTES_ESTILOS = { antes: ['ANTES', ''], normal: ['PRECIO NORMAL', ''], lista: ['PRECIO DE LISTA', ''], de_a: ['DE', 'A'], solo: ['', ''] };
 const antesPartes = price => (price && price.separado ? ['POR SEPARADO', ''] : ANTES_ESTILOS[PRECIO_CFG.antes] || ANTES_ESTILOS.antes);
-const txtPrecio = price => '$' + price.int + (price.dec ? ',' + price.dec : '');
+const txtPrecio = price => (price.cant ? price.cant + ' x ' : '') + '$' + price.int + (price.dec ? ',' + price.dec : '');
 /** Ancho de la leyenda del precio anterior ("ANTES $20.600", "DE $20.600 A"…) a un tamaño dado. */
 function measureAntes(ctx, price, size) {
   const [pre, post] = antesPartes(price), gap = size * 0.3;
