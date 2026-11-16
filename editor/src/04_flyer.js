@@ -384,9 +384,10 @@ function porUnidad(p) {
 const fraccionDe = v => (v === false || v === 'no' ? 'no' : ['cuarto', 'ambos'].includes(v) ? v : '100g');
 /** Nota debajo del precio: la que escribió la persona y el precio por kilo o litro. */
 const notaDe = p => [cadaUno(p), String(p.nota || '').trim(), porUnidad(p)].filter(Boolean).join(' · ');
-/** «2 x $3.100» → «$1.550 c/u» (hacia arriba: nunca menos de lo que se cobra). '' si no es promo por cantidad. */
+/** «2 x $3.100» → «$1.550 c/u» (hacia arriba: nunca menos de lo que se cobra). '' si no es promo por cantidad.
+ *  También en un combo: «2 x $…» de un combo sigue siendo el precio de 2 (antes un «Es un combo» olvidado lo escondía). */
 function cadaUno(p) {
-  const n = cantDe(p), F = n && parsePrecio(p.final); if (!F || !(F.num > 0) || p.combo) return '';
+  const n = cantDe(p), F = n && parsePrecio(p.final); if (!F || !(F.num > 0)) return '';
   return '$' + precioATexto(Math.ceil(F.num * 100 / n) / 100) + ' c/u';
 }
 /** Condición de pago debajo del precio de un cuadro (en modo limpio no se repite la de la barra). */

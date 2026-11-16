@@ -1328,3 +1328,14 @@ blackfriday mirados en Chromium.
    blackfriday: #FFE24A→#FFC400, tinta #0A0A0A). colorCant() ya elige la tinta negra para el «2x» y «FINAL».
    Selector en cajaLeyendaPrecio() (#ley-color) y la placa de ejemplo se pinta amarilla.
 Probado: autoprueba 169 OK (1 nueva); post 4 naranja con «amarilla» y «cantidad» mirados en Chromium.
+
+54. VERSIÓN 6.10: EL «c/u» SALE SIEMPRE EN LOS «2 x $…» (16/11/2026)
+------------------------------------------------------------------
+ - El dueño: el atún «2 x $3.100» no mostraba «$1.550 c/u» (otros «2 x» sí). Causa probable: p.combo = true
+   escondido. elegirFormato('combo_…') lo prendía en productos[0] y nunca se apagaba; asignarProducto() no lo
+   reseteaba y el producto lo llevaba al reordenar. cadaUno() devolvía '' con p.combo. (El folleto real no estaba en
+   el repo: la causa se dedujo del código; el dueño lo corrigió a mano en su folleto.)
+ - cadaUno(): ya no mira p.combo. elegirFormato(): marca combo + comboAuto; en otro formato apaga los comboAuto.
+   El casillero «Es un combo» pone comboAuto = false (se respeta). asignarProducto(): combo y comboAuto solo se
+   conservan en el producto 1 de un formato combo.
+Probado: autoprueba 171 OK (2 nuevas).
