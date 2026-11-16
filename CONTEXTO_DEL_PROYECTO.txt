@@ -1309,3 +1309,13 @@ Probado: autoprueba 157 OK; panchos a la derecha, pizza centro, hamburguesa a la
    el precio de 1 unidad.
 Probado: autoprueba 167 OK (10 nuevas); prueba_ofertas 17 de 17; folletos A4 10, post 4, un producto, carteles y
 estrella + 4 con «2x $3.100» en Chromium. prueba_nube.py no se corrió (necesita Firefox y geckodriver).
+
+52. VERSIÓN 6.8: EL «2» DE «2 x $3.100» SE VE GRANDE (16/11/2026)
+---------------------------------------------------------------
+ - El dueño: el «2x» chico se pierde y a simple vista parece $3.100 por unidad. drawPlate(): el número al tamaño de
+   la cifra (CANT_NUM = 1) y la «x» al 50 % (CANT_X), en colorCant(T).
+ - colorCant(T): T.accent[0] salvo que su contraste con la placa (T.price) sea < 2 y peor que el de T.priceInk
+   (luminancia(), contraste() WCAG). Solo cambia en blackfriday (acento = placa, contraste 1,00). La palabra «FINAL»
+   de la placa usa el mismo color (antes era invisible en blackfriday).
+Probado: autoprueba 168 OK (1 nueva: el «2» se distingue de la placa en los 24 fondos); A4 10, post 4, naranja y
+blackfriday mirados en Chromium.

@@ -270,15 +270,30 @@ function drawBadge(ctx, cx, cy, R, p, T, pct, rot = -0.17, escala = null) {
 }
 
 // ───────── placa de precio ─────────
-const CANT_TAM = 0.62;                                           // tamaño del «2x» de las promos por cantidad, respecto de la cifra
+// «2x» de las promos por cantidad: el número tan grande como la cifra y en el color de acento (que no se lea «$3.100 c/u»); la «x», chica
+const CANT_NUM = 1, CANT_X = 0.5;
+/** Luminancia de un color «#rrggbb» o «#rgb» (null si no es así). */
+function luminancia(c) {
+  let h = String(c || '').trim(); if (/^#[0-9a-f]{3}$/i.test(h)) h = '#' + [...h.slice(1)].map(x => x + x).join('');
+  if (!/^#[0-9a-f]{6}$/i.test(h)) return null;
+  const v = [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255).map(u => (u <= 0.03928 ? u / 12.92 : ((u + 0.055) / 1.055) ** 2.4));
+  return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2];
+}
+const contraste = (a, b) => { const A = luminancia(a), B = luminancia(b); return A == null || B == null ? null : (Math.max(A, B) + 0.05) / (Math.min(A, B) + 0.05); };
+/** Color del «2x» sobre la placa: el de acento (amarillo), salvo que casi no se distinga de la placa (Black Friday): ahí, el de la cifra. */
+function colorCant(T) {
+  const peor = c => Math.min(...(T.price || []).map(p => contraste(c, p) ?? 99));
+  return peor(T.accent[0]) >= 2 || peor(T.accent[0]) >= peor(T.priceInk) ? T.accent[0] : T.priceInk;
+}
 /** Medidas de la placa: alto, tamaño de la cifra y ancho. Con o.min (cuando se agranda), crece solo hasta donde la cifra entra entera a su tamaño. */
 function plateGeom(ctx, maxW, H0, price, o = {}) {
   const skew = 0.16, dollar = 0.44, kFinal = o.final === false || !ETQ_PRECIO ? 0 : 0.27;
   const medir = (h, ds) => {
     const gap = h * 0.05; ctx.font = FB(900, ds); const wi = measure(ctx, price.int, 0);
     ctx.font = FB(900, ds * dollar); const wd = measure(ctx, '$', 0), wc = price.dec ? measure(ctx, price.dec, 0) : 0;
-    ctx.font = FB(900, ds * CANT_TAM); const wq = price.cant ? measure(ctx, price.cant + 'x', 0) + gap * 1.6 : 0;   // «2x» antes del $ (promo por cantidad)
-    return { gap, wi, wd, wc, wq, total: wq + wd + gap + wi + (price.dec ? gap * 0.6 + wc : 0) };
+    ctx.font = FB(900, ds * CANT_NUM); const wn = price.cant ? measure(ctx, String(price.cant), 0) : 0;   // «2x» antes del $ (promo por cantidad)
+    ctx.font = FB(900, ds * CANT_X); const wq = price.cant ? wn + gap * 0.5 + measure(ctx, 'x', 0) + gap * 1.8 : 0;
+    return { gap, wi, wd, wc, wn, wq, total: wq + wd + gap + wi + (price.dec ? gap * 0.6 + wc : 0) };
   };
   let H = H0;
   if (o.min && H0 > o.min) { const a = medir(100, 98).total / 100; H = Math.max(o.min, Math.min(H0, maxW / (a + 0.52 + skew + kFinal))); }
@@ -309,14 +324,18 @@ function drawPlate(ctx, x, yBottom, maxW, H0, price, T, o = {}) {
   let tx = x + padX + H * skew * 0.1;
   const shd = [T.priceShadow, 2, 0, 3];
   const dsz = ds * dollar;
-  if (price.cant) { text(ctx, price.cant + 'x', tx, baseY, { font: FB(900, ds * CANT_TAM), fill: T.priceInk, shadow: shd }); tx += m.wq; }
+  if (price.cant) {
+    const cc = colorCant(T);
+    text(ctx, String(price.cant), tx, baseY, { font: FB(900, ds * CANT_NUM), fill: cc, shadow: shd });
+    text(ctx, 'x', tx + m.wn + gap * 0.5, baseY, { font: FB(900, ds * CANT_X), fill: cc, shadow: shd }); tx += m.wq;
+  }
   text(ctx, '$', tx, topY + dsz * capH, { font: FB(900, dsz), fill: T.priceInk, shadow: shd }); tx += m.wd + gap;
   text(ctx, price.int, tx, baseY, { font: FB(900, ds), fill: T.priceInk, shadow: shd }); tx += m.wi;
   if (price.dec) text(ctx, price.dec, tx + gap * 0.6, topY + dsz * capH, { font: FB(900, dsz), fill: T.priceInk, shadow: shd });
   if (finalW) {                                    // "FINAL" vertical, como en los folletos mayoristas
     ctx.save(); ctx.translate(x + w - finalW * 0.52, y + H / 2); ctx.rotate(-Math.PI / 2);
     const lab = ETQ_PRECIO, lsz = Math.min(H * 0.2, (H * 0.82) / (lab.length * 0.56));
-    text(ctx, lab, 0, lsz * 0.36, { font: FB(900, lsz, false), fill: T.accent[0], align: 'center', tracking: lsz * 0.06 });
+    text(ctx, lab, 0, lsz * 0.36, { font: FB(900, lsz, false), fill: colorCant(T), align: 'center', tracking: lsz * 0.06 });
     ctx.restore();
   }
   return { x, y, w, h: H, right: x + w, ds };

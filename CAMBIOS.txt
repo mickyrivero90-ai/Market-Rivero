@@ -5,6 +5,12 @@ Desde la 3.0, la herramienta online (https://mickyrivero90-ai.github.io/Market-R
 se actualiza sola. Si usás el programa de la PC y muestra un número menor, bajá el nuevo
 desde la herramienta online (⋯ Más → Programa para usar sin internet).
 
+Versión 6.8 · 16 de noviembre de 2026 · EL «2» DE «2 x $3.100» SE VE GRANDE
+- En las promos por cantidad, el número de la cantidad sale tan grande como el precio y en
+  amarillo (la «x» chica): «2x $3.100» se lee de un vistazo y no parece $3.100 cada uno.
+- En los fondos donde la placa es amarilla (Black Friday), el número sale del color del precio.
+  También la palabra «FINAL» de la placa, que en Black Friday no se veía.
+
 Versión 6.7 · 16 de noviembre de 2026 · PRECIO POR CANTIDAD: «2 x $3.100»
 - Cada producto tiene un casillero nuevo, «Cantidad», al lado del precio final. Poné 2 y el
   precio de las 2 juntas (3100): la placa del folleto dice «2x $3.100» y abajo, en chico,

@@ -1737,6 +1737,8 @@ async function autotest() {
       t('cantidad: x litro de 1 unidad', porUnidad(nuevoProducto({ nombre: 'Aceite 900 ml', final: '3.600', cant: '2' })) === '$2.000 x litro', porUnidad(nuevoProducto({ nombre: 'Aceite 900 ml', final: '3.600', cant: '2' })));
       { const cx = document.createElement('canvas').getContext('2d'), a = plateGeom(cx, 2000, 70, parsePrecio('3.100')), b = plateGeom(cx, 2000, 70, { ...parsePrecio('3.100'), cant: 2 });
         t('cantidad: la placa hace lugar al «2x»', b.w > a.w && b.ds === a.ds, a.w.toFixed(0) + ' → ' + b.w.toFixed(0)); }
+      { const malos = Object.keys(THEMES).filter(k => { const T = THEMES[k], c = colorCant(T); return Math.min(...T.price.map(p => contraste(c, p) ?? 99)) < 2; });
+        t('cantidad: el «2» se distingue de la placa en todos los fondos', !malos.length && colorCant(THEMES.naranja) === THEMES.naranja.accent[0], malos.join(', ')); }
       const O = ofertasPublicas({ ...S, formato: 'a4_10', productos: [q, ...Array.from({ length: 15 }, () => nuevoProducto())] });
       t('cantidad: va a la página de ofertas', O.productos[0].cant === 2 && O.productos[0].regular === '4.000' && O.productos[0].porUnidad.includes('$1.550 c/u'), JSON.stringify(O.productos[0]));
     }
