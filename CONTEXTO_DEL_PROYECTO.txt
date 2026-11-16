@@ -1292,3 +1292,20 @@ Probado: autoprueba 157 OK; los tres fondos en post, historia y A4.
  - elegirTema() con combo automático conserva estilo, opac, tamTexto, tamPrecio y alinear.
  - assets/fondos/panchos.webp espejada (recuadro [0,16, 0,39, 0,92, 0,74]).
 Probado: autoprueba 157 OK; panchos a la derecha, pizza centro, hamburguesa a la izquierda y al 160 % en A4.
+
+51. VERSIÓN 6.7: PRECIO POR CANTIDAD «2 x $3.100» (16/11/2026)
+------------------------------------------------------------
+ - Pedido del dueño: ofertas como «2 x $3.100» (atún Cascabel). Producto: campo nuevo p.cant ('' = 1 unidad;
+   cantDe(p) devuelve 2..99 o 0). p.final es el precio de las n unidades; p.regular sigue siendo el de 1.
+ - infoProducto(): F.cant = n y R = regular × n (con cant) → % y «AHORRÁS» sobre el total. txtPrecio() antepone
+   «n x » (lo usan «ANTES», las lecturas del editor y los textos de Marketing). La placa (plateGeom/drawPlate) dibuja
+   «nx» antes del «$» al 62 % de la cifra (CANT_TAM). notaDe() suma cadaUno(p) = «$1.550 c/u» (hacia arriba).
+ - ofertaDesde(regular, pct, cant): con % el final se calcula sobre regular × n. porUnidad() divide por n (x litro de
+   1 unidad). precioPromoTexto() antepone «n x » con descuento adicional. separarCantidad(): «2x3100» escrito en el
+   precio final pasa el 2 al campo Cantidad. Editor: columna «Cantidad» (sufijo «x») entre % y precio final; en
+   pantallas ≤ 600 px la fila de precios va en 2 × 2.
+ - Memoria de precios (CAT) guarda cant; la página pública recibe cant y regular × n (armar_sitio.py muestra
+   «2 x $3.100», «Antes 2 x $4.000» y el pedido por WhatsApp con la cantidad). Marketing: calculadora y combo usan
+   el precio de 1 unidad.
+Probado: autoprueba 167 OK (10 nuevas); prueba_ofertas 17 de 17; folletos A4 10, post 4, un producto, carteles y
+estrella + 4 con «2x $3.100» en Chromium. prueba_nube.py no se corrió (necesita Firefox y geckodriver).

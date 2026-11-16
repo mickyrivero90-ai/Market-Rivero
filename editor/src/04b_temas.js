@@ -517,7 +517,7 @@ function precioConPromo(p, P) {
 function precioPromoTexto(p, P) {
   if (!P || !P.verPrecio) return null;
   const F = parsePrecio(p.final); if (!F) return null;
-  if (P.extra) return '$' + precioATexto(precioConPromo(p, P));
+  if (P.extra) return (cantDe(p) ? cantDe(p) + ' x ' : '') + '$' + precioATexto(precioConPromo(p, P));
   if (P.cuotas) return '$' + precioATexto(Math.ceil(F.num * 100 / P.cuotas) / 100);   // por cuota, hacia arriba: nunca menos de lo que se paga
   return null;
 }

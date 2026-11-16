@@ -88,10 +88,17 @@ function precioATexto(n) {
   return formatMiles(String(ent)) + (dec ? ',' + String(dec).padStart(2, '0') : '');
 }
 /** Precio de oferta a partir del precio anterior y un % (texto como lo escribe la persona), con centavos exactos. */
-function ofertaDesde(regular, pct) {
+function ofertaDesde(regular, pct, cant = 0) {
   const R = parsePrecio(regular), p = numPct(pct);
   if (!R || !p) return null;
-  return conDescuento(R.num, p);
+  return conDescuento(R.num * (cant > 1 ? cant : 1), p);      // «2 x $…»: el precio normal es de 1 unidad; la oferta es por las 2
+}
+/** Promo por cantidad «2 x $3.100»: cuántas unidades cubre el precio final (2 a 99), o 0 si es el precio de 1 sola. */
+const cantDe = p => { const n = parseInt(String((p && p.cant) || '').replace(/\D/g, ''), 10); return n >= 2 && n <= 99 ? n : 0; };
+/** «2x3100», «2 x $3.100», «3×2.500» escrito en el precio final → { cant: '2', final: '3100' }; null si no es así. */
+function separarCantidad(v) {
+  const m = /^\s*(\d{1,2})\s*[xX×*]\s*\$?\s*(\d[\d.,]*)\s*$/.exec(String(v ?? ''));
+  return m && +m[1] >= 2 ? { cant: String(+m[1]), final: m[2] } : null;
 }
 
 // ── WhatsApp ──

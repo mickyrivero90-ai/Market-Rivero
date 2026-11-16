@@ -5,6 +5,18 @@ Desde la 3.0, la herramienta online (https://mickyrivero90-ai.github.io/Market-R
 se actualiza sola. Si usás el programa de la PC y muestra un número menor, bajá el nuevo
 desde la herramienta online (⋯ Más → Programa para usar sin internet).
 
+Versión 6.7 · 16 de noviembre de 2026 · PRECIO POR CANTIDAD: «2 x $3.100»
+- Cada producto tiene un casillero nuevo, «Cantidad», al lado del precio final. Poné 2 y el
+  precio de las 2 juntas (3100): la placa del folleto dice «2x $3.100» y abajo, en chico,
+  «$1.550 c/u». Vacío (o 1) = el precio de una sola unidad, como siempre.
+- También se puede escribir directo «2x3100» (o «2 x $3.100») en el precio final: el programa
+  pasa el 2 a «Cantidad» solo.
+- El precio normal se sigue escribiendo de 1 unidad: el folleto lo muestra por la cantidad
+  («ANTES 2 x $4.000») y calcula el % y el «Ahorrás» sobre las 2. Con el % de descuento, el
+  precio final se calcula por las 2.
+- El precio por litro o por kilo es el de 1 unidad. La cantidad se recuerda con el precio del
+  producto, sale en los textos de Marketing y en la página pública de ofertas («2 x $3.100»).
+
 Versión 6.6 · 13 de noviembre de 2026 · AHORA NOS LLAMAMOS RIVERO MARKET
 - El pie de todos los folletos dice «Rivero Market» (antes «Fiambrería Rivero») y suma el
   Instagram @marketrivero con su ícono, al lado de Facebook. Los folletos y datos guardados se

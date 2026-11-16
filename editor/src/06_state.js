@@ -3,7 +3,7 @@ const ESTADO_VERSION = 10;
 const LEGALES_VIEJO = 'Imágenes ilustrativas. Precios finales en pesos argentinos.';   // hasta la v3.0 (ahora «precios finales» ya va en la letra chica)
 
 // `archivo` = ruta de la foto dentro de la carpeta "productos" (programa local); `img` = foto incrustada (página suelta).
-const nuevoProducto = (o = {}) => ({ id: uid(), nombre: '', desc: '', regular: '', pct: '', final: '', unidad: '', etiqueta: '', nota: '', pago: '', img: null, imgV: 0, archivo: null, mtime: null, demo: null, recordado: false, alfa: false, quitarFondo: false, tol: 40, zoom: 1, dx: 0, dy: 0, fotosExtra: [], ...o });   // fotosExtra: otras fotos en el mismo cuadro (Fernet + gaseosa). combo: true = el de Marketing
+const nuevoProducto = (o = {}) => ({ id: uid(), nombre: '', desc: '', regular: '', pct: '', final: '', cant: '', unidad: '', etiqueta: '', nota: '', pago: '', img: null, imgV: 0, archivo: null, mtime: null, demo: null, recordado: false, alfa: false, quitarFondo: false, tol: 40, zoom: 1, dx: 0, dy: 0, fotosExtra: [], ...o });   // fotosExtra: otras fotos en el mismo cuadro (Fernet + gaseosa). combo: true = el de Marketing
 /** Combos de comida que ya arma Rivero Market (se cargan solos al elegir el fondo, mientras no los cambies). */
 const COMBOS_COMIDA = {
   panchos: { cartel: '¡SÚPER OFERTA!', nombre: 'Combo Panchos', precio: '10.500', items: [['2', 'Pan de Viena Soraide x6'], ['2 paq.', 'Salchichas La Blanca'], ['1', 'Mayonesa Fiesta 237 g'], ['1', 'Ketchup Danica 220 g'], ['1', 'Mostaza Danica 220 g'], ['100 g', 'Papas pay sueltas']] },

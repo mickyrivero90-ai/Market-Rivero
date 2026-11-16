@@ -276,7 +276,7 @@ async function recordarPrecios() {
   for (const p of S.productos.slice(0, L_ACTUAL().slots)) {
     if (p.archivo && !productoVacio(p) && parsePrecio(p.final)) {
       const hist = ((recordadoDe(p.archivo) || {}).hist || []).concat([{ ts: ahora, regular: p.regular, final: p.final }]).slice(-12);   // historial de precios del producto
-      CAT[p.archivo] = { nombre: p.nombre, desc: p.desc, regular: p.regular, final: p.final, unidad: p.unidad, etiqueta: p.etiqueta, nota: p.nota, ts: ahora, hist }; n++;
+      CAT[p.archivo] = { nombre: p.nombre, desc: p.desc, regular: p.regular, final: p.final, cant: p.cant || '', unidad: p.unidad, etiqueta: p.etiqueta, nota: p.nota, ts: ahora, hist }; n++;
     }
   }
   if (n) CAT = await CARPETA.guardarCatalogo(CAT);
@@ -531,8 +531,8 @@ function ofertasPublicas(S) {
     comercio: { nombre: C.nombre || 'Rivero Market', direccion: C.direccion || '', horario: C.horario || '', whatsapp: waNumero(C.whatsapp), whatsappTexto: String(C.whatsapp || '').trim(), canal: C.waCanal || '', facebook: C.facebook || '', facebookUrl: C.qrUrl || '', instagram: String(C.instagram || '').trim(), mapa: C.mapa || '', razon: C.razon || '', cuit: C.cuit || '' },
     legal: { letraChica: letraChica(S) || '', stock: String((S.legal || {}).stock || '').trim() },
     alcohol: alcoholActivo(S),
-    productos: prods.map(p => { const I = infoProducto(p), cp = chipProducto(p, S); return { nombre: String(p.nombre || '').trim(), desc: String(p.desc || '').trim(), final: p.final, regular: I.R && I.F && I.R.num > I.F.num ? p.regular : '', pct: I.pct || 0,
-      unidad: p.unidad || '', etiqueta: p.etiqueta || '', nota: String(p.nota || '').trim(), porUnidad: porUnidad(p), condicion: cp ? (cp.label + (cp.price ? ' ' + cp.price : '')).trim() : '', combo: !!p.combo, foto: p.archivo || '', categoria: categoria(p.archivo) }; }),
+    productos: prods.map(p => { const I = infoProducto(p), cp = chipProducto(p, S); return { nombre: String(p.nombre || '').trim(), desc: String(p.desc || '').trim(), final: p.final, cant: cantDe(p), regular: I.R && I.F && I.R.num > I.F.num ? precioATexto(I.R.num) : '', pct: I.pct || 0,
+      unidad: p.unidad || '', etiqueta: p.etiqueta || '', nota: String(p.nota || '').trim(), porUnidad: [cadaUno(p), porUnidad(p)].filter(Boolean).join(' · '), condicion: cp ? (cp.label + (cp.price ? ' ' + cp.price : '')).trim() : '', combo: !!p.combo, foto: p.archivo || '', categoria: categoria(p.archivo) }; }),
   };
 }
 async function publicarOfertas(vacia = false) {
