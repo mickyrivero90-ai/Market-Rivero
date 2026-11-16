@@ -181,8 +181,8 @@ function elegirFormato(id) {
   const L = LAYOUTS[id]; S.formato = id;
   if (id.startsWith('combo_')) {                                  // combo: el cartel dice «¡SÚPER COMBO!» y el tachado «POR SEPARADO»
     if (!S.destacado.mensaje || MENSAJES1.includes(S.destacado.mensaje)) S.destacado.mensaje = '¡SÚPER COMBO!';
-    if (S.productos[0]) S.productos[0].combo = true;
-  }
+    if (S.productos[0] && !S.productos[0].combo) Object.assign(S.productos[0], { combo: true, comboAuto: true });
+  } else S.productos.forEach(p => { if (p.comboAuto) { p.combo = false; p.comboAuto = false; } });   // el «combo» que puso solo el formato no sigue en otros
   if (!L.temas.includes(THEMES[S.tema].grupo)) { S.tema = temaPorDefecto(L); aplicarTextosDeTema(S.tema); }
   ACTIVO = { tipo: L.grupo === 'coleccion' ? 'foto' : 'producto', i: 0 };
   construirPanel(); cambio();
@@ -319,6 +319,7 @@ async function asignarProducto(p, it) {
   try { info = await analizarFoto(urlImagen(it.ruta, it.mtime)); } catch (e) { /* se marca como faltante al dibujar */ }
   const m = recordadoDe(it.ruta);
   Object.assign(p, { archivo: it.ruta, mtime: it.mtime, img: null, demo: null, imgV: (p.imgV || 0) + 1, alfa: info.alfa, quitarFondo: !info.alfa && info.claro, zoom: 1, dx: 0, dy: 0, tol: 40,
+    combo: !!(p.combo && String(S.formato).startsWith('combo_') && S.productos[0] === p), comboAuto: !!(p.comboAuto && String(S.formato).startsWith('combo_') && S.productos[0] === p),
     nombre: (m && m.nombre) || it.nombre, desc: (m && m.desc) || '', regular: (m && m.regular) || '', final: (m && m.final) || '', cant: (m && m.cant) || '', unidad: (m && m.unidad) || '', etiqueta: (m && m.etiqueta) || '', nota: (m && m.nota) || '', pct: '', pago: '', recordado: !!(m && m.final) });
 }
 async function asignarFoto(f, it) {
@@ -382,7 +383,7 @@ function cuerpoMas(p, i) {
       h('div', { class: 'insig-lista' }, ...INSIGNIAS.map(t => h('button', { type: 'button', class: 'insig', 'aria-pressed': String(String(p.etiqueta || '').toUpperCase() === t.toUpperCase()), onclick: e => { usarInsignia(t); $$('.insig', e.currentTarget.parentNode).forEach(b => b.setAttribute('aria-pressed', String(String(p.etiqueta || '').toUpperCase() === b.textContent.toUpperCase()))); } }, t)))),
     campo('Nota bajo el precio', inNota, 'opcional'),
     check('No mostrar “Ahorrás $…” en este producto', null, !!p.noAhorro, v => { p.noAhorro = v; cambio(); }),
-    check('Es un combo', 'El precio tachado dice «POR SEPARADO» (la suma de los productos) en vez de «ANTES».', !!p.combo, v => { p.combo = v; cambio(); }));
+    check('Es un combo', 'El precio tachado dice «POR SEPARADO» (la suma de los productos) en vez de «ANTES».', !!p.combo, v => { p.combo = v; p.comboAuto = false; cambio(); }));
   return h('div', { class: 'stack' }, campos, controlesFoto(p, i, 'producto'), accionesFila(i));
 }
 /** El folleto en toda la pantalla, como va a salir (para revisarlo en una pantalla chica). Se cierra con un clic o Esc. */
@@ -1734,6 +1735,12 @@ async function autotest() {
       t('cantidad: placa «2 x $3.100»', I.F.cant === 2 && txtPrecio(I.F) === '2 x $3.100' && resumenPrecio(q) === '2 x $3.100', txtPrecio(I.F));
       t('cantidad: el normal se compara por las 2', I.R.num === 4000 && txtPrecio(I.R) === '2 x $4.000' && I.pct === 22 && I.ahorro === 900, [I.R.num, I.pct, I.ahorro].join(' '));
       t('cantidad: precio de cada uno', notaDe(q).startsWith('$1.550 c/u') && cadaUno(nuevoProducto({ final: '1.000', cant: '3' })) === '$333,34 c/u', notaDe(q));
+      t('cantidad: c/u también si quedó marcado como combo', cadaUno(nuevoProducto({ final: '3.100', cant: '2', combo: true })) === '$1.550 c/u');
+      { const bak = S.formato, p0 = S.productos[0], c0 = [p0.combo, p0.comboAuto];
+        Object.assign(p0, { combo: false, comboAuto: false }); elegirFormato('combo_post'); const a = p0.combo; elegirFormato('a4_10'); const b = !p0.combo;
+        Object.assign(p0, { combo: true, comboAuto: false }); elegirFormato('combo_post'); elegirFormato('a4_10'); const c = p0.combo;   // marcado a mano: se respeta
+        Object.assign(p0, { combo: c0[0], comboAuto: c0[1] }); elegirFormato(bak);
+        t('combo: el formato combo no deja la marca puesta al salir', a && b && c, [a, b, c].join(' ')); }
       t('cantidad: vacío o 1 = precio de 1', !infoProducto(nuevoProducto({ final: '900', cant: '1' })).F.cant && !infoProducto(nuevoProducto({ final: '900' })).F.cant && cadaUno(nuevoProducto({ final: '900' })) === '');
       t('cantidad: % sobre las 2', ofertaDesde('2.000', '10', 2) === 3600 && ofertaDesde('2.000', '10') === 1800);
       t('cantidad: x litro de 1 unidad', porUnidad(nuevoProducto({ nombre: 'Aceite 900 ml', final: '3.600', cant: '2' })) === '$2.000 x litro', porUnidad(nuevoProducto({ nombre: 'Aceite 900 ml', final: '3.600', cant: '2' })));

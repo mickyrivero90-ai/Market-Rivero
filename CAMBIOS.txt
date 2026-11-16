@@ -5,6 +5,13 @@ Desde la 3.0, la herramienta online (https://mickyrivero90-ai.github.io/Market-R
 se actualiza sola. Si usás el programa de la PC y muestra un número menor, bajá el nuevo
 desde la herramienta online (⋯ Más → Programa para usar sin internet).
 
+Versión 6.10 · 16 de noviembre de 2026 · EL «c/u» SALE SIEMPRE EN LOS «2 x $…»
+- A veces un producto «2 x $3.100» no mostraba abajo «$1.550 c/u». Era porque tenía puesto, sin
+  que se viera, «Es un combo». Esa marca la ponía solo el formato «Combo» en el producto 1 y
+  después quedaba puesta: al cambiar de formato, al elegir otro producto en ese casillero o al
+  reordenar. Ahora el «c/u» sale igual, y la marca se saca sola al salir de los formatos
+  «Combo» o al elegir otro producto. Si la pusiste vos a mano, se respeta.
+
 Versión 6.9 · 16 de noviembre de 2026 · PLACA DEL PRECIO AMARILLA (A ELECCIÓN)
 - Paso 2 → «Leyenda del precio» → «Color de la placa del precio»:
   · Roja (la del fondo elegido): como siempre.
